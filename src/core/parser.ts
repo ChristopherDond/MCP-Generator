@@ -209,12 +209,14 @@ function buildModels(
       };
       for (const sub of schema.allOf) {
         if ("$ref" in sub) continue;
-        Object.assign(merged.properties!, (sub as OpenAPIV3.SchemaObject).properties ?? {});
+        const subSchema = sub as OpenAPIV3.SchemaObject;
+        Object.assign(merged.properties!, subSchema.properties ?? {});
         merged.required = [
           ...(merged.required ?? []),
-          ...((sub as OpenAPIV3.SchemaObject).required ?? []),
+          ...(subSchema.required ?? []),
         ];
       }
+      merged.required = Array.from(new Set([...(schema.required ?? []), ...(merged.required ?? [])]));
       resolvedSchema = merged;
     }
 
@@ -222,7 +224,7 @@ function buildModels(
       name,
       description: schema.description ?? "",
       properties: resolveSchemaProperties(resolvedSchema, components),
-      required: schema.required ?? [],
+      required: resolvedSchema.required ?? [],
     });
   }
 

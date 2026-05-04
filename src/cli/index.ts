@@ -36,7 +36,7 @@ program
   .option("--version <version>", "Override the server version")
   .action(async (opts) => {
     const options: GeneratorOptions = {
-      input: path.resolve(opts.input),
+      input: opts.input,
       lang: opts.lang as GeneratorOptions["lang"],
       out: path.resolve(opts.out),
       force: opts.force,
@@ -107,7 +107,7 @@ program
     const { parseOpenAPI } = await import("../core/parser.js");
 
     try {
-      const ast = await parseOpenAPI(path.resolve(opts.input));
+      const ast = await parseOpenAPI(opts.input);
       spinner.succeed("Spec is valid");
       console.log(
         chalk.dim(
