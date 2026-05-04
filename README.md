@@ -2,6 +2,8 @@
 
 > Turn any OpenAPI spec into a ready-to-run MCP server in seconds.
 
+Portuguese version: [README.pt-BR.md](README.pt-BR.md)
+
 ```bash
 mcp-gen generate --input openapi.json --out ./my-server
 ```
