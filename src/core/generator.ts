@@ -1,27 +1,44 @@
 import fs from "fs";
 import path from "path";
+import Handlebars from "handlebars";
 import { parseOpenAPI } from "./parser.js";
 import { renderTemplate, registerPartials } from "./templating.js";
+import { extractHandlers, injectHandlers, TS_DEFAULT_STUB_PATTERN, PY_DEFAULT_STUB_PATTERN } from "./incremental.js";
 import type { GeneratorOptions, GenerationResult, MCPServerAST } from "./types.js";
 
 // From dist/core/generator.js → dist/templates/
 const TEMPLATES_ROOT = path.resolve(__dirname, "../templates");
 
+Handlebars.registerHelper(
+  "includes",
+  (arr: unknown[], val: unknown) => Array.isArray(arr) && arr.includes(val)
+);
+
 interface FileSpec {
   templateFile: string;
   outputFile: string;
-  outputDir?: string; // subdirectory inside project output, e.g. ".github/workflows"
 }
 
 function getTypeScriptFileSpecs(): FileSpec[] {
   return [
-    { templateFile: "server.hbs", outputFile: "src/server.ts" },
-    { templateFile: "models.hbs", outputFile: "src/models.ts" },
-    { templateFile: "package.json.hbs", outputFile: "package.json" },
-    { templateFile: "tsconfig.json.hbs", outputFile: "tsconfig.json" },
-    { templateFile: "README.md.hbs", outputFile: "README.md" },
-    { templateFile: "Dockerfile.hbs", outputFile: "Dockerfile" },
-    { templateFile: "ci.yml.hbs", outputFile: ".github/workflows/ci.yml" },
+    { templateFile: "server.hbs",          outputFile: "src/server.ts" },
+    { templateFile: "models.hbs",          outputFile: "src/models.ts" },
+    { templateFile: "package.json.hbs",    outputFile: "package.json" },
+    { templateFile: "tsconfig.json.hbs",   outputFile: "tsconfig.json" },
+    { templateFile: "README.md.hbs",       outputFile: "README.md" },
+    { templateFile: "Dockerfile.hbs",      outputFile: "Dockerfile" },
+    { templateFile: "ci.yml.hbs",          outputFile: ".github/workflows/ci.yml" },
+  ];
+}
+
+function getPythonFileSpecs(): FileSpec[] {
+  return [
+    { templateFile: "server.py.hbs",       outputFile: "server.py" },
+    { templateFile: "models.py.hbs",       outputFile: "models.py" },
+    { templateFile: "requirements.txt.hbs",outputFile: "requirements.txt" },
+    { templateFile: "Dockerfile.hbs",      outputFile: "Dockerfile" },
+    { templateFile: "README.md.hbs",       outputFile: "README.md" },
+    { templateFile: "ci.yml.hbs",          outputFile: ".github/workflows/ci.yml" },
   ];
 }
 
@@ -31,34 +48,23 @@ function ensureDir(dirPath: string): void {
 
 function writeFile(filePath: string, content: string, force: boolean): void {
   if (fs.existsSync(filePath) && !force) {
-    throw new Error(
-      `File already exists: ${filePath}. Use --force to overwrite.`
-    );
+    throw new Error(`File already exists: ${filePath}. Use --force to overwrite.`);
   }
   ensureDir(path.dirname(filePath));
   fs.writeFileSync(filePath, content, "utf-8");
 }
 
-// Add a helper 'includes' for Handlebars that checks array membership
-// (registered here so it has access to runtime data)
-import Handlebars from "handlebars";
-Handlebars.registerHelper(
-  "includes",
-  (arr: unknown[], val: unknown) => Array.isArray(arr) && arr.includes(val)
-);
-
-export async function generate(
-  options: GeneratorOptions
-): Promise<GenerationResult> {
+export async function generate(options: GeneratorOptions): Promise<GenerationResult> {
   const result: GenerationResult = {
     success: false,
     outputDir: path.resolve(options.out),
     filesCreated: [],
+    filesPreserved: [],
     errors: [],
     warnings: [],
   };
 
-  // 1. Parse and validate the OpenAPI spec
+  // 1. Parse
   let ast: MCPServerAST;
   try {
     ast = await parseOpenAPI(options.input);
@@ -67,50 +73,58 @@ export async function generate(
     return result;
   }
 
-  // Override server name/version if provided
   if (options.serverName) ast.serverName = options.serverName;
   if (options.serverVersion) ast.serverVersion = options.serverVersion;
 
-  // Warn about tools with no example response (handlers will throw NotImplemented)
   const stubTools = ast.tools.filter((t) => t.exampleResponse === null);
   if (stubTools.length > 0) {
     result.warnings.push(
-      `${stubTools.length} tool(s) have no example response and will throw NotImplemented: ${stubTools
-        .map((t) => t.name)
-        .join(", ")}`
+      `${stubTools.length} tool(s) have no example response and will throw NotImplemented: ${stubTools.map((t) => t.name).join(", ")}`
     );
   }
 
-  // 2. Select templates for the target language
-  if (options.lang !== "typescript") {
-    result.errors.push(
-      `Language "${options.lang}" not yet supported. Only "typescript" is implemented in this version.`
-    );
+  // 2. Select template set
+  const isTs = options.lang === "typescript";
+  const isPy = options.lang === "python";
+
+  if (!isTs && !isPy) {
+    result.errors.push(`Language "${options.lang}" is not supported. Use: typescript | python`);
     return result;
   }
 
-  const templatesDir = path.join(TEMPLATES_ROOT, "typescript");
+  const langDir = isTs ? "typescript" : "python";
+  const templatesDir = path.join(TEMPLATES_ROOT, langDir);
   const partialsDir = path.join(templatesDir, "partials");
   registerPartials(partialsDir);
 
-  const fileSpecs = getTypeScriptFileSpecs();
+  const fileSpecs = isTs ? getTypeScriptFileSpecs() : getPythonFileSpecs();
 
-  // 3. Check output directory
-  if (fs.existsSync(result.outputDir) && !options.force) {
+  // 3. Check output dir
+  if (fs.existsSync(result.outputDir) && !options.force && !options.incremental) {
     const contents = fs.readdirSync(result.outputDir);
     if (contents.length > 0) {
       result.errors.push(
-        `Output directory is not empty: ${result.outputDir}. Use --force to overwrite.`
+        `Output directory is not empty: ${result.outputDir}. Use --force to overwrite or --incremental to preserve handlers.`
       );
       return result;
     }
   }
 
-  // 4. Render and write each file
+  // 4. Incremental — extract existing handlers before overwriting
+  const serverFile = isTs
+    ? path.join(result.outputDir, "src/server.ts")
+    : path.join(result.outputDir, "server.py");
+
+  const extracted = options.incremental
+    ? extractHandlers(serverFile)
+    : { handlers: new Map() };
+
+  // 5. Render and write
   const context: Record<string, unknown> = {
     ...ast,
     generatedAt: new Date().toISOString(),
     lang: options.lang,
+    incremental: options.incremental,
   };
 
   for (const spec of fileSpecs) {
@@ -122,9 +136,21 @@ export async function generate(
     }
 
     try {
-      const rendered = renderTemplate(templatePath, context);
+      let rendered = renderTemplate(templatePath, context);
+
+      // Apply incremental injection only to the server file
+      const isServerFile =
+        spec.outputFile === "src/server.ts" || spec.outputFile === "server.py";
+
+      if (options.incremental && isServerFile && extracted.handlers.size > 0) {
+        const stubPattern = isTs ? TS_DEFAULT_STUB_PATTERN : PY_DEFAULT_STUB_PATTERN;
+        const { result: injected, preserved } = injectHandlers(rendered, extracted, stubPattern);
+        rendered = injected;
+        result.filesPreserved.push(...preserved);
+      }
+
       const outputPath = path.join(result.outputDir, spec.outputFile);
-      writeFile(outputPath, rendered, options.force);
+      writeFile(outputPath, rendered, options.force || options.incremental);
       result.filesCreated.push(spec.outputFile);
     } catch (err: unknown) {
       result.errors.push(
