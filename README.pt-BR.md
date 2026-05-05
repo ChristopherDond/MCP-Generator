@@ -2,19 +2,17 @@
 
 > Transforme qualquer especificação OpenAPI em um servidor MCP pronto para uso em segundos.
 
-English version: [README.md](README.md)
-
 ```bash
-mcp-gen generate --input openapi.json --out ./my-server
+mcp-gen generate --input openapi.yaml --lang typescript --out ./my-server
 ```
 
-Sem boilerplate. Sem wiring manual. Apenas um servidor [Model Context Protocol](https://modelcontextprotocol.io) funcional, com cada endpoint mapeado para uma tool e exemplos incluídos.
+Sem boilerplate. Sem wiring manual. Apenas um servidor [Model Context Protocol](https://modelcontextprotocol.io) funcional, com cada endpoint mapeado para uma tool, em TypeScript ou Python.
 
 ---
 
 ## Por que
 
-O MCP se tornou a forma padrão de expor APIs para agentes de IA em 2025/26. Escrever servidores MCP na mão significa repetir a mesma estrutura em todo projeto: parser de specs, registro de tools, tratamento de schemas. O `openapi-to-mcp` elimina isso.
+O MCP se tornou a forma padrão de expor APIs para agentes de IA em 2025/26. Escrever servidores MCP na mão significa repetir a mesma estrutura em todo projeto: parsing de specs, registro de tools e tratamento de schemas. O `openapi-to-mcp` elimina tudo isso.
 
 Você traz a spec. A CLI entrega o servidor.
 
@@ -30,17 +28,17 @@ sequenceDiagram
     participant Generator
     participant Output
 
-    User->>CLI: mcp-gen generate --input api.yaml
-    CLI->>Parser: valida e faz parse de OpenAPI v3
+    User->>CLI: mcp-gen generate --input api.yaml --lang python
+    CLI->>Parser: valida e faz parse de OpenAPI v3 (JSON ou YAML)
     Parser->>Generator: AST interna (tools, models, examples)
     Generator->>Output: renderiza templates Handlebars
-    Output-->>User: projeto TypeScript MCP
+    Output-->>User: projeto servidor MCP em TypeScript ou Python
 ```
 
 Cada `path + method` da sua spec vira uma **tool** MCP com:
 - Schema de entrada tipado a partir de parâmetros e request body
-- Exemplo de resposta vindo da spec (ou um stub `NotImplemented`)
-- Comentários JSDoc completos
+- Exemplo de resposta vindo da spec já conectado como stub
+- Marcadores incrementais para que novas gerações nunca sobrescrevam sua lógica customizada
 
 ---
 
@@ -54,7 +52,6 @@ Cada `path + method` da sua spec vira uma **tool** MCP com:
 ## Instalação
 
 ```bash
-# Clone e instale
 git clone https://github.com/your-username/openapi-to-mcp.git
 cd openapi-to-mcp
 npm install
@@ -69,8 +66,10 @@ npm run build
 
 ### Validar uma spec
 
+Aceita `.json`, `.yaml`, `.yml` ou uma URL.
+
 ```bash
-node dist/cli/index.js validate --input ./api/openapi.json
+node dist/cli/index.js validate --input ./api/openapi.yaml
 ```
 
 ```
@@ -79,12 +78,13 @@ node dist/cli/index.js validate --input ./api/openapi.json
   Tools: 12  Models: 6  Base URL: https://api.example.com
 ```
 
-### Gerar um servidor
+### Gerar um servidor TypeScript
 
 ```bash
 node dist/cli/index.js generate \
-  --input ./api/openapi.json \
-  --out ./generated/my-server
+  --input ./api/openapi.yaml \
+  --lang typescript \
+  --out ./my-server
 ```
 
 ```
@@ -92,23 +92,58 @@ node dist/cli/index.js generate \
 
   ✓ 7 files created
 
-    /generated/my-server/src/server.ts
-    /generated/my-server/src/models.ts
-    /generated/my-server/package.json
-    /generated/my-server/tsconfig.json
-    /generated/my-server/README.md
-    /generated/my-server/Dockerfile
-    /generated/my-server/.github/workflows/ci.yml
+    my-server/src/server.ts
+    my-server/src/models.ts
+    my-server/package.json
+    my-server/tsconfig.json
+    my-server/README.md
+    my-server/Dockerfile
+    my-server/.github/workflows/ci.yml
 ```
 
-### Executar o servidor gerado
+### Gerar um servidor Python
 
 ```bash
-cd generated/my-server
-npm install
-npm run build
-npm start
+node dist/cli/index.js generate \
+  --input ./api/openapi.yaml \
+  --lang python \
+  --out ./my-server
 ```
+
+```
+✔ Generation complete
+
+  ✓ 6 files created
+
+    my-server/server.py
+    my-server/models.py
+    my-server/requirements.txt
+    my-server/Dockerfile
+    my-server/README.md
+    my-server/.github/workflows/ci.yml
+```
+
+### Regenerar sem perder seu código (incremental)
+
+```bash
+node dist/cli/index.js generate \
+  --input ./api/openapi.yaml \
+  --out ./my-server \
+  --incremental
+```
+
+```
+✔ Generation complete
+
+  ✓ 7 files created
+  ↺ 3 handler(s) preserved
+
+    ↺ get_users
+    ↺ post_users
+    ↺ get_users_id
+```
+
+Código customizado entre os marcadores `@@mcp-gen` é preservado. Os stubs gerados são atualizados. Sua lógica nunca é tocada.
 
 ### Também aceita URLs
 
@@ -124,17 +159,19 @@ node dist/cli/index.js generate \
 
 | Flag | Descrição | Padrão |
 |------|-----------|--------|
-| `--input`, `-i` | Caminho ou URL da spec OpenAPI (JSON ou YAML) | obrigatório |
+| `--input`, `-i` | Caminho ou URL da spec OpenAPI (`.json` \| `.yaml` \| `.yml`) | obrigatório |
 | `--out`, `-o` | Diretório de saída do projeto gerado | `./mcp-server` |
-| `--lang`, `-l` | Linguagem alvo: `typescript` | `typescript` |
+| `--lang`, `-l` | Linguagem alvo: `typescript` \| `python` | `typescript` |
 | `--force`, `-f` | Sobrescreve arquivos existentes sem perguntar | `false` |
-| `--name` | Override do nome do servidor | derivado do título da spec |
-| `--version` | Override da versão do servidor | derivado da spec |
+| `--incremental` | Preserva código customizado dos handlers ao regenerar | `false` |
+| `--name` | Sobrescreve o nome do servidor | derivado do título da spec |
+| `--server-version` | Sobrescreve a versão do servidor | derivada da spec |
 
 ---
 
 ## Estrutura do projeto gerado
 
+**TypeScript:**
 ```
 my-server/
 ├── src/
@@ -142,19 +179,31 @@ my-server/
 │   └── models.ts        # Interfaces TypeScript geradas a partir dos schemas OpenAPI
 ├── .github/
 │   └── workflows/
-│       └── ci.yml       # GitHub Actions: build + test
-├── Dockerfile           # Imagem multi-stage para produção
+│       └── ci.yml
+├── Dockerfile
 ├── package.json
 ├── tsconfig.json
-└── README.md            # Guia de uso do servidor gerado
+└── README.md
+```
+
+**Python:**
+```
+my-server/
+├── server.py            # Servidor FastMCP — definições de tools + handlers
+├── models.py            # Modelos Pydantic gerados a partir dos schemas OpenAPI
+├── requirements.txt
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── Dockerfile
+└── README.md
 ```
 
 ---
 
 ## Conectar ao Claude Desktop
 
-Adicione o servidor gerado ao arquivo `claude_desktop_config.json`:
-
+**TypeScript:**
 ```json
 {
   "mcpServers": {
@@ -166,38 +215,64 @@ Adicione o servidor gerado ao arquivo `claude_desktop_config.json`:
 }
 ```
 
+**Python:**
+```json
+{
+  "mcpServers": {
+    "my-server": {
+      "command": "python",
+      "args": ["/absolute/path/to/my-server/server.py"]
+    }
+  }
+}
+```
+
 Reinicie o Claude Desktop. As tools da sua API vão aparecer automaticamente.
 
 ---
 
 ## Implementar handlers
 
-O `src/server.ts` gerado retorna exemplos da spec por padrão. Troque os stubs por lógica real:
+Os arquivos gerados retornam exemplos da spec por padrão. Substitua os stubs pela lógica real.
 
+**TypeScript** (`src/server.ts`):
 ```typescript
 case "get_users_id": {
+  // @@mcp-gen:start:get_users_id
   const user = await db.users.findById(args.id);
-  return {
-    content: [{ type: "text", text: JSON.stringify(user) }],
-  };
+  return { content: [{ type: "text", text: JSON.stringify(user) }] };
+  // @@mcp-gen:end:get_users_id
 }
 ```
 
-Tools sem exemplo de resposta na spec vão lançar `NotImplemented` — a CLI avisa quais são antes.
+**Python** (`server.py`):
+```python
+@mcp.tool()
+async def get_users_id(id: float) -> Any:
+    # @@mcp-gen:start:get_users_id
+    user = await db.users.find_by_id(id)
+    return user
+    # @@mcp-gen:end:get_users_id
+```
+
+Código entre os marcadores `@@mcp-gen:start` e `@@mcp-gen:end` é preservado quando você roda `generate --incremental` novamente.
 
 ---
 
 ## Desenvolvimento
 
 ```bash
-# Rodar testes
 npm test
-
-# Apenas type-check
 npx tsc --noEmit
 
-# Testar a spec de exemplo
-node dist/cli/index.js generate --input examples/petstore.json --out /tmp/petstore --force
+# Exemplo TypeScript
+node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-test --force
+
+# Exemplo Python
+node dist/cli/index.js generate --input examples/petstore.yaml --lang python --out /tmp/py-test --force
+
+# Exemplo incremental
+node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-test --incremental
 ```
 
 ---
@@ -205,12 +280,12 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/petsto
 ## Roadmap
 
 | Semana | Status | Escopo |
-|--------|--------|--------|
+|------|--------|--------|
 | 0–1 | ✅ Concluído | CLI, parser OpenAPI v3, gerador TypeScript, scaffold com 7 arquivos |
-| 2 | 🔜 Próximo | Target Python/FastAPI, suporte a YAML |
-| 3 | Planejado | Polimento do Dockerfile, testes de integração, melhorias no template de CI |
+| 2 | ✅ Concluído | Entrada YAML, target Python/FastMCP, geração incremental |
+| 3 | 🔜 Próximo | Suporte a `oneOf`/`anyOf`, stubs de auth, testes de integração |
 | 4 | Planejado | CLI interativa, publicação npm/pip |
-| 5 | Planejado | Geração incremental — preservar blocos de código customizados |
+| 5 | Planejado | `mcp-gen init --from stripe` — registry de specs embutido |
 | 6 | Planejado | Release candidate, lançamento no Product Hunt |
 
 ---
@@ -218,9 +293,8 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/petsto
 ## Limitações conhecidas
 
 - OpenAPI v2 (Swagger) não é suportado — apenas v3.x
-- Schemas com `oneOf` / `anyOf` / `discriminator` são tratados parcialmente (MVP)
-- O target Python ainda não foi implementado
-- O script `copy-templates` usa `xcopy` no Windows; ajuste se estiver em outro ambiente
+- `oneOf` / `anyOf` / `discriminator` são parcialmente tratados
+- O script `copy-templates` usa `cp` — no Windows, troque para `xcopy` no `package.json`
 
 ---
 
