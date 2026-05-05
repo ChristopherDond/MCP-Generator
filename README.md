@@ -2,13 +2,11 @@
 
 > Turn any OpenAPI spec into a ready-to-run MCP server in seconds.
 
-Portuguese version: [README.pt-BR.md](README.pt-BR.md)
-
 ```bash
-mcp-gen generate --input openapi.json --out ./my-server
+mcp-gen generate --input openapi.yaml --lang typescript --out ./my-server
 ```
 
-No boilerplate. No manual wiring. Just a working [Model Context Protocol](https://modelcontextprotocol.io) server with every endpoint mapped to a tool, example responses included.
+No boilerplate. No manual wiring. Just a working [Model Context Protocol](https://modelcontextprotocol.io) server with every endpoint mapped to a tool — in TypeScript or Python.
 
 ---
 
@@ -30,17 +28,17 @@ sequenceDiagram
     participant Generator
     participant Output
 
-    User->>CLI: mcp-gen generate --input api.yaml
-    CLI->>Parser: validate & parse OpenAPI v3
+    User->>CLI: mcp-gen generate --input api.yaml --lang python
+    CLI->>Parser: validate & parse OpenAPI v3 (JSON or YAML)
     Parser->>Generator: internal AST (tools, models, examples)
     Generator->>Output: render Handlebars templates
-    Output-->>User: TypeScript MCP server project
+    Output-->>User: TypeScript or Python MCP server project
 ```
 
 Each `path + method` in your spec becomes an MCP **tool** with:
 - Typed input schema derived from parameters and request body
-- Example response from the spec (or a `NotImplemented` stub)
-- Full JSDoc comments
+- Example response from the spec pre-wired as a stub
+- Incremental markers so re-generation never overwrites your custom logic
 
 ---
 
@@ -54,7 +52,6 @@ Each `path + method` in your spec becomes an MCP **tool** with:
 ## Installation
 
 ```bash
-# Clone and install
 git clone https://github.com/your-username/openapi-to-mcp.git
 cd openapi-to-mcp
 npm install
@@ -69,8 +66,10 @@ npm run build
 
 ### Validate a spec
 
+Accepts `.json`, `.yaml`, `.yml`, or a URL.
+
 ```bash
-node dist/cli/index.js validate --input ./api/openapi.json
+node dist/cli/index.js validate --input ./api/openapi.yaml
 ```
 
 ```
@@ -79,12 +78,13 @@ node dist/cli/index.js validate --input ./api/openapi.json
   Tools: 12  Models: 6  Base URL: https://api.example.com
 ```
 
-### Generate a server
+### Generate a TypeScript server
 
 ```bash
 node dist/cli/index.js generate \
-  --input ./api/openapi.json \
-  --out ./generated/my-server
+  --input ./api/openapi.yaml \
+  --lang typescript \
+  --out ./my-server
 ```
 
 ```
@@ -92,23 +92,58 @@ node dist/cli/index.js generate \
 
   ✓ 7 files created
 
-    /generated/my-server/src/server.ts
-    /generated/my-server/src/models.ts
-    /generated/my-server/package.json
-    /generated/my-server/tsconfig.json
-    /generated/my-server/README.md
-    /generated/my-server/Dockerfile
-    /generated/my-server/.github/workflows/ci.yml
+    my-server/src/server.ts
+    my-server/src/models.ts
+    my-server/package.json
+    my-server/tsconfig.json
+    my-server/README.md
+    my-server/Dockerfile
+    my-server/.github/workflows/ci.yml
 ```
 
-### Run the generated server
+### Generate a Python server
 
 ```bash
-cd generated/my-server
-npm install
-npm run build
-npm start
+node dist/cli/index.js generate \
+  --input ./api/openapi.yaml \
+  --lang python \
+  --out ./my-server
 ```
+
+```
+✔ Generation complete
+
+  ✓ 6 files created
+
+    my-server/server.py
+    my-server/models.py
+    my-server/requirements.txt
+    my-server/Dockerfile
+    my-server/README.md
+    my-server/.github/workflows/ci.yml
+```
+
+### Re-generate without losing your code (incremental)
+
+```bash
+node dist/cli/index.js generate \
+  --input ./api/openapi.yaml \
+  --out ./my-server \
+  --incremental
+```
+
+```
+✔ Generation complete
+
+  ✓ 7 files created
+  ↺ 3 handler(s) preserved
+
+    ↺ get_users
+    ↺ post_users
+    ↺ get_users_id
+```
+
+Custom code between `@@mcp-gen` markers is preserved. Generated stubs are refreshed. Your logic is never touched.
 
 ### Accepts URLs too
 
@@ -124,17 +159,19 @@ node dist/cli/index.js generate \
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--input`, `-i` | Path or URL to the OpenAPI spec (JSON or YAML) | required |
+| `--input`, `-i` | Path or URL to the OpenAPI spec (`.json` \| `.yaml` \| `.yml`) | required |
 | `--out`, `-o` | Output directory for the generated project | `./mcp-server` |
-| `--lang`, `-l` | Target language: `typescript` | `typescript` |
+| `--lang`, `-l` | Target language: `typescript` \| `python` | `typescript` |
 | `--force`, `-f` | Overwrite existing files without prompting | `false` |
+| `--incremental` | Preserve custom handler code on re-generation | `false` |
 | `--name` | Override the server name | derived from spec title |
-| `--version` | Override the server version | derived from spec |
+| `--server-version` | Override the server version | derived from spec |
 
 ---
 
 ## Generated project structure
 
+**TypeScript:**
 ```
 my-server/
 ├── src/
@@ -142,19 +179,31 @@ my-server/
 │   └── models.ts        # TypeScript interfaces from OpenAPI schemas
 ├── .github/
 │   └── workflows/
-│       └── ci.yml       # GitHub Actions: build + test
-├── Dockerfile           # Multi-stage production image
+│       └── ci.yml
+├── Dockerfile
 ├── package.json
 ├── tsconfig.json
-└── README.md            # Usage guide for the generated server
+└── README.md
+```
+
+**Python:**
+```
+my-server/
+├── server.py            # FastMCP server — tool definitions + handlers
+├── models.py            # Pydantic models from OpenAPI schemas
+├── requirements.txt
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── Dockerfile
+└── README.md
 ```
 
 ---
 
 ## Connect to Claude Desktop
 
-Add the generated server to your `claude_desktop_config.json`:
-
+**TypeScript:**
 ```json
 {
   "mcpServers": {
@@ -166,38 +215,64 @@ Add the generated server to your `claude_desktop_config.json`:
 }
 ```
 
-Restart Claude Desktop. Your API tools will appear automatically.
+**Python:**
+```json
+{
+  "mcpServers": {
+    "my-server": {
+      "command": "python",
+      "args": ["/absolute/path/to/my-server/server.py"]
+    }
+  }
+}
+```
+
+Restart Claude Desktop. Your API tools appear automatically.
 
 ---
 
 ## Implement handlers
 
-The generated `src/server.ts` returns spec examples by default. Replace stubs with real logic:
+Generated files return spec examples by default. Replace stubs with real logic.
 
+**TypeScript** (`src/server.ts`):
 ```typescript
 case "get_users_id": {
+  // @@mcp-gen:start:get_users_id
   const user = await db.users.findById(args.id);
-  return {
-    content: [{ type: "text", text: JSON.stringify(user) }],
-  };
+  return { content: [{ type: "text", text: JSON.stringify(user) }] };
+  // @@mcp-gen:end:get_users_id
 }
 ```
 
-Tools without an example response in the spec will throw `NotImplemented` — the CLI warns you which ones upfront.
+**Python** (`server.py`):
+```python
+@mcp.tool()
+async def get_users_id(id: float) -> Any:
+    # @@mcp-gen:start:get_users_id
+    user = await db.users.find_by_id(id)
+    return user
+    # @@mcp-gen:end:get_users_id
+```
+
+Code between `@@mcp-gen:start` and `@@mcp-gen:end` markers is preserved when you re-run `generate --incremental`.
 
 ---
 
 ## Development
 
 ```bash
-# Run tests
 npm test
-
-# Type-check only
 npx tsc --noEmit
 
-# Try the example spec
-node dist/cli/index.js generate --input examples/petstore.json --out /tmp/petstore --force
+# TypeScript example
+node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-test --force
+
+# Python example
+node dist/cli/index.js generate --input examples/petstore.yaml --lang python --out /tmp/py-test --force
+
+# Incremental example
+node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-test --incremental
 ```
 
 ---
@@ -207,10 +282,10 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/petsto
 | Week | Status | Scope |
 |------|--------|-------|
 | 0–1 | ✅ Done | CLI, OpenAPI v3 parser, TypeScript generator, 7-file scaffold |
-| 2 | 🔜 Next | Python/FastAPI target, YAML input support |
-| 3 | Planned | Dockerfile polish, integration tests, CI template improvements |
+| 2 | ✅ Done | YAML input, Python/FastMCP target, incremental generation |
+| 3 | 🔜 Next | `oneOf`/`anyOf` support, auth stubs, integration tests |
 | 4 | Planned | Interactive CLI mode, npm/pip publish |
-| 5 | Planned | Incremental generation — preserve custom code blocks |
+| 5 | Planned | `mcp-gen init --from stripe` — built-in spec registry |
 | 6 | Planned | Release candidate, Product Hunt launch |
 
 ---
@@ -218,8 +293,7 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/petsto
 ## Known limitations
 
 - OpenAPI v2 (Swagger) is not supported — v3.x only
-- `oneOf` / `anyOf` / `discriminator` schemas are partially handled (MVP)
-- Python target is not yet implemented
+- `oneOf` / `anyOf` / `discriminator` schemas are partially handled
 - `copy-templates` script uses `cp` — on Windows, change to `xcopy` in `package.json`
 
 ---
