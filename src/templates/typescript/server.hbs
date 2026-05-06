@@ -14,6 +14,33 @@ import {
 // Incremental mode: edit code between @@mcp-gen markers — it will be preserved on re-generation.
 {{/if}}
 
+// ─── Logging ─────────────────────────────────────────────────────────────────
+// IMPORTANT: This server uses stdio transport. stdout is reserved for JSON-RPC.
+// Never use console.log() — it will corrupt the MCP stream.
+// Always use log() (writes to stderr) for any debug output.
+const log = (...args: unknown[]) => console.error("[{{serverName}}]", ...args);
+
+// ─── Serialization ───────────────────────────────────────────────────────────
+// Safely converts any handler return value to a string for the MCP text content.
+// Handles: objects, arrays, primitives, Buffers, Uint8Arrays (as base64), and
+// non-serializable values (circular refs, undefined, functions).
+function safeSerialize(value: unknown): string {
+  if (value === undefined || value === null) return String(value);
+  if (typeof value === "string") return value;
+  if (typeof value !== "object") return String(value);
+
+  // Binary data — encode as base64 instead of corrupting the stream
+  if (Buffer.isBuffer(value)) return value.toString("base64");
+  if (value instanceof Uint8Array) return Buffer.from(value).toString("base64");
+
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    // Circular references or non-serializable values
+    return String(value);
+  }
+}
+
 const server = new Server(
   { name: "{{serverName}}", version: "{{serverVersion}}" },
   { capabilities: { tools: {} } }
@@ -53,7 +80,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // @@mcp-gen:start:{{name}}
       {{#if exampleResponse}}
       return {
-        content: [{ type: "text" as const, text: JSON.stringify({{json exampleResponse}}, null, 2) }],
+        content: [{ type: "text" as const, text: safeSerialize({{json exampleResponse}}) }],
       };
       {{else}}
       throw new McpError(ErrorCode.InternalError, "Handler not implemented: {{name}}");
@@ -71,10 +98,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error(`MCP Server "{{serverName}}" running on stdio`);
+  log("running on stdio");
 }
 
 main().catch((err) => {
-  console.error("Fatal:", err);
+  log("Fatal:", err);
   process.exit(1);
 });
