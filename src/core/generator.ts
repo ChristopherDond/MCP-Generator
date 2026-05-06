@@ -26,6 +26,7 @@ function getTypeScriptFileSpecs(): FileSpec[] {
     { templateFile: "package.json.hbs",    outputFile: "package.json" },
     { templateFile: "tsconfig.json.hbs",   outputFile: "tsconfig.json" },
     { templateFile: "README.md.hbs",       outputFile: "README.md" },
+    { templateFile: "client.hbs",          outputFile: "src/client.ts" },
     { templateFile: "Dockerfile.hbs",      outputFile: "Dockerfile" },
     { templateFile: "ci.yml.hbs",          outputFile: ".github/workflows/ci.yml" },
   ];

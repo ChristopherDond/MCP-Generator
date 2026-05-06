@@ -55,16 +55,16 @@ describe("generate (typescript)", () => {
   beforeEach(() => { tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-ts-")); });
   afterEach(() => { fs.rmSync(tmpDir, { recursive: true, force: true }); });
 
-  it("generates 7 files", async () => {
+  it("generates 8 files", async () => {
     const result = await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: true, incremental: false });
     expect(result.success).toBe(true);
-    expect(result.filesCreated).toHaveLength(7);
+    expect(result.filesCreated).toHaveLength(8);
   });
 
   it("generates from YAML spec", async () => {
     const result = await generate({ input: PETSTORE_YAML, lang: "typescript", out: tmpDir, force: true, incremental: false });
     expect(result.success).toBe(true);
-    expect(result.filesCreated).toHaveLength(7);
+    expect(result.filesCreated).toHaveLength(8);
   });
 
   it("server.ts contains tool names", async () => {

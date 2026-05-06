@@ -3,10 +3,16 @@
 
 {{#each models}}
 /** {{description}} */
+{{#if oneOf}}
+export type {{name}} = {{#each oneOf}}{{this}}{{#unless @last}} | {{/unless}}{{/each}};
+{{else if anyOf}}
+export type {{name}} = {{#each anyOf}}{{this}}{{#unless @last}} | {{/unless}}{{/each}};
+{{else}}
 export interface {{name}} {
   {{#each properties}}
   {{name}}{{#unless (includes ../required name)}}?{{/unless}}: {{#if ref}}{{ref}}{{#if isArray}}[]{{/if}}{{else}}{{type}}{{/if}};{{#if description}} // {{description}}{{/if}}
   {{/each}}
 }
 
+{{/if}}
 {{/each}}

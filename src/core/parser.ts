@@ -176,6 +176,7 @@ function buildTools(
         method: method.toUpperCase(),
         path,
         params,
+        security: operation.security,
         exampleResponse: extractExampleResponse(operation),
         tags: operation.tags ?? [],
       });
@@ -225,6 +226,14 @@ function buildModels(
       description: schema.description ?? "",
       properties: resolveSchemaProperties(resolvedSchema, components),
       required: resolvedSchema.required ?? [],
+      oneOf: schema.oneOf ? schema.oneOf.map((s) => ("$ref" in s ? refToName((s as OpenAPIV3.ReferenceObject).$ref) : undefined)).filter(Boolean) as string[] : undefined,
+      anyOf: schema.anyOf ? schema.anyOf.map((s) => ("$ref" in s ? refToName((s as OpenAPIV3.ReferenceObject).$ref) : undefined)).filter(Boolean) as string[] : undefined,
+      discriminator: schema.discriminator
+        ? {
+            propertyName: schema.discriminator.propertyName,
+            mapping: schema.discriminator.mapping ?? undefined,
+          }
+        : null,
     });
   }
 
@@ -249,6 +258,14 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
 
   const tools = buildTools(api.paths ?? {}, api.components);
   const models = buildModels(api.components);
+  const rawSchemes = api.components?.securitySchemes;
+  const securitySchemes = rawSchemes
+    ? Object.fromEntries(
+        Object.entries(rawSchemes)
+          .filter(([, v]) => !("$ref" in (v as any)))
+          .map(([k, v]) => [k, v as OpenAPIV3.SecuritySchemeObject])
+      )
+    : undefined;
 
   const serverName = (api.info.title ?? "mcp-server")
     .toLowerCase()
@@ -269,5 +286,6 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
       version: api.info.version ?? "1.0.0",
     },
     baseUrl,
+    securitySchemes,
   };
 }

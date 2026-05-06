@@ -1,0 +1,40 @@
+// Auto-generated client SDK for {{info.title}} v{{info.version}}
+// Generated: {{generatedAt}}
+
+export class ApiClient {
+  constructor(public baseUrl: string = "{{baseUrl}}", public token?: string) {}
+
+  private buildUrl(path: string, params: Record<string, unknown> | undefined): string {
+    let url = path;
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        url = url.replace(`{${k}}`, encodeURIComponent(String(v ?? "")));
+      }
+    }
+    return this.baseUrl.replace(/\/$/, "") + url;
+  }
+
+  private async request(method: string, url: string, body?: unknown, headers: Record<string,string> = {}) {
+    if (this.token) headers["Authorization"] = `Bearer ${this.token}`;
+    const opts: RequestInit = { method, headers };
+    if (body !== undefined) {
+      opts.body = JSON.stringify(body);
+      headers["Content-Type"] = "application/json";
+    }
+    const res = await fetch(url, opts);
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+    const text = await res.text();
+    try { return JSON.parse(text); } catch { return text; }
+  }
+
+  {{#each tools}}
+  /** {{description}} */
+  async {{name}}(params: Record<string, unknown> = {}): Promise<unknown> {
+    const url = this.buildUrl("{{path}}", params);
+    const method = "{{method}}";
+    const hasBody = {{#if (includes (requiredParams params) "body")}}true{{else}}false{{/if}};
+    const body = hasBody ? (params["body"] as unknown) : undefined;
+    return this.request(method, url, body);
+  }
+  {{/each}}
+}

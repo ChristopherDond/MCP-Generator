@@ -24,6 +24,7 @@ export interface MCPTool {
   method: string;
   path: string;
   params: MCPToolParam[];
+  security?: OpenAPIV3.SecurityRequirementObject[];
   exampleResponse: unknown | null;
   tags: string[];
 }
@@ -33,6 +34,13 @@ export interface MCPModel {
   description: string;
   properties: MCPModelProperty[];
   required: string[];
+  // For schemas that use oneOf/anyOf
+  oneOf?: string[];
+  anyOf?: string[];
+  discriminator?: {
+    propertyName: string;
+    mapping?: Record<string, string>;
+  } | null;
 }
 
 export interface MCPModelProperty {
@@ -55,6 +63,7 @@ export interface MCPServerAST {
     version: string;
   };
   baseUrl: string;
+  securitySchemes?: Record<string, OpenAPIV3.SecuritySchemeObject>;
 }
 
 export interface GenerationResult {

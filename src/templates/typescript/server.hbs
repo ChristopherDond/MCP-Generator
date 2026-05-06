@@ -46,6 +46,38 @@ const server = new Server(
   { capabilities: { tools: {} } }
 );
 
+// ─── Security helpers (auto-generated stubs) ─────────────────────────────────
+const securitySchemes = {{{json securitySchemes}}} ?? {};
+
+function requireSecurity(args: Record<string, unknown> | undefined, security: unknown): void {
+  if (!security) return;
+  try {
+    const secArray = security as Array<Record<string, string[]>>;
+    if (!Array.isArray(secArray) || secArray.length === 0) return;
+    const req = secArray[0];
+    const satisfied = Object.keys(req).some((schemeName) => {
+      const scheme = (securitySchemes as Record<string, any>)?.[schemeName];
+      if (!scheme) return false;
+      // Look for common credential locations in the MCP tool args
+      const maybe = (obj: any, keys: string[]) => keys.some((k) => obj && (k in obj));
+      const a = args as Record<string, any> | undefined;
+      if (scheme.type === "http" && (scheme.scheme ?? "").toLowerCase() === "bearer") {
+        return maybe(a, ["authorization", "Authorization", "token", "access_token"]);
+      }
+      if (scheme.type === "apiKey") {
+        return maybe(a, [scheme.name, "api_key", "apiKey"]);
+      }
+      if (scheme.type === "oauth2") {
+        return maybe(a, ["access_token", "token", "authorization", "Authorization"]);
+      }
+      return false;
+    });
+    if (!satisfied) throw new McpError(ErrorCode.InternalError, "Unauthorized");
+  } catch (err) {
+    throw new McpError(ErrorCode.InternalError, "Unauthorized");
+  }
+}
+
 // ─── Tool Definitions ────────────────────────────────────────────────────────
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -78,6 +110,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     case "{{name}}": {
       // {{method}} {{path}}
       // @@mcp-gen:start:{{name}}
+      {{#if security}}
+      // Security requirements: {{json security}}
+      requireSecurity(args, {{json security}});
+      {{/if}}
       {{#if exampleResponse}}
       return {
         content: [{ type: "text" as const, text: safeSerialize({{json exampleResponse}}) }],
