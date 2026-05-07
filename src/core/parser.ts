@@ -29,8 +29,13 @@ function openapiTypeToTS(type: string): string {
 
 function resolveSchemaProperties(
   schema: OpenAPIV3.SchemaObject,
-  components: OpenAPIV3.ComponentsObject | undefined
+  components: OpenAPIV3.ComponentsObject | undefined,
+  visited: Set<OpenAPIV3.SchemaObject> = new Set()
 ): MCPModelProperty[] {
+  // Guard against circular $ref chains (e.g. TreeNode -> children: TreeNode[])
+  if (visited.has(schema)) return [];
+  visited.add(schema);
+
   const props: MCPModelProperty[] = [];
   if (!schema.properties) return props;
 
@@ -176,7 +181,6 @@ function buildTools(
         method: method.toUpperCase(),
         path,
         params,
-        security: operation.security,
         exampleResponse: extractExampleResponse(operation),
         tags: operation.tags ?? [],
       });
@@ -210,14 +214,12 @@ function buildModels(
       };
       for (const sub of schema.allOf) {
         if ("$ref" in sub) continue;
-        const subSchema = sub as OpenAPIV3.SchemaObject;
-        Object.assign(merged.properties!, subSchema.properties ?? {});
+        Object.assign(merged.properties!, (sub as OpenAPIV3.SchemaObject).properties ?? {});
         merged.required = [
           ...(merged.required ?? []),
-          ...(subSchema.required ?? []),
+          ...((sub as OpenAPIV3.SchemaObject).required ?? []),
         ];
       }
-      merged.required = Array.from(new Set([...(schema.required ?? []), ...(merged.required ?? [])]));
       resolvedSchema = merged;
     }
 
@@ -225,15 +227,7 @@ function buildModels(
       name,
       description: schema.description ?? "",
       properties: resolveSchemaProperties(resolvedSchema, components),
-      required: resolvedSchema.required ?? [],
-      oneOf: schema.oneOf ? schema.oneOf.map((s) => ("$ref" in s ? refToName((s as OpenAPIV3.ReferenceObject).$ref) : undefined)).filter(Boolean) as string[] : undefined,
-      anyOf: schema.anyOf ? schema.anyOf.map((s) => ("$ref" in s ? refToName((s as OpenAPIV3.ReferenceObject).$ref) : undefined)).filter(Boolean) as string[] : undefined,
-      discriminator: schema.discriminator
-        ? {
-            propertyName: schema.discriminator.propertyName,
-            mapping: schema.discriminator.mapping ?? undefined,
-          }
-        : null,
+      required: schema.required ?? [],
     });
   }
 
@@ -244,7 +238,11 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
   let api: OpenAPIV3.Document;
 
   try {
-    api = (await SwaggerParser.validate(inputPath)) as OpenAPIV3.Document;
+    // dereference resolves $refs inline; circular:"ignore" prevents infinite loops
+    // on self-referential schemas (e.g. TreeNode { children: TreeNode[] })
+    api = (await SwaggerParser.dereference(inputPath, {
+      dereference: { circular: "ignore" },
+    })) as OpenAPIV3.Document;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     throw new Error(`OpenAPI validation failed: ${message}`);
@@ -258,14 +256,6 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
 
   const tools = buildTools(api.paths ?? {}, api.components);
   const models = buildModels(api.components);
-  const rawSchemes = api.components?.securitySchemes;
-  const securitySchemes = rawSchemes
-    ? Object.fromEntries(
-        Object.entries(rawSchemes)
-          .filter(([, v]) => !("$ref" in (v as any)))
-          .map(([k, v]) => [k, v as OpenAPIV3.SecuritySchemeObject])
-      )
-    : undefined;
 
   const serverName = (api.info.title ?? "mcp-server")
     .toLowerCase()
@@ -286,6 +276,5 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
       version: api.info.version ?? "1.0.0",
     },
     baseUrl,
-    securitySchemes,
   };
 }
