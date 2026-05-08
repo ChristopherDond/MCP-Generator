@@ -94,9 +94,59 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
   }
 
   const langDir = isTs ? "typescript" : "python";
+
+  // Build template roots: plugin-provided templates first (allow overrides), then core templates
+  const templateRoots: string[] = [];
+
+  // 2.a Load plugin-provided templates/helpers if any
+  const pluginPaths = options.plugins ?? [];
+  if (options.pluginsDir) {
+    try {
+      const scan = fs.readdirSync(path.resolve(options.pluginsDir));
+      for (const entry of scan) {
+        const candidate = path.resolve(options.pluginsDir, entry);
+        if (fs.existsSync(candidate) && fs.lstatSync(candidate).isDirectory()) pluginPaths.push(candidate);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  for (const p of pluginPaths) {
+    try {
+      const pluginTemplates = path.join(p, "templates", langDir);
+      if (fs.existsSync(pluginTemplates)) templateRoots.push(pluginTemplates);
+
+      // If plugin exports a helper registration function, call it
+      try {
+        // dynamic import: plugin can be a folder with index.js or a module name
+        // prefer absolute path
+        const modPath = require.resolve(p, { paths: [process.cwd(), __dirname] });
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const mod = require(modPath);
+        if (mod && typeof mod.registerHandlebars === "function") {
+          try {
+            mod.registerHandlebars(Handlebars);
+          } catch (e) {
+            // ignore plugin helper failures
+          }
+        }
+      } catch (e) {
+        // ignore failure to load plugin module
+      }
+    } catch (err) {
+      // ignore plugin path issues
+    }
+  }
+
   const templatesDir = path.join(TEMPLATES_ROOT, langDir);
-  const partialsDir = path.join(templatesDir, "partials");
-  registerPartials(partialsDir);
+  templateRoots.push(templatesDir);
+
+  // Register partials from plugin roots first, then core
+  for (const root of templateRoots) {
+    const partialsDir = path.join(root, "partials");
+    registerPartials(partialsDir);
+  }
 
   const fileSpecs = isTs ? getTypeScriptFileSpecs() : getPythonFileSpecs();
 
@@ -129,9 +179,16 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
   };
 
   for (const spec of fileSpecs) {
-    const templatePath = path.join(templatesDir, spec.templateFile);
-
-    if (!fs.existsSync(templatePath)) {
+    // Find the first template file available from plugin roots then core templates
+    let templatePath: string | null = null;
+    for (const root of templateRoots) {
+      const candidate = path.join(root, spec.templateFile);
+      if (fs.existsSync(candidate)) {
+        templatePath = candidate;
+        break;
+      }
+    }
+    if (!templatePath) {
       result.warnings.push(`Template not found, skipping: ${spec.templateFile}`);
       continue;
     }

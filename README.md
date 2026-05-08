@@ -1,3 +1,43 @@
+# MCP-Generator
+
+OpenAPI → MCP Server generator
+
+This tool generates a minimal MCP server from an OpenAPI (v3) spec using templates for TypeScript and Python.
+
+Quick usage
+
+- Generate from a local spec:
+
+  mcp-gen generate -i openapi.json -l typescript -o ./mcp-server
+
+- Initialize a local copy of a known public spec (registry) and optionally generate:
+
+  mcp-gen init --from stripe
+  mcp-gen init --from stripe --generate -o ./mcp-server
+
+- Watch a spec file or URL and regenerate automatically (useful for CI):
+
+  mcp-gen watch -i openapi.json -o ./mcp-server
+  mcp-gen watch -i https://example.com/spec.json --interval 60000
+
+Plugin system (templates & helpers)
+
+Large orgs can provide custom templates and Handlebars helpers as a plugin. A plugin may be a folder containing:
+
+- `templates/typescript/...` or `templates/python/...` — any template files to override or extend core templates
+- `index.js` that exports `registerHandlebars(handlebars)` to register helpers
+
+Load a plugin with `--plugin` when generating or watching:
+
+  mcp-gen generate -i openapi.json --plugin ./my-company-plugin
+  mcp-gen watch -i openapi.json --plugin ./my-company-plugin
+
+Behavior notes
+
+- Plugin templates override core templates when a file with the same name exists in the plugin's `templates/<lang>/` folder.
+- Plugins may register Handlebars helpers by exporting a `registerHandlebars` function which receives the Handlebars instance.
+
+See the Portuguese README for localized instructions: `README.pt-BR.md`.
 # openapi-to-mcp
 
 > Turn any OpenAPI spec into a ready-to-run MCP server in seconds.

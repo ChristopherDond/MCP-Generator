@@ -5,6 +5,8 @@ import ora from "ora";
 import path from "path";
 import { generate } from "../core/generator.js";
 import type { GeneratorOptions } from "../core/types.js";
+import { fetchSpecToCwd, listKnownSpecs } from "../core/registry.js";
+import fs from "fs";
 
 const SUPPORTED_LANGS = ["typescript", "python"] as const;
 const SUPPORTED_EXTS = [".json", ".yaml", ".yml"];
@@ -52,10 +54,17 @@ program
   .option("--incremental", "Preserve custom handler code on re-generation (@@mcp-gen markers)", false)
   .option("--name <name>", "Override the server name")
   .option("--server-version <version>", "Override the server version")
+  .option("--plugin <path>", "Path to a plugin module or folder to load", (val, acc) => {
+    if (!acc) return [val];
+    acc.push(val);
+    return acc;
+  }, [] as string[])
   .action(async (opts) => {
     validateLang(opts.lang);
     const input = resolveInput(opts.input);
     validateInputExt(input);
+
+    const plugins = (opts.plugin as string[] | undefined) ?? [];
 
     const options: GeneratorOptions = {
       input,
@@ -63,6 +72,7 @@ program
       out: path.resolve(opts.out),
       force: opts.force,
       incremental: opts.incremental,
+      plugins,
       serverName: opts.name,
       serverVersion: opts.serverVersion,
     };
@@ -136,6 +146,144 @@ program
       console.error(chalk.red(err instanceof Error ? err.message : String(err)));
       process.exit(1);
     }
+  });
+
+program
+  .command("init")
+  .description("Initialize a local spec from a known public registry (e.g. stripe, github)")
+  .requiredOption("--from <key>", "Registry key to fetch spec from. Use 'list' to show known keys")
+  .option("--generate", "Run generation after fetching the spec", false)
+  .option("-i, --input <path>", "If provided, use this as the saved filename instead of the registry default")
+  .option("-l, --lang <language>", `Target language: ${SUPPORTED_LANGS.join(" | ")}`, "typescript")
+  .option("-o, --out <dir>", "Output directory for the generated project", "./mcp-server")
+  .action(async (opts) => {
+    const key = opts.from;
+    try {
+      if (key === "list") {
+        console.log(listKnownSpecs().join("\n"));
+        return;
+      }
+      const saved = await fetchSpecToCwd(key);
+      console.log(chalk.green(`Saved spec to ${saved}`));
+      if (opts.generate) {
+        const input = resolveInput(opts.input ?? saved);
+        validateInputExt(input);
+        const options: GeneratorOptions = {
+          input,
+          lang: opts.lang as GeneratorOptions["lang"],
+          out: path.resolve(opts.out),
+          force: false,
+          incremental: false,
+        };
+        await generate(options);
+      }
+    } catch (err: unknown) {
+      console.error(chalk.red(err instanceof Error ? err.message : String(err)));
+      process.exit(1);
+    }
+  });
+
+program
+  .command("watch")
+  .description("Watch a spec (file or URL) and regenerate on changes")
+  .requiredOption("-i, --input <path>", "Path or URL to the OpenAPI spec to watch")
+  .option("-l, --lang <language>", `Target language: ${SUPPORTED_LANGS.join(" | ")}`, "typescript")
+  .option("-o, --out <dir>", "Output directory for the generated project", "./mcp-server")
+  .option("--once", "Run generation once on first change then exit", false)
+  .option("--interval <ms>", "Polling interval for URL inputs (ms)", "30000")
+  .option("--plugin <path>", "Path to a plugin module or folder to load", (val, acc) => {
+    if (!acc) return [val];
+    acc.push(val);
+    return acc;
+  }, [] as string[])
+  .action(async (opts) => {
+    const input = resolveInput(opts.input);
+    validateInputExt(input);
+    validateLang(opts.lang);
+
+    const commonOptions = {
+      lang: opts.lang as GeneratorOptions["lang"],
+      out: path.resolve(opts.out),
+      force: false,
+      incremental: false,
+      plugins: opts.plugin as string[] | undefined,
+    } as Partial<GeneratorOptions>;
+
+    const runGenerate = async () => {
+      const options: GeneratorOptions = {
+        input: opts.input,
+        lang: commonOptions.lang!,
+        out: commonOptions.out!,
+        force: false,
+        incremental: false,
+        plugins: commonOptions.plugins,
+      };
+      console.log(chalk.dim(`[watch] regenerating from ${opts.input} → ${options.out}`));
+      try {
+        const res = await generate(options);
+        if (!res.success) {
+          console.error(chalk.red("Generation failed:"));
+          for (const e of res.errors) console.error(chalk.red(`  ${e}`));
+        } else {
+          console.log(chalk.green(`[watch] generated ${res.filesCreated.length} files`));
+        }
+      } catch (e: unknown) {
+        console.error(chalk.red(String(e)));
+      }
+    };
+
+    // If input is http(s) — poll for changes
+    if (opts.input.startsWith("http://") || opts.input.startsWith("https://")) {
+      let last = "";
+      const interval = Number(opts.interval) || 30000;
+      console.log(chalk.dim(`[watch] polling ${opts.input} every ${interval}ms`));
+      const check = async () => {
+        try {
+          const r = await fetch(opts.input);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const body = await r.text();
+          if (!last) {
+            last = body;
+            await runGenerate();
+            if (opts.once) process.exit(0);
+            return;
+          }
+          if (body !== last) {
+            last = body;
+            await runGenerate();
+            if (opts.once) process.exit(0);
+          }
+        } catch (e) {
+          console.error(chalk.red(String(e)));
+        }
+      };
+      await check();
+      setInterval(check, interval);
+      return;
+    }
+
+    // Local file — fs.watch
+    const abs = path.resolve(opts.input);
+    if (!fs.existsSync(abs)) {
+      console.error(chalk.red(`File not found: ${abs}`));
+      process.exit(1);
+    }
+
+    let timeout: NodeJS.Timeout | null = null;
+    const watcher = fs.watch(abs, async () => {
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(async () => {
+        await runGenerate();
+        if (opts.once) {
+          watcher.close();
+          process.exit(0);
+        }
+      }, 200);
+    });
+
+    console.log(chalk.dim(`[watch] watching ${abs}`));
+    // run once initially
+    await runGenerate();
   });
 
 program.parse();

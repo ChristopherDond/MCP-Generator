@@ -6,6 +6,10 @@ export interface GeneratorOptions {
   out: string;
   force: boolean;
   incremental: boolean;
+  /** Paths to plugin folders or modules that can provide templates/helpers */
+  plugins?: string[];
+  /** Optional directory to discover plugins (scanned before core templates) */
+  pluginsDir?: string;
   serverName?: string;
   serverVersion?: string;
 }
