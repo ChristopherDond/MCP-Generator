@@ -181,6 +181,7 @@ function buildTools(
         method: method.toUpperCase(),
         path,
         params,
+        security: operation.security,
         exampleResponse: extractExampleResponse(operation),
         tags: operation.tags ?? [],
       });
@@ -223,11 +224,33 @@ function buildModels(
       resolvedSchema = merged;
     }
 
+    // Handle oneOf / anyOf by recording referenced component names
+    const oneOf: string[] | undefined = schema.oneOf
+      ? (schema.oneOf
+          .map((s) => {
+            if ("$ref" in s) return refToName((s as OpenAPIV3.ReferenceObject).$ref);
+            return undefined;
+          })
+          .filter(Boolean) as string[])
+      : undefined;
+
+    const anyOf: string[] | undefined = schema.anyOf
+      ? (schema.anyOf
+          .map((s) => {
+            if ("$ref" in s) return refToName((s as OpenAPIV3.ReferenceObject).$ref);
+            return undefined;
+          })
+          .filter(Boolean) as string[])
+      : undefined;
+
     models.push({
       name,
       description: schema.description ?? "",
       properties: resolveSchemaProperties(resolvedSchema, components),
       required: schema.required ?? [],
+      oneOf,
+      anyOf,
+      discriminator: schema.discriminator ?? null,
     });
   }
 
@@ -236,8 +259,12 @@ function buildModels(
 
 export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
   let api: OpenAPIV3.Document;
+  let raw: OpenAPIV3.Document;
 
   try {
+    // parse returns the original document with $ref intact
+    raw = (await SwaggerParser.parse(inputPath)) as OpenAPIV3.Document;
+
     // dereference resolves $refs inline; circular:"ignore" prevents infinite loops
     // on self-referential schemas (e.g. TreeNode { children: TreeNode[] })
     api = (await SwaggerParser.dereference(inputPath, {
@@ -255,7 +282,9 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
   }
 
   const tools = buildTools(api.paths ?? {}, api.components);
-  const models = buildModels(api.components);
+  // Build models from the raw (non-dereferenced) components so $ref targets
+  // like oneOf/anyOf remain as ReferenceObjects and we can extract names.
+  const models = buildModels(raw.components);
 
   const serverName = (api.info.title ?? "mcp-server")
     .toLowerCase()
@@ -276,5 +305,6 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
       version: api.info.version ?? "1.0.0",
     },
     baseUrl,
+    securitySchemes: api.components?.securitySchemes,
   };
 }

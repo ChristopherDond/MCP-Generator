@@ -1,0 +1,47 @@
+{
+  "openapi": "3.0.1",
+  "info": { "title": "Week3 API", "version": "1.0.0" },
+  "servers": [{ "url": "https://api.week3.test" }],
+  "paths": {
+    "/items": {
+      "get": {
+        "summary": "List items",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ItemList" }
+              }
+            }
+          }
+        },
+        "security": [{ "ApiKeyAuth": [] }]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": { "type": "apiKey", "in": "header", "name": "x-api-key" },
+      "BearerAuth": { "type": "http", "scheme": "bearer" }
+    },
+    "schemas": {
+      "A": {
+        "type": "object",
+        "properties": { "a": { "type": "string" } }
+      },
+      "B": {
+        "type": "object",
+        "properties": { "b": { "type": "number" } }
+      },
+      "Item": {
+        "oneOf": [ { "$ref": "#/components/schemas/A" }, { "$ref": "#/components/schemas/B" } ],
+        "discriminator": { "propertyName": "type" }
+      },
+      "ItemList": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/Item" }
+      }
+    }
+  }
+}

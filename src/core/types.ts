@@ -67,7 +67,8 @@ export interface MCPServerAST {
     version: string;
   };
   baseUrl: string;
-  securitySchemes?: Record<string, OpenAPIV3.SecuritySchemeObject>;
+  /** Security schemes may be actual objects or $ref references */
+  securitySchemes?: Record<string, OpenAPIV3.SecuritySchemeObject | OpenAPIV3.ReferenceObject>;
 }
 
 export interface GenerationResult {
