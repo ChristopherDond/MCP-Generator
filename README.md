@@ -323,7 +323,7 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 |------|--------|-------|
 | 0–1 | ✅ Done | CLI, OpenAPI v3 parser, TypeScript generator, 7-file scaffold |
 | 2 | ✅ Done | YAML input, Python/FastMCP target, incremental generation |
-| 3 | 🔜 Next | `oneOf`/`anyOf` support, auth stubs, integration tests |
+| 3 | ✅ Done | `oneOf`/`anyOf` support, auth stubs, integration tests |
 | 4 | Planned | Interactive CLI mode, npm/pip publish |
 | 5 | Planned | `mcp-gen init --from stripe` — built-in spec registry |
 | 6 | Planned | Release candidate, Product Hunt launch |
