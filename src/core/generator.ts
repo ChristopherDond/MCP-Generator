@@ -4,6 +4,7 @@ import Handlebars from "handlebars";
 import { parseOpenAPI } from "./parser";
 import { renderTemplate, registerPartials } from "./templating";
 import { extractHandlers, injectHandlers, TS_DEFAULT_STUB_PATTERN, PY_DEFAULT_STUB_PATTERN } from "./incremental";
+import { validateOutputPath, validatePluginPath, validatePluginModule } from "./security";
 import type { GeneratorOptions, GenerationResult, MCPServerAST } from "./types";
 
 // From dist/core/generator.js → dist/templates/
@@ -47,9 +48,13 @@ function ensureDir(dirPath: string): void {
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
-function writeFile(filePath: string, content: string, force: boolean): void {
+function writeFile(filePath: string, content: string, force: boolean, baseDir?: string): void {
   if (fs.existsSync(filePath) && !force) {
     throw new Error(`File already exists: ${filePath}. Use --force to overwrite.`);
+  }
+  // Validate path to prevent traversal attacks
+  if (baseDir) {
+    validateOutputPath(filePath, baseDir);
   }
   ensureDir(path.dirname(filePath));
   fs.writeFileSync(filePath, content, "utf-8");
@@ -114,28 +119,40 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
 
   for (const p of pluginPaths) {
     try {
+      // Security: validate plugin path to prevent path traversal
+      validatePluginPath(p);
+
       const pluginTemplates = path.join(p, "templates", langDir);
       if (fs.existsSync(pluginTemplates)) templateRoots.push(pluginTemplates);
 
-      // If plugin exports a helper registration function, call it
-      try {
-        // dynamic import: plugin can be a folder with index.js or a module name
-        // prefer absolute path
-        const modPath = require.resolve(p, { paths: [process.cwd(), __dirname] });
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const mod = require(modPath);
-        if (mod && typeof mod.registerHandlebars === "function") {
-          try {
-            mod.registerHandlebars(Handlebars);
-          } catch (e) {
-            // ignore plugin helper failures
+      // Security: Only load plugin modules if explicitly in safe mode
+      // By default, only templates are loaded, not dynamic code
+      if (process.env.MCP_GEN_ALLOW_PLUGINS === "true") {
+        try {
+          // dynamic import: plugin can be a folder with index.js or a module name
+          // prefer absolute path
+          const modPath = require.resolve(p, { paths: [process.cwd(), __dirname] });
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const mod = require(modPath);
+          
+          if (mod) {
+            // Security: validate plugin module structure
+            validatePluginModule(mod);
+            
+            if (typeof mod.registerHandlebars === "function") {
+              try {
+                mod.registerHandlebars(Handlebars);
+              } catch (e) {
+                result.warnings.push(`Failed to register plugin helpers from ${p}: ${e instanceof Error ? e.message : String(e)}`);
+              }
+            }
           }
+        } catch (e) {
+          result.warnings.push(`Failed to load plugin module from ${p}: ${e instanceof Error ? e.message : String(e)}`);
         }
-      } catch (e) {
-        // ignore failure to load plugin module
       }
     } catch (err) {
-      // ignore plugin path issues
+      result.errors.push(`Invalid plugin path: ${p} - ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
@@ -208,7 +225,7 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
       }
 
       const outputPath = path.join(result.outputDir, spec.outputFile);
-      writeFile(outputPath, rendered, options.force || options.incremental);
+      writeFile(outputPath, rendered, options.force || options.incremental, result.outputDir);
       result.filesCreated.push(spec.outputFile);
     } catch (err: unknown) {
       result.errors.push(

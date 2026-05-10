@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { validateRemoteUrl, validateContentType, validateContentSize } from "./security";
 
 export const KNOWN_SPECS: Record<string, { url: string; filename?: string; description?: string }> = {
   stripe: { 
@@ -58,15 +59,44 @@ export async function fetchSpecToCwd(key: string, targetPath?: string): Promise<
   const entry = KNOWN_SPECS[key];
   if (!entry) throw new Error(`Unknown registry key: ${key}`);
 
-  const res = await fetch(entry.url);
-  if (!res.ok) throw new Error(`Failed to fetch ${entry.url}: ${res.status} ${res.statusText}`);
+  // Security: validate URL
+  validateRemoteUrl(entry.url);
 
-  const content = await res.text();
-  const filename = entry.filename ?? (path.basename(new URL(entry.url).pathname) || "openapi.json");
-  const outPath = path.resolve(targetPath ? targetPath : path.join(process.cwd(), filename));
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, content, "utf-8");
-  return outPath;
+  // Create abort controller for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds
+
+  try {
+    const res = await fetch(entry.url, {
+      signal: controller.signal,
+    });
+    
+    if (!res.ok) throw new Error(`Failed to fetch ${entry.url}: ${res.status} ${res.statusText}`);
+
+    // Security: validate Content-Type
+    const contentType = res.headers.get("content-type");
+    validateContentType(contentType);
+
+    // Security: validate content size before reading
+    const contentLength = res.headers.get("content-length");
+    if (contentLength) {
+      validateContentSize(parseInt(contentLength, 10));
+    }
+
+    const content = await res.text();
+    
+    // Security: ensure content size after reading (in case header was missing/wrong)
+    validateContentSize(Buffer.byteLength(content, "utf-8"));
+
+    const filename = entry.filename ?? (path.basename(new URL(entry.url).pathname) || "openapi.json");
+    const outPath = path.resolve(targetPath ? targetPath : path.join(process.cwd(), filename));
+    
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, content, "utf-8");
+    return outPath;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export function listKnownSpecs(): string[] {
