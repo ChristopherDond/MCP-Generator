@@ -64,6 +64,20 @@ npm run build
 
 ## Uso
 
+### Modo interativo
+
+Você pode executar a CLI sem argumentos para abrir um assistente interativo (em PT-BR) que guia pelas ações principais: gerar, validar, init e watch.
+
+```bash
+# durante desenvolvimento
+npm run dev
+
+# se instalado globalmente (quando publicado)
+mcp-gen
+```
+
+O assistente pergunta o caminho/URL da spec, linguagem alvo, diretório de saída e outras opções úteis.
+
 ### Validar uma spec
 
 Aceita `.json`, `.yaml`, `.yml` ou uma URL.

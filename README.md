@@ -195,6 +195,53 @@ node dist/cli/index.js generate \
 
 ---
 
+### Initialize from the public registry
+
+You can download known public specs (for example `stripe` or `github`) directly into the current directory:
+
+```bash
+# downloads `openapi.stripe.json` into the working directory
+mcp-gen init --from stripe
+
+# downloads and generates the project immediately
+mcp-gen init --from stripe --generate -o ./my-server
+```
+
+### Watch mode
+
+Watch a local or remote spec and regenerate automatically when it changes, which is useful for CI flows that update the spec:
+
+```bash
+# watch a local file
+mcp-gen watch -i openapi.json -o ./my-server
+
+# watch a URL (polling interval in ms)
+mcp-gen watch -i https://example.com/spec.json --interval 60000
+```
+
+### Plugin system (templates and helpers)
+
+Larger teams can provide custom Handlebars templates and helpers to standardize internal generation.
+
+Basic plugin requirements:
+
+- `templates/typescript/...` or `templates/python/...` — `.hbs` files that override or extend core templates
+- `index.js` (optional) that exports `registerHandlebars(handlebars)` to register additional helpers
+
+Load a plugin with `--plugin` when generating or watching:
+
+```bash
+mcp-gen generate -i openapi.json --plugin ./my-plugin
+mcp-gen watch -i openapi.json --plugin ./my-plugin
+```
+
+Behavior:
+
+- If a template with the same name exists in the plugin under `templates/<lang>/`, it overrides the core template.
+- If the plugin exports `registerHandlebars`, that function is called with the Handlebars instance to register helpers.
+
+---
+
 ## CLI Reference
 
 | Flag | Description | Default |

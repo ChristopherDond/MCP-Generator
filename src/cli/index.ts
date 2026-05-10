@@ -7,6 +7,7 @@ import { generate } from "../core/generator.js";
 import type { GeneratorOptions } from "../core/types.js";
 import { fetchSpecToCwd, listKnownSpecs } from "../core/registry.js";
 import fs from "fs";
+import inquirer from "inquirer";
 
 const SUPPORTED_LANGS = ["typescript", "python"] as const;
 const SUPPORTED_EXTS = [".json", ".yaml", ".yml"];
@@ -286,4 +287,194 @@ program
     await runGenerate();
   });
 
-program.parse();
+async function interactive(): Promise<void> {
+  while (true) {
+    const { cmd } = await inquirer.prompt<{ cmd: string }>([
+      {
+        type: "list",
+        name: "cmd",
+        message: "Escolha uma ação:",
+        choices: [
+          { name: "Generate (Gerar servidor a partir de spec)", value: "generate" },
+          { name: "Validate (Validar spec)", value: "validate" },
+          { name: "Init (Buscar spec de registro)", value: "init" },
+          { name: "Watch (Observar spec)", value: "watch" },
+          { name: "Sair", value: "exit" },
+        ],
+      },
+    ]);
+
+    if (cmd === "exit") return;
+
+    if (cmd === "generate") {
+      const answers = await inquirer.prompt(
+        [
+          { type: "input", name: "input", message: "Caminho ou URL para o OpenAPI spec (.json|.yaml):" },
+          { type: "list", name: "lang", message: "Linguagem alvo:", choices: [...SUPPORTED_LANGS] },
+          { type: "input", name: "out", message: "Diretório de saída:", default: "./mcp-server" },
+          { type: "confirm", name: "force", message: "Sobrescrever arquivos existentes?", default: false },
+          { type: "confirm", name: "incremental", message: "Preservar handlers customizados?", default: false },
+          { type: "input", name: "name", message: "Nome do servidor (opcional):", default: "" },
+          { type: "input", name: "serverVersion", message: "Versão do servidor (opcional):", default: "" },
+        ] as inquirer.QuestionCollection
+      );
+
+      const input = resolveInput(answers.input as string);
+      validateInputExt(input);
+      validateLang(answers.lang as string);
+
+      const options: GeneratorOptions = {
+        input,
+        lang: answers.lang as GeneratorOptions["lang"],
+        out: path.resolve(answers.out as string),
+        force: Boolean(answers.force),
+        incremental: Boolean(answers.incremental),
+        plugins: [],
+        serverName: answers.name || undefined,
+        serverVersion: answers.serverVersion || undefined,
+      };
+
+      console.log(chalk.bold("\nmcp-gen") + " — OpenAPI → MCP Server\n");
+      const spinner = ora("Parsing OpenAPI spec…").start();
+      try {
+        const result = await generate(options);
+        if (result.warnings.length > 0) {
+          spinner.warn("Completed with warnings");
+          for (const w of result.warnings) console.log(chalk.yellow(`  ⚠ ${w}`));
+          console.log();
+        }
+        if (!result.success) {
+          spinner.fail("Generation failed");
+          for (const err of result.errors) console.error(chalk.red(`  ✗ ${err}`));
+        } else {
+          spinner.succeed("Generation complete");
+          console.log(chalk.green(`\n  ✓ ${result.filesCreated.length} files created\n`));
+        }
+      } catch (err: unknown) {
+        spinner.fail("Unexpected error");
+        console.error(chalk.red(err instanceof Error ? err.message : String(err)));
+      }
+    }
+
+    if (cmd === "validate") {
+      const { input } = await inquirer.prompt([{ type: "input", name: "input", message: "Caminho ou URL para o OpenAPI spec:" }]);
+      const resolved = resolveInput(input as string);
+      validateInputExt(resolved);
+      const spinner = ora("Validating spec…").start();
+      const { parseOpenAPI } = await import("../core/parser.js");
+      try {
+        const ast = await parseOpenAPI(resolved);
+        spinner.succeed("Spec is valid");
+        console.log(chalk.dim(`\n  Tools: ${ast.tools.length}  Models: ${ast.models.length}  Base URL: ${ast.baseUrl}\n`));
+      } catch (err: unknown) {
+        spinner.fail("Validation failed");
+        console.error(chalk.red(err instanceof Error ? err.message : String(err)));
+      }
+    }
+
+    if (cmd === "init") {
+      const { key } = await inquirer.prompt([{ type: "input", name: "key", message: "Chave do registro (use 'list' para ver conhecidos):" }]);
+      try {
+        if (key === "list") {
+          console.log(listKnownSpecs().join("\n"));
+        } else {
+          const saved = await fetchSpecToCwd(key as string);
+          console.log(chalk.green(`Saved spec to ${saved}`));
+        }
+      } catch (err: unknown) {
+        console.error(chalk.red(err instanceof Error ? err.message : String(err)));
+      }
+    }
+
+    if (cmd === "watch") {
+      const answers = await inquirer.prompt([
+        { type: "input", name: "input", message: "Caminho ou URL para o OpenAPI spec:" },
+        { type: "list", name: "lang", message: "Linguagem alvo:", choices: [...SUPPORTED_LANGS] },
+        { type: "input", name: "out", message: "Diretório de saída:", default: "./mcp-server" },
+      ] as inquirer.QuestionCollection);
+
+      const input = resolveInput(answers.input as string);
+      validateInputExt(input);
+      validateLang(answers.lang as string);
+
+      const commonOptions = {
+        lang: answers.lang as GeneratorOptions["lang"],
+        out: path.resolve(answers.out as string),
+        force: false,
+        incremental: false,
+        plugins: [],
+      } as Partial<GeneratorOptions>;
+
+      const runGenerate = async () => {
+        const options: GeneratorOptions = {
+          input: answers.input as string,
+          lang: commonOptions.lang!,
+          out: commonOptions.out!,
+          force: false,
+          incremental: false,
+          plugins: commonOptions.plugins,
+        };
+        console.log(chalk.dim(`[watch] regenerating from ${answers.input} → ${options.out}`));
+        try {
+          const res = await generate(options);
+          if (!res.success) {
+            console.error(chalk.red("Generation failed:"));
+            for (const e of res.errors) console.error(chalk.red(`  ${e}`));
+          } else {
+            console.log(chalk.green(`[watch] generated ${res.filesCreated.length} files`));
+          }
+        } catch (e: unknown) {
+          console.error(chalk.red(String(e)));
+        }
+      };
+
+      if (answers.input.startsWith("http://") || answers.input.startsWith("https://")) {
+        console.log(chalk.dim(`[watch] polling ${answers.input} every 30000ms`));
+        let last = "";
+        const check = async () => {
+          try {
+            const r = await fetch(answers.input as string);
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const body = await r.text();
+            if (!last) {
+              last = body;
+              await runGenerate();
+              return;
+            }
+            if (body !== last) {
+              last = body;
+              await runGenerate();
+            }
+          } catch (e) {
+            console.error(chalk.red(String(e)));
+          }
+        };
+        await check();
+        setInterval(check, 30000);
+      } else {
+        const abs = path.resolve(answers.input as string);
+        if (!fs.existsSync(abs)) {
+          console.error(chalk.red(`File not found: ${abs}`));
+        } else {
+          let timeout: NodeJS.Timeout | null = null;
+          const watcher = fs.watch(abs, async () => {
+            if (timeout) clearTimeout(timeout);
+            timeout = setTimeout(async () => {
+              await runGenerate();
+            }, 200);
+          });
+          console.log(chalk.dim(`[watch] watching ${abs}`));
+          await runGenerate();
+        }
+      }
+    }
+  }
+}
+
+(async () => {
+  if (process.argv.length <= 2 && process.stdin.isTTY) {
+    await interactive();
+    process.exit(0);
+  }
+  program.parse();
+})();
