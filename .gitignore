@@ -3,3 +3,5 @@ dist/
 *.js.map
 tmp/
 openapi.
+test-py/
+test-ts/
