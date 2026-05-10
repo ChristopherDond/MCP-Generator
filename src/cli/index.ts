@@ -5,7 +5,7 @@ import ora from "ora";
 import path from "path";
 import { generate } from "../core/generator";
 import type { GeneratorOptions } from "../core/types";
-import { fetchSpecToCwd, listKnownSpecs } from "../core/registry";
+import { fetchSpecToCwd, listKnownSpecs, getSpecInfo } from "../core/registry";
 import fs from "fs";
 import inquirer from "inquirer";
 
@@ -161,11 +161,21 @@ program
     const key = opts.from;
     try {
       if (key === "list") {
-        console.log(listKnownSpecs().join("\n"));
+        const specs = listKnownSpecs();
+        console.log(chalk.bold("\n📚 Known Public Specs (Specs Públicas Conhecidas):\n"));
+        for (const k of specs) {
+          const info = getSpecInfo(k);
+          console.log(chalk.cyan(`  ${k.padEnd(15)}`), info?.description || "");
+        }
+        console.log("\n" + chalk.dim(`Usage: mcp-gen init --from <key> [--generate -o ./output]`));
+        console.log(chalk.dim(`Example: mcp-gen init --from stripe --generate -o ./stripe-mcp\n`));
         return;
       }
+      
+      const spinner = ora(`Fetching ${key}…`).start();
       const saved = await fetchSpecToCwd(key);
-      console.log(chalk.green(`Saved spec to ${saved}`));
+      spinner.succeed(`Saved spec to ${chalk.green(path.basename(saved))}`);
+      
       if (opts.generate) {
         const input = resolveInput(opts.input ?? saved);
         validateInputExt(input);
@@ -373,13 +383,78 @@ async function interactive(): Promise<void> {
     }
 
     if (cmd === "init") {
-      const { key } = await inquirer.prompt([{ type: "input", name: "key", message: "Chave do registro (use 'list' para ver conhecidos):" }]);
+      const specs = listKnownSpecs();
+      const { key } = await inquirer.prompt([
+        {
+          type: "list",
+          name: "key",
+          message: "Qual spec pública você deseja clonar? / Which public spec?",
+          choices: specs.map((k) => ({
+            name: `${k.padEnd(15)} — ${getSpecInfo(k)?.description || ""}`,
+            value: k,
+          })),
+        },
+      ]);
+      
       try {
-        if (key === "list") {
-          console.log(listKnownSpecs().join("\n"));
-        } else {
-          const saved = await fetchSpecToCwd(key as string);
-          console.log(chalk.green(`Saved spec to ${saved}`));
+        const spinner = ora(`Downloading ${key}…`).start();
+        const saved = await fetchSpecToCwd(key as string);
+        spinner.succeed(`Saved to ${chalk.green(path.basename(saved))}`);
+        
+        const { autoGen } = await inquirer.prompt([
+          {
+            type: "confirm",
+            name: "autoGen",
+            message: "Generate MCP server now? / Gerar servidor MCP agora?",
+            default: true,
+          },
+        ]);
+        
+        if (autoGen) {
+          const { lang, out } = await inquirer.prompt([
+            {
+              type: "list",
+              name: "lang",
+              message: "Target language / Linguagem alvo:",
+              choices: [...SUPPORTED_LANGS],
+            },
+            {
+              type: "input",
+              name: "out",
+              message: "Output directory / Diretório de saída:",
+              default: `./${key}-mcp`,
+            },
+          ]);
+          
+          const options: GeneratorOptions = {
+            input: resolveInput(saved),
+            lang: lang as GeneratorOptions["lang"],
+            out: path.resolve(out as string),
+            force: false,
+            incremental: false,
+          };
+          
+          const genSpinner = ora("Generating MCP server…").start();
+          try {
+            const result = await generate(options);
+            if (result.warnings.length > 0) {
+              genSpinner.warn("Generated with warnings");
+              for (const w of result.warnings) console.log(chalk.yellow(`  ⚠ ${w}`));
+            }
+            if (!result.success) {
+              genSpinner.fail("Generation failed");
+              for (const err of result.errors) console.error(chalk.red(`  ✗ ${err}`));
+            } else {
+              genSpinner.succeed("MCP server generated!");
+              console.log(chalk.green(`\n  ✓ ${result.filesCreated.length} files created\n`));
+              console.log(chalk.bold("Next steps / Próximos passos:\n"));
+              console.log(`  cd ${out as string}`);
+              console.log(lang === "typescript" ? "  npm install && npm run build\n" : "  pip install -r requirements.txt\n");
+            }
+          } catch (err: unknown) {
+            genSpinner.fail("Generation error");
+            console.error(chalk.red(err instanceof Error ? err.message : String(err)));
+          }
         }
       } catch (err: unknown) {
         console.error(chalk.red(err instanceof Error ? err.message : String(err)));

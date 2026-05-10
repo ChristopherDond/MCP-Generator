@@ -171,14 +171,45 @@ node dist/cli/index.js generate \
 
 ### Inicializar a partir do registro público
 
-É possível baixar specs públicas conhecidas (ex.: `stripe`, `github`) diretamente para o diretório atual:
+É possível baixar specs públicas conhecidas (ex.: `stripe`, `github`) diretamente para o diretório atual e gerar um servidor MCP em um comando:
 
 ```bash
-# baixa `openapi.stripe.json` para o diretório de trabalho
+# Lista todas as specs públicas disponíveis
+mcp-gen init --from list
+
+# Baixa `openapi.stripe.json` para o diretório de trabalho
 mcp-gen init --from stripe
 
-# baixa e já gera o projeto
-mcp-gen init --from stripe --generate -o ./my-server
+# Baixa e já gera o projeto em TypeScript
+mcp-gen init --from stripe --generate -l typescript -o ./stripe-mcp
+
+# Baixa e gera em Python
+mcp-gen init --from github --generate -l python -o ./github-mcp
+```
+
+**Specs públicas suportadas no registry:**
+
+| Chave | Descrição | Caso de uso |
+|-------|-----------|-----------|
+| `stripe` | Stripe Payment API | Processamento de pagamentos |
+| `github` | GitHub REST API | Controle de versão e colaboração |
+| `slack` | Slack Web API | Automação de mensagens e workspace |
+| `openai` | OpenAI API | Modelos GPT, embeddings, completions |
+| `petstore` | Swagger Petstore (exemplo) | Testes e prototipagem |
+| `twilio` | Twilio Communications | SMS, voz, vídeo, mensagens |
+| `shopify` | Shopify Admin API | Gerenciamento de e-commerce |
+| `kubernetes` | Kubernetes API | Orquestração de containers |
+| `digitalocean` | DigitalOcean API | Infraestrutura em nuvem |
+| `azure` | Azure Resource Manager | Gerenciamento de recursos Azure |
+
+**Modo interativo:**
+
+Você também pode usar o assistente interativo sem argumentos — ele oferece uma interface gráfica para selecionar a spec:
+
+```bash
+npm run dev
+
+# Escolha "Init" e selecione a spec na lista
 ```
 
 ### Modo watch
@@ -345,7 +376,7 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | 2 | ✅ Concluído | Entrada YAML, target Python/FastMCP, geração incremental |
 | 3 | ✅ Concluído | Suporte a `oneOf`/`anyOf`, stubs de auth, testes de integração |
 | 4 | ✅ Concluído | CLI interativa, publicação npm/pip |
-| 5 | Planejado | `mcp-gen init --from stripe` — registry de specs embutido |
+| 5 | ✅ Concluído | `mcp-gen init --from stripe` — registry de specs com 10+ APIs públicas |
 | 6 | Planejado | Release candidate, lançamento no Product Hunt |
 
 ---
