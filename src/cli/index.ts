@@ -3,9 +3,9 @@ import { Command } from "commander";
 import chalk from "chalk";
 import ora from "ora";
 import path from "path";
-import { generate } from "../core/generator.js";
-import type { GeneratorOptions } from "../core/types.js";
-import { fetchSpecToCwd, listKnownSpecs } from "../core/registry.js";
+import { generate } from "../core/generator";
+import type { GeneratorOptions } from "../core/types";
+import { fetchSpecToCwd, listKnownSpecs } from "../core/registry";
 import fs from "fs";
 import inquirer from "inquirer";
 
@@ -137,7 +137,7 @@ program
     const input = resolveInput(opts.input);
     validateInputExt(input);
     const spinner = ora("Validating spec…").start();
-    const { parseOpenAPI } = await import("../core/parser.js");
+    const { parseOpenAPI } = await import("../core/parser");
     try {
       const ast = await parseOpenAPI(input);
       spinner.succeed("Spec is valid");
@@ -316,7 +316,7 @@ async function interactive(): Promise<void> {
           { type: "confirm", name: "incremental", message: "Preservar handlers customizados?", default: false },
           { type: "input", name: "name", message: "Nome do servidor (opcional):", default: "" },
           { type: "input", name: "serverVersion", message: "Versão do servidor (opcional):", default: "" },
-        ] as inquirer.QuestionCollection
+        ] as Parameters<typeof inquirer.prompt>[0]
       );
 
       const input = resolveInput(answers.input as string);
@@ -361,7 +361,7 @@ async function interactive(): Promise<void> {
       const resolved = resolveInput(input as string);
       validateInputExt(resolved);
       const spinner = ora("Validating spec…").start();
-      const { parseOpenAPI } = await import("../core/parser.js");
+      const { parseOpenAPI } = await import("../core/parser");
       try {
         const ast = await parseOpenAPI(resolved);
         spinner.succeed("Spec is valid");
@@ -391,7 +391,7 @@ async function interactive(): Promise<void> {
         { type: "input", name: "input", message: "Caminho ou URL para o OpenAPI spec:" },
         { type: "list", name: "lang", message: "Linguagem alvo:", choices: [...SUPPORTED_LANGS] },
         { type: "input", name: "out", message: "Diretório de saída:", default: "./mcp-server" },
-      ] as inquirer.QuestionCollection);
+      ] as Parameters<typeof inquirer.prompt>[0]);
 
       const input = resolveInput(answers.input as string);
       validateInputExt(input);

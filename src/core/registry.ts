@@ -14,7 +14,7 @@ export async function fetchSpecToCwd(key: string): Promise<string> {
   if (!res.ok) throw new Error(`Failed to fetch ${entry.url}: ${res.status} ${res.statusText}`);
 
   const content = await res.text();
-  const filename = entry.filename ?? path.basename(new URL(entry.url).pathname) || "openapi.json";
+  const filename = entry.filename ?? (path.basename(new URL(entry.url).pathname) || "openapi.json");
   const outPath = path.resolve(process.cwd(), filename);
   fs.writeFileSync(outPath, content, "utf-8");
   return outPath;

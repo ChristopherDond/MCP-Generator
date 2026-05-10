@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc && npm run copy-templates",
     "copy-templates": "xcopy /E /I /Y src\\templates dist\\templates",
-    "dev": "ts-node src/cli/index.ts",
+    "dev": "ts-node --prefer-ts-exts src/cli/index.ts",
     "test": "jest",
     "lint": "eslint src/**/*.ts"
   },
@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@types/handlebars": "^4.1.0",
+    "@types/inquirer": "^9.0.8",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "jest": "^29.5.0",

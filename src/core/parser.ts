@@ -6,7 +6,7 @@ import type {
   MCPToolParam,
   MCPModel,
   MCPModelProperty,
-} from "./types.js";
+} from "./types";
 
 // Resolve a $ref string to its component name: "#/components/schemas/User" → "User"
 function refToName(ref: string): string {

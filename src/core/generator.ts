@@ -1,10 +1,10 @@
 import fs from "fs";
 import path from "path";
 import Handlebars from "handlebars";
-import { parseOpenAPI } from "./parser.js";
-import { renderTemplate, registerPartials } from "./templating.js";
-import { extractHandlers, injectHandlers, TS_DEFAULT_STUB_PATTERN, PY_DEFAULT_STUB_PATTERN } from "./incremental.js";
-import type { GeneratorOptions, GenerationResult, MCPServerAST } from "./types.js";
+import { parseOpenAPI } from "./parser";
+import { renderTemplate, registerPartials } from "./templating";
+import { extractHandlers, injectHandlers, TS_DEFAULT_STUB_PATTERN, PY_DEFAULT_STUB_PATTERN } from "./incremental";
+import type { GeneratorOptions, GenerationResult, MCPServerAST } from "./types";
 
 // From dist/core/generator.js → dist/templates/
 const TEMPLATES_ROOT = path.resolve(__dirname, "../templates");
