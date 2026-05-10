@@ -80,6 +80,13 @@ describe("generate (typescript)", () => {
     const result = await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: false, incremental: false });
     expect(result.success).toBe(false);
   });
+
+  it("allows incremental regeneration into a non-empty dir", async () => {
+    fs.writeFileSync(path.join(tmpDir, "existing.txt"), "block");
+    const result = await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: false, incremental: true });
+    expect(result.success).toBe(true);
+    expect(result.filesCreated.length).toBeGreaterThan(0);
+  });
 });
 
 // ─── Generator — Python ───────────────────────────────────────────────────────

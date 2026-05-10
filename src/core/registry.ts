@@ -54,7 +54,7 @@ export const KNOWN_SPECS: Record<string, { url: string; filename?: string; descr
   }
 };
 
-export async function fetchSpecToCwd(key: string): Promise<string> {
+export async function fetchSpecToCwd(key: string, targetPath?: string): Promise<string> {
   const entry = KNOWN_SPECS[key];
   if (!entry) throw new Error(`Unknown registry key: ${key}`);
 
@@ -63,7 +63,8 @@ export async function fetchSpecToCwd(key: string): Promise<string> {
 
   const content = await res.text();
   const filename = entry.filename ?? (path.basename(new URL(entry.url).pathname) || "openapi.json");
-  const outPath = path.resolve(process.cwd(), filename);
+  const outPath = path.resolve(targetPath ? targetPath : path.join(process.cwd(), filename));
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, content, "utf-8");
   return outPath;
 }

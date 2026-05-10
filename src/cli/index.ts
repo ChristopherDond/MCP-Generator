@@ -173,11 +173,11 @@ program
       }
       
       const spinner = ora(`Fetching ${key}…`).start();
-      const saved = await fetchSpecToCwd(key);
+      const saved = await fetchSpecToCwd(key, opts.input ? resolveInput(opts.input) : undefined);
       spinner.succeed(`Saved spec to ${chalk.green(path.basename(saved))}`);
       
       if (opts.generate) {
-        const input = resolveInput(opts.input ?? saved);
+        const input = saved;
         validateInputExt(input);
         const options: GeneratorOptions = {
           input,
@@ -186,7 +186,11 @@ program
           force: false,
           incremental: false,
         };
-        await generate(options);
+        const result = await generate(options);
+        if (!result.success) {
+          for (const err of result.errors) console.error(chalk.red(`  ✗ ${err}`));
+          process.exit(1);
+        }
       }
     } catch (err: unknown) {
       console.error(chalk.red(err instanceof Error ? err.message : String(err)));
@@ -216,17 +220,17 @@ program
       lang: opts.lang as GeneratorOptions["lang"],
       out: path.resolve(opts.out),
       force: false,
-      incremental: false,
+      incremental: true,
       plugins: opts.plugin as string[] | undefined,
     } as Partial<GeneratorOptions>;
 
     const runGenerate = async () => {
       const options: GeneratorOptions = {
-        input: opts.input,
+        input,
         lang: commonOptions.lang!,
         out: commonOptions.out!,
         force: false,
-        incremental: false,
+        incremental: true,
         plugins: commonOptions.plugins,
       };
       console.log(chalk.dim(`[watch] regenerating from ${opts.input} → ${options.out}`));
