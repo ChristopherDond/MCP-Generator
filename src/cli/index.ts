@@ -293,13 +293,13 @@ async function interactive(): Promise<void> {
       {
         type: "list",
         name: "cmd",
-        message: "Escolha uma ação:",
+        message: "Escolha uma ação / Choose an action:",
         choices: [
-          { name: "Generate (Gerar servidor a partir de spec)", value: "generate" },
-          { name: "Validate (Validar spec)", value: "validate" },
-          { name: "Init (Buscar spec de registro)", value: "init" },
-          { name: "Watch (Observar spec)", value: "watch" },
-          { name: "Sair", value: "exit" },
+          { name: "Generate (Generate an MCP server from a spec / Gerar um servidor MCP a partir de uma spec)", value: "generate" },
+          { name: "Validate (Validate an OpenAPI spec / Validar uma spec OpenAPI)", value: "validate" },
+          { name: "Init (Download a known public spec / Baixar uma spec pública conhecida)", value: "init" },
+          { name: "Watch (Watch and auto-regenerate on changes / Observar e regenerar automaticamente)", value: "watch" },
+          { name: "Exit (Sair)", value: "exit" },
         ],
       },
     ]);
