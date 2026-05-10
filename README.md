@@ -1,64 +1,35 @@
 # MCP-Generator
 
-OpenAPI → MCP Server generator
+Generate MCP servers from OpenAPI specs.
 
-This tool generates a minimal MCP server from an OpenAPI (v3) spec using templates for TypeScript and Python.
+`mcp-gen` turns an OpenAPI v3 spec into an MCP server in TypeScript or Python. It maps each route to a tool and keeps custom code when you regenerate.
 
-Quick usage
-
-- Generate from a local spec:
-
-  mcp-gen generate -i openapi.json -l typescript -o ./mcp-server
-
-- Initialize a local copy of a known public spec (registry) and optionally generate:
-
-  mcp-gen init --from stripe
-  mcp-gen init --from stripe --generate -o ./mcp-server
-
-- Watch a spec file or URL and regenerate automatically (useful for CI):
-
-  mcp-gen watch -i openapi.json -o ./mcp-server
-  mcp-gen watch -i https://example.com/spec.json --interval 60000
-
-Plugin system (templates & helpers)
-
-Large orgs can provide custom templates and Handlebars helpers as a plugin. A plugin may be a folder containing:
-
-- `templates/typescript/...` or `templates/python/...` — any template files to override or extend core templates
-- `index.js` that exports `registerHandlebars(handlebars)` to register helpers
-
-Load a plugin with `--plugin` when generating or watching:
-
-  mcp-gen generate -i openapi.json --plugin ./my-company-plugin
-  mcp-gen watch -i openapi.json --plugin ./my-company-plugin
-
-Behavior notes
-
-- Plugin templates override core templates when a file with the same name exists in the plugin's `templates/<lang>/` folder.
-- Plugins may register Handlebars helpers by exporting a `registerHandlebars` function which receives the Handlebars instance.
-
-See the Portuguese README for localized instructions: `README.pt-BR.md`.
-# openapi-to-mcp
-
-> Turn any OpenAPI spec into a ready-to-run MCP server in seconds.
+## Quick start
 
 ```bash
-mcp-gen generate --input openapi.yaml --lang typescript --out ./my-server
+npm install
+npm run build
 ```
 
-No boilerplate. No manual wiring. Just a working [Model Context Protocol](https://modelcontextprotocol.io) server with every endpoint mapped to a tool — in TypeScript or Python.
+Generate a server from a local spec:
 
----
+```bash
+mcp-gen generate -i examples/petstore.json -l typescript -o ./my-server
+```
 
-## Why
+Validate a spec without generating files:
 
-MCP became the standard way to expose APIs to AI agents in 2025/26. Writing MCP servers by hand means repeating the same scaffolding for every project — parsing specs, registering tools, handling schemas. `openapi-to-mcp` eliminates that entirely.
+```bash
+mcp-gen validate -i examples/petstore.yaml
+```
 
-You bring the spec. The CLI brings the server.
+Run the interactive CLI if you prefer prompts:
 
----
+```bash
+npm run dev
+```
 
-## How it works
+## What it does
 
 ```mermaid
 sequenceDiagram
@@ -69,192 +40,115 @@ sequenceDiagram
     participant Output
 
     User->>CLI: mcp-gen generate --input api.yaml --lang python
-    CLI->>Parser: validate & parse OpenAPI v3 (JSON or YAML)
+    CLI->>Parser: validate and parse OpenAPI v3 (JSON or YAML)
     Parser->>Generator: internal AST (tools, models, examples)
     Generator->>Output: render Handlebars templates
     Output-->>User: TypeScript or Python MCP server project
 ```
 
-Each `path + method` in your spec becomes an MCP **tool** with:
-- Typed input schema derived from parameters and request body
-- Example response from the spec pre-wired as a stub
-- Incremental markers so re-generation never overwrites your custom logic
+Each route becomes an MCP tool with:
 
----
+- typed input from parameters and request bodies
+- example responses from the spec
+- optional incremental code preservation
 
 ## Requirements
 
 - Node.js 20+
 - npm 9+
 
----
-
 ## Installation
 
 ```bash
-git clone https://github.com/your-username/openapi-to-mcp.git
-cd openapi-to-mcp
+git clone https://github.com/ChristopherDond/MCP-Generator.git
+cd MCP-Generator
 npm install
 npm run build
 ```
 
-> npm publish coming soon — `npm install -g mcp-gen` will work once released.
+## CLI
 
----
+### Commands
 
-## Usage
+- `mcp-gen generate` or `mcp-gen g` creates a server from a spec.
+- `mcp-gen validate` or `mcp-gen v` checks a spec without generating files.
+- `mcp-gen init` downloads a known public spec and can generate a project.
+- `mcp-gen watch` watches a file or URL and regenerates on changes.
 
-### Validate a spec
-
-Accepts `.json`, `.yaml`, `.yml`, or a URL.
-
-```bash
-node dist/cli/index.js validate --input ./api/openapi.yaml
-```
-
-```
-✔ Spec is valid
-
-  Tools: 12  Models: 6  Base URL: https://api.example.com
-```
-
-### Generate a TypeScript server
+### Generate
 
 ```bash
-node dist/cli/index.js generate \
-  --input ./api/openapi.yaml \
-  --lang typescript \
-  --out ./my-server
+mcp-gen generate -i ./api/openapi.yaml -l typescript -o ./my-server
+mcp-gen generate -i ./api/openapi.yaml -l python -o ./my-server
 ```
 
-```
-✔ Generation complete
+Useful flags:
 
-  ✓ 7 files created
+- `--force`, `-f` overwrites existing files.
+- `--incremental` keeps code between `@@mcp-gen:start` and `@@mcp-gen:end`.
+- `--name <name>` sets the server name.
+- `--server-version <version>` sets the server version.
+- `--plugin <path>` loads a plugin module or folder.
 
-    my-server/src/server.ts
-    my-server/src/models.ts
-    my-server/package.json
-    my-server/tsconfig.json
-    my-server/README.md
-    my-server/Dockerfile
-    my-server/.github/workflows/ci.yml
-```
-
-### Generate a Python server
+### Validate
 
 ```bash
-node dist/cli/index.js generate \
-  --input ./api/openapi.yaml \
-  --lang python \
-  --out ./my-server
+mcp-gen validate -i ./api/openapi.yaml
 ```
 
-```
-✔ Generation complete
+Valid input formats are `.json`, `.yaml`, `.yml`, or a URL.
 
-  ✓ 6 files created
+### Init
 
-    my-server/server.py
-    my-server/models.py
-    my-server/requirements.txt
-    my-server/Dockerfile
-    my-server/README.md
-    my-server/.github/workflows/ci.yml
-```
-
-### Re-generate without losing your code (incremental)
+`init` uses the built-in registry:
 
 ```bash
-node dist/cli/index.js generate \
-  --input ./api/openapi.yaml \
-  --out ./my-server \
-  --incremental
-```
-
-```
-✔ Generation complete
-
-  ✓ 7 files created
-  ↺ 3 handler(s) preserved
-
-    ↺ get_users
-    ↺ post_users
-    ↺ get_users_id
-```
-
-Custom code between `@@mcp-gen` markers is preserved. Generated stubs are refreshed. Your logic is never touched.
-
-### Accepts URLs too
-
-```bash
-node dist/cli/index.js generate \
-  --input https://petstore3.swagger.io/api/v3/openapi.json \
-  --out ./petstore-mcp
-```
-
----
-
-### Initialize from the public registry
-
-You can download known public specs (for example `stripe` or `github`) directly into the current directory:
-
-```bash
-# downloads `openapi.stripe.json` into the working directory
+mcp-gen init --from list
 mcp-gen init --from stripe
-
-# downloads and generates the project immediately
-mcp-gen init --from stripe --generate -o ./my-server
+mcp-gen init --from stripe --generate -o ./stripe-mcp
 ```
 
-### Watch mode
+Available registry keys:
 
-Watch a local or remote spec and regenerate automatically when it changes, which is useful for CI flows that update the spec:
+| Key | Description |
+|-----|-------------|
+| `stripe` | Stripe Payment API |
+| `github` | GitHub REST API |
+| `slack` | Slack Web API |
+| `openai` | OpenAI API |
+| `petstore` | Swagger Petstore example |
+| `twilio` | Twilio Communications API |
+| `shopify` | Shopify Admin API |
+| `kubernetes` | Kubernetes API |
+| `digitalocean` | DigitalOcean API |
+| `azure` | Azure Resource Manager API |
+
+### Watch
 
 ```bash
-# watch a local file
-mcp-gen watch -i openapi.json -o ./my-server
-
-# watch a URL (polling interval in ms)
+mcp-gen watch -i ./api/openapi.yaml -o ./my-server
 mcp-gen watch -i https://example.com/spec.json --interval 60000
 ```
 
-### Plugin system (templates and helpers)
+For URL inputs, `--interval <ms>` controls the polling interval. `--once` runs generation once and exits after the first change.
 
-Larger teams can provide custom Handlebars templates and helpers to standardize internal generation.
+## Plugins
 
-Basic plugin requirements:
+Plugins can override templates and register extra Handlebars helpers.
 
-- `templates/typescript/...` or `templates/python/...` — `.hbs` files that override or extend core templates
-- `index.js` (optional) that exports `registerHandlebars(handlebars)` to register additional helpers
+Basic structure:
 
-Load a plugin with `--plugin` when generating or watching:
+- `templates/typescript/...` or `templates/python/...` for `.hbs` template overrides
+- `index.js` that exports `registerHandlebars(handlebars)` for custom helpers
+
+Example:
 
 ```bash
-mcp-gen generate -i openapi.json --plugin ./my-plugin
-mcp-gen watch -i openapi.json --plugin ./my-plugin
+mcp-gen generate -i ./api/openapi.yaml --plugin ./my-plugin
+mcp-gen watch -i ./api/openapi.yaml --plugin ./my-plugin
 ```
 
-Behavior:
-
-- If a template with the same name exists in the plugin under `templates/<lang>/`, it overrides the core template.
-- If the plugin exports `registerHandlebars`, that function is called with the Handlebars instance to register helpers.
-
----
-
-## CLI Reference
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--input`, `-i` | Path or URL to the OpenAPI spec (`.json` \| `.yaml` \| `.yml`) | required |
-| `--out`, `-o` | Output directory for the generated project | `./mcp-server` |
-| `--lang`, `-l` | Target language: `typescript` \| `python` | `typescript` |
-| `--force`, `-f` | Overwrite existing files without prompting | `false` |
-| `--incremental` | Preserve custom handler code on re-generation | `false` |
-| `--name` | Override the server name | derived from spec title |
-| `--server-version` | Override the server version | derived from spec |
-
----
+Plugin templates override core templates when they use the same path under `templates/<lang>/`.
 
 ## Generated project structure
 
