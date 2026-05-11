@@ -81,7 +81,45 @@ Available on npm as @latest and @rc
 - **Social**: Twitter, Dev.to, Product Hunt, Hacker News
 - **Docs**: Atualizar README com status RC
 
+## Timeline de Lançamento
+
+### Pre-Launch (T-3 a T-1)
+```
+T-3 days: Preparar screenshots, vídeo de demo, blog post
+T-2 days: Review documentação, testar builds
+T-1 days: Agendar social media, preparar submissão PH
+```
+
+### Release Day (T-0)
+```
+T-0 00:00 GMT: npm version prerelease --preid=rc
+T-0 00:01 GMT: git push origin main --tags
+T-0 00:02 GMT: Monitorar GitHub Actions
+T-0 00:10 GMT: Verificar publicação npm
+T-0 12:01 AM PT: LAUNCH on Product Hunt 🚀
+```
+
+### Launch Day (T+0 a T+24h)
+```
+T+0 (12:01 AM PT):  Submeter no Product Hunt
+T+1h:               Compartilhar no Twitter
+T+2h:               Responder primeiros comentários
+T+6h:               Verificar métricas (objetivo: top 5)
+T+12h:              Continuar monitorando
+T+24h:              Dia 1 wrap-up, preparar Dia 2
+```
+
+### Week 1 (T+1 a T+7)
+```
+T+1:  Incorporar feedback, começar trabalho em rc.2
+T+7:  Análise completa, preparar próxima iteração
+```
+
 ## Próximas fases
 
 - **rc.2, rc.3**: Incorporar feedback, correções críticas
 - **v1.0.0 (final)**: Quando pronto para produção
+
+---
+
+**Nota**: Para detalhes específicos de publicação no Product Hunt, veja [PRODUCT_HUNT_GUIDE.md](./PRODUCT_HUNT_GUIDE.md)
