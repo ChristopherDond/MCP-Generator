@@ -75,6 +75,15 @@ describe("generate (typescript)", () => {
     expect(content).toContain("@@mcp-gen:end:get_pets");
   });
 
+  it("server.ts enforces scoped authContext and blocks raw credentials", async () => {
+    await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: true, incremental: false });
+    const content = fs.readFileSync(path.join(tmpDir, "src/server.ts"), "utf-8");
+    expect(content).toContain("function ensureNoRawCredentials");
+    expect(content).toContain("authContext");
+    expect(content).toContain("requiresSpendLimit: true");
+    expect(content).toContain("requestId is required for audit logging");
+  });
+
   it("fails on non-empty dir without --force", async () => {
     fs.writeFileSync(path.join(tmpDir, "existing.txt"), "block");
     const result = await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: false, incremental: false });
@@ -108,6 +117,15 @@ describe("generate (python)", () => {
     expect(content).toContain("@mcp.tool()");
     expect(content).toContain("async def get_pets");
     expect(content).toContain("@@mcp-gen:start:get_pets");
+  });
+
+  it("server.py enforces auth_context policy and blocks raw credentials", async () => {
+    await generate({ input: PETSTORE_JSON, lang: "python", out: tmpDir, force: true, incremental: false });
+    const content = fs.readFileSync(path.join(tmpDir, "server.py"), "utf-8");
+    expect(content).toContain("def ensure_no_raw_credentials");
+    expect(content).toContain("auth_context: Optional[dict] = None");
+    expect(content).toContain("requires_spend_limit");
+    expect(content).toContain("request_id is required for audit logging");
   });
 
   it("models.py contains Pydantic models", async () => {

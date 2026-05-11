@@ -80,6 +80,26 @@ async def your_tool_name(param: str) -> Any:
 - **Logs and audit**: log sensitive requests and enable audit for critical operations.
 - **Never put secrets in model context**: avoid passing keys, tokens, or secrets in prompts or model context.
 
+### Default `auth_context` contract
+
+Generated tools expect **scoped authorization metadata** (not raw provider credentials), for example:
+
+```json
+{
+  "token_id": "tok_abc123",
+  "principal": "user:42",
+  "expires_at": "2026-05-11T14:00:00Z",
+  "allowed_tools": ["get_orders"],
+  "endpoint_allowlist": ["GET /orders"],
+  "spend_limit_usd": 5,
+  "spend_used_usd": 1.2,
+  "revoked": false,
+  "request_id": "req_01J..."
+}
+```
+
+The scaffold blocks raw credential-style arguments such as `token`, `authorization`, `api_key`, `client_secret`, and similar keys by default.
+
 *Quick example (env var):*
 
 ```bash
