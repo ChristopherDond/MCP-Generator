@@ -55,10 +55,26 @@ Add to your `claude_desktop_config.json`:
 
 ## Security
 
-- **Don't embed credentials**: don't include provider keys or secrets directly in generated projects. Use environment variables or a secret manager (e.g., Vault, AWS Secrets Manager) or credential management service (e.g., Cohesivity.ai) for storage and secret revocation.
-- **Scoped and TTL tokens**: prefer short-lived tokens with minimal scope, usage limits, and revocation capability.
-- **Logs and audit**: log sensitive requests and enable audit for critical operations.
-- **Never put secrets in model context**: avoid passing keys, tokens, or secrets in prompts or model context.
+
+### Contrato padrão do `authContext`
+
+As tools geradas esperam **metadados de autorização com escopo** (e não credenciais brutas), por exemplo:
+
+```json
+{
+  "tokenId": "tok_abc123",
+  "principal": "user:42",
+  "expiresAt": "2026-05-11T14:00:00Z",
+  "allowedTools": ["get_orders"],
+  "endpointAllowlist": ["GET /orders"],
+  "spendLimitUsd": 5,
+  "spendUsedUsd": 1.2,
+  "revoked": false,
+  "requestId": "req_01J..."
+}
+```
+
+O scaffold bloqueia por padrão argumentos como `token`, `authorization`, `api_key`, `client_secret` e similares.
 
 *Quick example (env var):*
 

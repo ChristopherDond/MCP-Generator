@@ -46,35 +46,157 @@ const server = new Server(
   { capabilities: { tools: {} } }
 );
 
-// ─── Security helpers (auto-generated stubs) ─────────────────────────────────
+// ─── Security helpers (scoped resource policy by default) ───────────────────
 const securitySchemes = {{{json securitySchemes}}} ?? {};
 
-function requireSecurity(args: Record<string, unknown> | undefined, security: unknown): void {
+type ToolAuthContext = {
+  tokenId?: string;
+  principal?: string;
+  expiresAt?: string;
+  allowedTools?: string[];
+  endpointAllowlist?: string[];
+  spendLimitUsd?: number;
+  spendUsedUsd?: number;
+  revoked?: boolean;
+  requestId?: string;
+};
+
+type ToolPolicy = {
+  endpoint: string;
+  requiresTtl: boolean;
+  requiresSpendLimit: boolean;
+  requiresRequestLog: boolean;
+  requiresRevocationCheck: boolean;
+};
+
+const rawCredentialKeys = [
+  "authorization",
+  "token",
+  "access_token",
+  "api_key",
+  "apikey",
+  "x-api-key",
+  "client_secret",
+  "refresh_token",
+  "password",
+  "secret",
+];
+
+const toolPolicies: Record<string, ToolPolicy> = {
+  {{#each tools}}
+  "{{name}}": {
+    endpoint: "{{method}} {{path}}",
+    requiresTtl: true,
+    requiresSpendLimit: true,
+    requiresRequestLog: true,
+    requiresRevocationCheck: true,
+  },
+  {{/each}}
+};
+
+function hasRawCredentialKey(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  const entries = Object.entries(value as Record<string, unknown>);
+  for (const [key, nested] of entries) {
+    const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (rawCredentialKeys.some((candidate) => normalized === candidate.replace(/[^a-z0-9]/g, ""))) {
+      return true;
+    }
+    if (nested && typeof nested === "object" && hasRawCredentialKey(nested)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function getAuthContext(args: Record<string, unknown> | undefined): ToolAuthContext | undefined {
+  const ctx = args?.authContext;
+  if (!ctx || typeof ctx !== "object") return undefined;
+  return ctx as ToolAuthContext;
+}
+
+function ensureNoRawCredentials(args: Record<string, unknown> | undefined): void {
+  if (!args) return;
+  if (hasRawCredentialKey(args)) {
+    throw new McpError(
+      ErrorCode.InvalidParams,
+      "Raw provider credentials are not allowed in tool arguments. Use scoped authContext metadata only."
+    );
+  }
+}
+
+function isExpired(expiresAt: string): boolean {
+  const ts = Date.parse(expiresAt);
+  if (Number.isNaN(ts)) return true;
+  return ts <= Date.now();
+}
+
+function requireSecurity(toolName: string, args: Record<string, unknown> | undefined, security: unknown): void {
+  ensureNoRawCredentials(args);
+  const policy = toolPolicies[toolName];
+  const authContext = getAuthContext(args);
+
+  if (!policy) {
+    throw new McpError(ErrorCode.InternalError, `Missing security policy for tool: ${toolName}`);
+  }
+
+  if (!authContext) {
+    throw new McpError(
+      ErrorCode.InvalidParams,
+      "Missing authContext. Provide scoped metadata (tokenId, expiresAt, limits, requestId) from your gateway."
+    );
+  }
+
+  if (policy.requiresRevocationCheck && authContext.revoked) {
+    throw new McpError(ErrorCode.InvalidRequest, "Access revoked");
+  }
+
+  if (policy.requiresTtl && (!authContext.expiresAt || isExpired(authContext.expiresAt))) {
+    throw new McpError(ErrorCode.InvalidRequest, "Token expired or missing TTL");
+  }
+
+  if (policy.requiresRequestLog && !authContext.requestId) {
+    throw new McpError(ErrorCode.InvalidParams, "requestId is required for audit logging");
+  }
+
+  if (policy.requiresSpendLimit) {
+    const limit = authContext.spendLimitUsd;
+    const used = authContext.spendUsedUsd;
+    if (typeof limit !== "number" || typeof used !== "number") {
+      throw new McpError(ErrorCode.InvalidParams, "Spend limit metadata is required");
+    }
+    if (used > limit) {
+      throw new McpError(ErrorCode.InvalidRequest, "Spend limit exceeded");
+    }
+  }
+
+  if (authContext.allowedTools && !authContext.allowedTools.includes(toolName)) {
+    throw new McpError(ErrorCode.InvalidRequest, `Tool not allowed by scope: ${toolName}`);
+  }
+
+  if (authContext.endpointAllowlist && !authContext.endpointAllowlist.includes(policy.endpoint)) {
+    throw new McpError(ErrorCode.InvalidRequest, `Endpoint not allowed: ${policy.endpoint}`);
+  }
+
   if (!security) return;
   try {
     const secArray = security as Array<Record<string, string[]>>;
     if (!Array.isArray(secArray) || secArray.length === 0) return;
-    const req = secArray[0];
-    const satisfied = Object.keys(req).some((schemeName) => {
+    const req = secArray[0] ?? {};
+    const requiresScheme = Object.keys(req).length > 0;
+    if (!requiresScheme) return;
+    if (!authContext.tokenId) {
+      throw new McpError(ErrorCode.InvalidRequest, "Missing tokenId for secured operation");
+    }
+    const declaredScheme = Object.keys(req).some((schemeName) => {
       const scheme = (securitySchemes as Record<string, any>)?.[schemeName];
-      if (!scheme) return false;
-      // Look for common credential locations in the MCP tool args
-      const maybe = (obj: any, keys: string[]) => keys.some((k) => obj && (k in obj));
-      const a = args as Record<string, any> | undefined;
-      if (scheme.type === "http" && (scheme.scheme ?? "").toLowerCase() === "bearer") {
-        return maybe(a, ["authorization", "Authorization", "token", "access_token"]);
-      }
-      if (scheme.type === "apiKey") {
-        return maybe(a, [scheme.name, "api_key", "apiKey"]);
-      }
-      if (scheme.type === "oauth2") {
-        return maybe(a, ["access_token", "token", "authorization", "Authorization"]);
-      }
-      return false;
+      return Boolean(scheme);
     });
-    if (!satisfied) throw new McpError(ErrorCode.InternalError, "Unauthorized");
-  } catch (err) {
-    throw new McpError(ErrorCode.InternalError, "Unauthorized");
+    if (!declaredScheme) {
+      throw new McpError(ErrorCode.InvalidRequest, "Declared security scheme not found in OpenAPI components");
+    }
+  } catch {
+    throw new McpError(ErrorCode.InvalidRequest, "Unauthorized");
   }
 }
 
@@ -92,6 +214,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           {{#each params}}
           {{name}}: { type: "{{type}}", description: "{{description}}" },
           {{/each}}
+          authContext: {
+            type: "object" as const,
+            description: "Scoped auth metadata from a gateway (no raw provider credentials).",
+            properties: {
+              tokenId: { type: "string" as const },
+              principal: { type: "string" as const },
+              expiresAt: { type: "string" as const },
+              allowedTools: { type: "array" as const, items: { type: "string" as const } },
+              endpointAllowlist: { type: "array" as const, items: { type: "string" as const } },
+              spendLimitUsd: { type: "number" as const },
+              spendUsedUsd: { type: "number" as const },
+              revoked: { type: "boolean" as const },
+              requestId: { type: "string" as const },
+            },
+            additionalProperties: false,
+          },
         },
         required: [{{#each params}}{{#if required}}"{{name}}",{{/if}}{{/each}}],
       },
@@ -112,7 +250,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // @@mcp-gen:start:{{name}}
       {{#if security}}
       // Security requirements: {{json security}}
-      requireSecurity(args, {{json security}});
+      requireSecurity("{{name}}", args as Record<string, unknown> | undefined, {{json security}});
+      {{else}}
+      requireSecurity("{{name}}", args as Record<string, unknown> | undefined, null);
       {{/if}}
       {{#if exampleResponse}}
       return {

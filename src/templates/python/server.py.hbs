@@ -12,22 +12,139 @@ from mcp.server.fastmcp import FastMCP
 from models import {{#each models}}{{name}}{{#unless @last}}, {{/unless}}{{/each}}
 from typing import Optional, Any
 import httpx
+from datetime import datetime, timezone
 
 mcp = FastMCP("{{serverName}}")
 
 BASE_URL = "{{baseUrl}}"
 
 
+RAW_CREDENTIAL_KEYS = {
+    "authorization",
+    "token",
+    "access_token",
+    "api_key",
+    "apikey",
+    "x_api_key",
+    "client_secret",
+    "refresh_token",
+    "password",
+    "secret",
+}
+
+TOOL_POLICIES = {
+{{#each tools}}
+    "{{name}}": {
+        "endpoint": "{{method}} {{path}}",
+        "requires_ttl": True,
+        "requires_spend_limit": True,
+        "requires_request_log": True,
+        "requires_revocation_check": True,
+    },
+{{/each}}
+}
+
+
+def _normalize_key(key: str) -> str:
+    return "".join(ch for ch in key.lower() if ch.isalnum() or ch == "_")
+
+
+def _contains_raw_credentials(value: Any) -> bool:
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            normalized = _normalize_key(str(key)).replace("-", "_")
+            for candidate in RAW_CREDENTIAL_KEYS:
+                if normalized == _normalize_key(candidate):
+                    return True
+            if _contains_raw_credentials(nested):
+                return True
+    elif isinstance(value, list):
+        return any(_contains_raw_credentials(item) for item in value)
+    return False
+
+
+def ensure_no_raw_credentials(payload: Optional[dict]) -> None:
+    if payload and _contains_raw_credentials(payload):
+        raise ValueError(
+            "Raw provider credentials are not allowed in tool arguments. "
+            "Use scoped auth_context metadata only."
+        )
+
+
+def _is_expired(expires_at: Optional[str]) -> bool:
+    if not expires_at:
+        return True
+    try:
+        parsed = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+    except ValueError:
+        return True
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed <= datetime.now(timezone.utc)
+
+
+def require_security(tool_name: str, security: Any, auth_context: Optional[dict], request_args: Optional[dict]) -> None:
+    ensure_no_raw_credentials(request_args)
+    if auth_context is not None:
+        ensure_no_raw_credentials(auth_context)
+
+    policy = TOOL_POLICIES.get(tool_name)
+    if not policy:
+        raise ValueError(f"Missing security policy for tool: {tool_name}")
+
+    if not isinstance(auth_context, dict):
+        raise ValueError(
+            "Missing auth_context. Provide scoped metadata "
+            "(token_id, expires_at, limits, request_id) from your gateway."
+        )
+
+    if policy["requires_revocation_check"] and auth_context.get("revoked") is True:
+        raise PermissionError("Access revoked")
+
+    if policy["requires_ttl"] and _is_expired(auth_context.get("expires_at")):
+        raise PermissionError("Token expired or missing TTL")
+
+    if policy["requires_request_log"] and not auth_context.get("request_id"):
+        raise ValueError("request_id is required for audit logging")
+
+    if policy["requires_spend_limit"]:
+        limit = auth_context.get("spend_limit_usd")
+        used = auth_context.get("spend_used_usd")
+        if not isinstance(limit, (int, float)) or not isinstance(used, (int, float)):
+            raise ValueError("Spend limit metadata is required")
+        if used > limit:
+            raise PermissionError("Spend limit exceeded")
+
+    allowed_tools = auth_context.get("allowed_tools")
+    if isinstance(allowed_tools, list) and tool_name not in allowed_tools:
+        raise PermissionError(f"Tool not allowed by scope: {tool_name}")
+
+    endpoint_allowlist = auth_context.get("endpoint_allowlist")
+    endpoint = policy["endpoint"]
+    if isinstance(endpoint_allowlist, list) and endpoint not in endpoint_allowlist:
+        raise PermissionError(f"Endpoint not allowed: {endpoint}")
+
+    if security:
+        if not auth_context.get("token_id"):
+            raise PermissionError("Missing token_id for secured operation")
+
+
 # ─── Tools ───────────────────────────────────────────────────────────────────
 
 {{#each tools}}
 @mcp.tool()
-async def {{name}}({{#each params}}{{name}}: {{#if required}}{{#eq type "string"}}str{{/eq}}{{#eq type "number"}}float{{/eq}}{{#eq type "boolean"}}bool{{/eq}}{{#eq type "object"}}dict{{/eq}}{{#eq type "array"}}list{{/eq}}{{else}}Optional[{{#eq type "string"}}str{{/eq}}{{#eq type "number"}}float{{/eq}}{{#eq type "boolean"}}bool{{/eq}}{{#eq type "object"}}dict{{/eq}}{{#eq type "array"}}list{{/eq}}] = None{{/if}}{{#unless @last}}, {{/unless}}{{/each}}) -> Any:
+async def {{name}}({{#each params}}{{name}}: {{#if required}}{{#eq type "string"}}str{{/eq}}{{#eq type "number"}}float{{/eq}}{{#eq type "boolean"}}bool{{/eq}}{{#eq type "object"}}dict{{/eq}}{{#eq type "array"}}list{{/eq}}{{else}}Optional[{{#eq type "string"}}str{{/eq}}{{#eq type "number"}}float{{/eq}}{{#eq type "boolean"}}bool{{/eq}}{{#eq type "object"}}dict{{/eq}}{{#eq type "array"}}list{{/eq}}] = None{{/if}}{{#unless @last}}, {{/unless}}{{/each}}{{#if params}}, {{/if}}auth_context: Optional[dict] = None) -> Any:
     """{{description}}
 
     {{method}} {{path}}
     """
     # @@mcp-gen:start:{{name}}
+    request_args = {
+        key: value
+        for key, value in locals().items()
+        if key not in {"auth_context", "request_args"}
+    }
+    require_security("{{name}}", {{#if security}}{{json security}}{{else}}None{{/if}}, auth_context, request_args)
     {{#if exampleResponse}}
     return {{json exampleResponse}}
     {{else}}
