@@ -1,5 +1,7 @@
 # MCP-Generator
 
+> **Também disponível em:** [English (English Version)](README.md)
+
 Gere servidores MCP a partir de specs OpenAPI.
 
 > **Status**: 🚀 Versão `v2.0.0` Lançada! [Veja mudanças](https://github.com/ChristopherDond/MCP-Generator/releases/tag/v2.0.0)
