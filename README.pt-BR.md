@@ -2,6 +2,8 @@
 
 Gere servidores MCP a partir de specs OpenAPI.
 
+> **Status**: 🚀 Versão `v2.0.0` Lançada! [Veja mudanças](https://github.com/ChristopherDond/MCP-Generator/releases/tag/v2.0.0)
+
 `mcp-gen` transforma uma spec OpenAPI v3 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript ou Python. Cada rota vira uma tool, e você pode regenerar sem perder o código customizado.
 
 ## Início rápido
@@ -55,7 +57,14 @@ Cada rota vira uma tool MCP com:
 ## Requisitos
 
 - Node.js 20+
-- npm 9+
+- npm 9+ ou yarn
+- (Opcional) Python 3.8+ para projetos Python
+
+Para instalar:
+
+```bash
+npm install -g mcp-gen
+```
 
 ## Instalação
 
@@ -262,7 +271,8 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 
 ## Roadmap
 
-| Semana | Status | Escopo |
+| Sema✅ Concluído | Release candidate `v1.0.0-rc.1` — em teste, feedback welcome! |
+| 7+ | 📋 Planejado | Plugins customizados, melhorias baseadas em feedback, v1.0.0 final
 |------|--------|--------|
 | 0–1 | ✅ Concluído | CLI, parser OpenAPI v3, gerador TypeScript, scaffold com 7 arquivos |
 | 2 | ✅ Concluído | Entrada YAML, target Python/FastMCP, geração incremental |

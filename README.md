@@ -2,6 +2,8 @@
 
 Generate MCP servers from OpenAPI specs.
 
+> **Status**: 🚀 Version `v2.0.0` Released! [View changes](https://github.com/ChristopherDond/MCP-Generator/releases/tag/v2.0.0)
+
 `mcp-gen` turns an OpenAPI v3 spec into an MCP server in TypeScript or Python. It maps each route to a tool and keeps custom code when you regenerate.
 
 ## Quick start
@@ -55,7 +57,14 @@ Each route becomes an MCP tool with:
 ## Requirements
 
 - Node.js 20+
-- npm 9+
+- npm 9+ or yarn
+- (Optional) Python 3.8+ for Python projects
+
+To install:
+
+```bash
+npm install -g mcp-gen
+```
 
 ## Installation
 
@@ -266,8 +275,9 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | 2 | ✅ Done | YAML input, Python/FastMCP target, incremental generation |
 | 3 | ✅ Done | `oneOf`/`anyOf` support, auth stubs, integration tests |
 | 4 | ✅ Done | Interactive CLI mode, npm/pip publish |
-| 5 | Planned | `mcp-gen init --from stripe` — built-in spec registry |
-| 6 | Planned | Release candidate, Product Hunt launch |
+| 5 | ✅ Done | `mcp-gen init --from stripe` — built-in spec registry |
+| 6 | ✅ Done | Release candidate `v1.0.0-rc.1` — in testing, feedback welcome! |
+| 7+ | 📋 Planned | Custom plugins, improvements from feedback, v1.0.0 final |
 
 ---
 
