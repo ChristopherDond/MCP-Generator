@@ -8,6 +8,7 @@ Gere servidores MCP a partir de specs OpenAPI.
 
 `mcp-gen` transforma uma spec OpenAPI v3 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript ou Python. Cada rota vira uma tool, e você pode regenerar sem perder o código customizado.
 
+
 ## Início rápido
 
 ```bash

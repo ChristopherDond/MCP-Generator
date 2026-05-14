@@ -8,6 +8,7 @@ Generate MCP servers from OpenAPI specs.
 
 `mcp-gen` turns an OpenAPI v3 spec into an MCP server in TypeScript or Python. It maps each route to a tool and keeps custom code when you regenerate.
 
+
 ## Quick start
 
 ```bash
