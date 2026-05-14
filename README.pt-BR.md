@@ -274,15 +274,15 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 
 ## Roadmap
 
-| Sema✅ Concluído | Release candidate `v1.0.0-rc.1` — em teste, feedback welcome! |
-| 7+ | 📋 Planejado | Plugins customizados, melhorias baseadas em feedback, v1.0.0 final
-|------|--------|--------|
+| Semana | Status | Escopo |
+|------|--------|-------|
 | 0–1 | ✅ Concluído | CLI, parser OpenAPI v3, gerador TypeScript, scaffold com 7 arquivos |
 | 2 | ✅ Concluído | Entrada YAML, target Python/FastMCP, geração incremental |
 | 3 | ✅ Concluído | Suporte a `oneOf`/`anyOf`, stubs de auth, testes de integração |
 | 4 | ✅ Concluído | CLI interativa, publicação npm/pip |
-| 5 | ✅ Concluído | `mcp-gen init --from stripe` — registry de specs com 10+ APIs públicas |
-| 6 | Planejado | Release candidate, lançamento no Product Hunt |
+| 5 | ✅ Concluído | `mcp-gen init --from stripe` — registry interno de specs |
+| 6 | ✅ Concluído | Release candidate `v1.0.0-rc.1` — em teste, feedback bem-vindo! |
+| 7+ | 📋 Planejado | Plugins customizados, melhorias a partir do feedback, versão final `v1.0.0` |
 
 ---
 
