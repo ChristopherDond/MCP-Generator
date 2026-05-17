@@ -294,4 +294,4 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 
 ## License
 
-MIT © 2026
+MIT © 2026 - Christopher D.
