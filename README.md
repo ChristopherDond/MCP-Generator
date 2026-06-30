@@ -21,6 +21,15 @@ Generate a server from a local spec:
 mcp-gen generate -i examples/petstore.json -l typescript -o ./my-server
 ```
 
+Generate a server from the included OpenAPI 3.1 fixture:
+
+```bash
+mcp-gen generate -i examples/openapi31.json -l typescript -o ./example-server
+```
+
+The fixture covers API-key and bearer authentication, query and path
+parameters, and a JSON request body.
+
 Validate a spec without generating files:
 
 ```bash
@@ -409,7 +418,8 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 
 - OpenAPI v2 (Swagger) is not supported — v3.x only
 - `oneOf` / `anyOf` / `discriminator` schemas generate union types but no runtime validation
-- `copy-templates` script uses `xcopy` on Windows (works in CI)
+- `copy-templates` uses Node's cross-platform filesystem API on Windows, macOS,
+  and Linux.
 
 ---
 

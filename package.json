@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build": "tsc && npm run copy-templates",
-    "copy-templates": "xcopy /E /I /Y src\\templates dist\\templates",
+    "copy-templates": "node scripts/copy-templates.mjs",
     "dev": "ts-node --prefer-ts-exts src/cli/index.ts",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
