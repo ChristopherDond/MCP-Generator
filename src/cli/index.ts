@@ -6,6 +6,7 @@ import path from "path";
 import { generate, validateSpec } from "../core/generator";
 import type { GeneratorOptions, Lang } from "../core/types";
 import { fetchSpecToCwd, listKnownSpecs, getSpecInfo } from "../core/registry";
+import type { SecurityReport } from "../core/security-lint";
 import fs from "fs";
 import inquirer from "inquirer";
 
@@ -49,7 +50,7 @@ const program = new Command();
 
 program
   .name("mcp-gen")
-  .description("OpenAPI → MCP Server generator")
+  .description("OpenAPI to MCP Server generator")
   .version(VERSION);
 
 program
@@ -62,7 +63,7 @@ program
   .option("-f, --force", "Overwrite existing files without prompting", false)
   .option("--incremental", "Preserve custom handler code on re-generation (@@mcp-gen markers)", false)
   .option("--http", "Generate handlers that call the real API over HTTP instead of returning example stubs", false)
-  .option("--env-file <path>", "Path to an .env-style file whose TOKEN/BASE_URL are embedded into the generated client",)
+  .option("--env-file <path>", "Path to an .env-style file whose TOKEN/BASE_URL are embedded into the generated client")
   .option("--name <name>", "Override the server name")
   .option("--server-version <version>", "Override the server version")
   .option("--plugin <path>", "Path to a plugin module or folder to load", (val, acc) => {
@@ -90,7 +91,7 @@ program
       serverVersion: opts.serverVersion,
     };
 
-    console.log(chalk.bold("\nmcp-gen") + ` v${VERSION} — OpenAPI → MCP Server\n`);
+    console.log(chalk.bold("\nmcp-gen") + ` v${VERSION} — OpenAPI to MCP Server\n`);
     console.log(`  Input:       ${chalk.cyan(options.input)}`);
     console.log(`  Language:    ${chalk.cyan(options.lang)}`);
     console.log(`  Output:      ${chalk.cyan(options.out)}`);
@@ -102,7 +103,7 @@ program
     }
     console.log();
 
-    const spinner = ora("Parsing OpenAPI spec…").start();
+    const spinner = ora("Parsing OpenAPI spec...").start();
 
     try {
       const result = await generate(options);
@@ -160,7 +161,7 @@ program
   .action(async (opts) => {
     const input = resolveInput(opts.input);
     validateInputExt(input);
-    const spinner = ora("Validating spec…").start();
+    const spinner = ora("Validating spec...").start();
     try {
       const result = await validateSpec(input);
       if (!result.valid) {
@@ -195,7 +196,7 @@ program
     try {
       if (key === "list") {
         const specs = listKnownSpecs();
-        console.log(chalk.bold("\n📚 Known Public Specs (Specs Públicas Conhecidas):\n"));
+        console.log(chalk.bold("\nKnown Public Specs:\n"));
         for (const k of specs) {
           const info = getSpecInfo(k);
           console.log(chalk.cyan(`  ${k.padEnd(15)}`), info?.description || "");
@@ -204,11 +205,11 @@ program
         console.log(chalk.dim(`Example: mcp-gen init --from stripe --generate -o ./stripe-mcp\n`));
         return;
       }
-      
-      const spinner = ora(`Fetching ${key}…`).start();
+
+      const spinner = ora(`Fetching ${key}...`).start();
       const saved = await fetchSpecToCwd(key, opts.input ? resolveInput(opts.input) : undefined);
       spinner.succeed(`Saved spec to ${chalk.green(path.basename(saved))}`);
-      
+
       if (opts.generate) {
         const input = saved;
         validateInputExt(input);
@@ -227,6 +228,49 @@ program
         }
       }
     } catch (err: unknown) {
+      console.error(chalk.red(err instanceof Error ? err.message : String(err)));
+      process.exit(1);
+    }
+  });
+
+program
+  .command("security")
+  .alias("sec")
+  .description("Scan a generated MCP project for security and lint issues")
+  .requiredOption("-p, --project <path>", "Path to the generated MCP project to scan")
+  .option("--fail-on-warn", "Exit with code 1 if warnings are found", false)
+  .option("--json", "Output results as JSON", false)
+  .action(async (opts) => {
+    const projectPath = path.resolve(opts.project);
+
+    if (!fs.existsSync(projectPath)) {
+      console.error(chalk.red(`\n  ✗ Project not found: ${projectPath}\n`));
+      process.exit(1);
+    }
+
+    console.log(chalk.bold("\nmcp-gen security") + ` v${VERSION} — Security & Lint Scan\n`);
+    console.log(`  Project:    ${chalk.cyan(projectPath)}\n`);
+
+    const { scanProject, formatReport } = await import("../core/security-lint");
+
+    const spinner = ora("Scanning project...").start();
+
+    try {
+      const report = await scanProject(projectPath);
+
+      if (opts.json) {
+        spinner.stop();
+        console.log(JSON.stringify(report, null, 2));
+      } else {
+        spinner.succeed("Scan complete");
+        console.log(formatReport(report));
+      }
+
+      if (!report.passed || (opts.failOnWarn && report.summary.warnings > 0)) {
+        process.exit(1);
+      }
+    } catch (err: unknown) {
+      spinner.fail("Scan failed");
       console.error(chalk.red(err instanceof Error ? err.message : String(err)));
       process.exit(1);
     }
@@ -343,13 +387,14 @@ async function interactive(): Promise<void> {
       {
         type: "list",
         name: "cmd",
-        message: "Escolha uma ação / Choose an action:",
+        message: "Choose an action:",
         choices: [
-          { name: "Generate (Generate an MCP server from a spec / Gerar um servidor MCP a partir de uma spec)", value: "generate" },
-          { name: "Validate (Validate an OpenAPI spec / Validar uma spec OpenAPI)", value: "validate" },
-          { name: "Init (Download a known public spec / Baixar uma spec pública conhecida)", value: "init" },
-          { name: "Watch (Watch and auto-regenerate on changes / Observar e regenerar automaticamente)", value: "watch" },
-          { name: "Exit (Sair)", value: "exit" },
+          { name: "Generate (Generate an MCP server from a spec)", value: "generate" },
+          { name: "Validate (Validate an OpenAPI spec)", value: "validate" },
+          { name: "Init (Download a known public spec)", value: "init" },
+          { name: "Watch (Watch and auto-regenerate on changes)", value: "watch" },
+          { name: "Security (Scan project for security/lint issues)", value: "security" },
+          { name: "Exit", value: "exit" },
         ],
       },
     ]);
@@ -357,18 +402,16 @@ async function interactive(): Promise<void> {
     if (cmd === "exit") return;
 
     if (cmd === "generate") {
-      const answers = await inquirer.prompt(
-        [
-          { type: "input", name: "input", message: "Caminho ou URL para o OpenAPI spec (.json|.yaml):" },
-          { type: "list", name: "lang", message: "Linguagem alvo:", choices: [...SUPPORTED_LANGS] },
-          { type: "input", name: "out", message: "Diretório de saída:", default: "./mcp-server" },
-          { type: "confirm", name: "force", message: "Sobrescrever arquivos existentes?", default: false },
-          { type: "confirm", name: "incremental", message: "Preservar handlers customizados?", default: false },
-          { type: "confirm", name: "http", message: "Gerar handlers HTTP reais (chamam a API)? / Generate real HTTP handlers?", default: false },
-          { type: "input", name: "name", message: "Nome do servidor (opcional):", default: "" },
-          { type: "input", name: "serverVersion", message: "Versão do servidor (opcional):", default: "" },
-        ] as Parameters<typeof inquirer.prompt>[0]
-      );
+      const answers = await inquirer.prompt([
+        { type: "input", name: "input", message: "Path or URL to the OpenAPI spec (.json|.yaml):" },
+        { type: "list", name: "lang", message: "Target language:", choices: [...SUPPORTED_LANGS] },
+        { type: "input", name: "out", message: "Output directory:", default: "./mcp-server" },
+        { type: "confirm", name: "force", message: "Overwrite existing files?", default: false },
+        { type: "confirm", name: "incremental", message: "Preserve custom handlers?", default: false },
+        { type: "confirm", name: "http", message: "Generate real HTTP handlers?", default: false },
+        { type: "input", name: "name", message: "Server name (optional):", default: "" },
+        { type: "input", name: "serverVersion", message: "Server version (optional):", default: "" },
+      ]);
 
       const input = resolveInput(answers.input as string);
       validateInputExt(input);
@@ -386,8 +429,8 @@ async function interactive(): Promise<void> {
         serverVersion: answers.serverVersion || undefined,
       };
 
-      console.log(chalk.bold("\nmcp-gen") + " — OpenAPI → MCP Server\n");
-      const spinner = ora("Parsing OpenAPI spec…").start();
+      console.log(chalk.bold("\nmcp-gen") + " — OpenAPI to MCP Server\n");
+      const spinner = ora("Parsing OpenAPI spec...").start();
       try {
         const result = await generate(options);
         if (result.warnings.length > 0) {
@@ -409,12 +452,12 @@ async function interactive(): Promise<void> {
     }
 
     if (cmd === "validate") {
-      const { input } = await inquirer.prompt([{ type: "input", name: "input", message: "Caminho ou URL para o OpenAPI spec:" }]);
+      const { input } = await inquirer.prompt([{ type: "input", name: "input", message: "Path or URL to the OpenAPI spec:" }]);
       const resolved = resolveInput(input as string);
       validateInputExt(resolved);
-      const spinner = ora("Validating spec…").start();
-      const { parseOpenAPI } = await import("../core/parser");
+      const spinner = ora("Validating spec...").start();
       try {
+        const { parseOpenAPI } = await import("../core/parser");
         const ast = await parseOpenAPI(resolved);
         spinner.succeed("Spec is valid");
         console.log(chalk.dim(`\n  Tools: ${ast.tools.length}  Models: ${ast.models.length}  Base URL: ${ast.baseUrl}\n`));
@@ -430,44 +473,44 @@ async function interactive(): Promise<void> {
         {
           type: "list",
           name: "key",
-          message: "Qual spec pública você deseja clonar? / Which public spec?",
+          message: "Which public spec?",
           choices: specs.map((k) => ({
             name: `${k.padEnd(15)} — ${getSpecInfo(k)?.description || ""}`,
             value: k,
           })),
         },
       ]);
-      
+
       try {
-        const spinner = ora(`Downloading ${key}…`).start();
+        const spinner = ora(`Downloading ${key}...`).start();
         const saved = await fetchSpecToCwd(key as string);
         spinner.succeed(`Saved to ${chalk.green(path.basename(saved))}`);
-        
+
         const { autoGen } = await inquirer.prompt([
           {
             type: "confirm",
             name: "autoGen",
-            message: "Generate MCP server now? / Gerar servidor MCP agora?",
+            message: "Generate MCP server now?",
             default: true,
           },
         ]);
-        
+
         if (autoGen) {
           const { lang, out } = await inquirer.prompt([
             {
               type: "list",
               name: "lang",
-              message: "Target language / Linguagem alvo:",
+              message: "Target language:",
               choices: [...SUPPORTED_LANGS],
             },
             {
               type: "input",
               name: "out",
-              message: "Output directory / Diretório de saída:",
+              message: "Output directory:",
               default: `./${key}-mcp`,
             },
           ]);
-          
+
           const options: GeneratorOptions = {
             input: resolveInput(saved),
             lang: lang as GeneratorOptions["lang"],
@@ -476,8 +519,8 @@ async function interactive(): Promise<void> {
             incremental: false,
             http: false,
           };
-          
-          const genSpinner = ora("Generating MCP server…").start();
+
+          const genSpinner = ora("Generating MCP server...").start();
           try {
             const result = await generate(options);
             if (result.warnings.length > 0) {
@@ -490,7 +533,7 @@ async function interactive(): Promise<void> {
             } else {
               genSpinner.succeed("MCP server generated!");
               console.log(chalk.green(`\n  ✓ ${result.filesCreated.length} files created\n`));
-              console.log(chalk.bold("Next steps / Próximos passos:\n"));
+              console.log(chalk.bold("Next steps:\n"));
               console.log(`  cd ${out as string}`);
               console.log(lang === "typescript" ? "  npm install && npm run build\n" : "  pip install -r requirements.txt\n");
             }
@@ -506,10 +549,10 @@ async function interactive(): Promise<void> {
 
     if (cmd === "watch") {
       const answers = await inquirer.prompt([
-        { type: "input", name: "input", message: "Caminho ou URL para o OpenAPI spec:" },
-        { type: "list", name: "lang", message: "Linguagem alvo:", choices: [...SUPPORTED_LANGS] },
-        { type: "input", name: "out", message: "Diretório de saída:", default: "./mcp-server" },
-      ] as Parameters<typeof inquirer.prompt>[0]);
+        { type: "input", name: "input", message: "Path or URL to the OpenAPI spec:" },
+        { type: "list", name: "lang", message: "Target language:", choices: [...SUPPORTED_LANGS] },
+        { type: "input", name: "out", message: "Output directory:", default: "./mcp-server" },
+      ]);
 
       const input = resolveInput(answers.input as string);
       validateInputExt(input);
@@ -586,6 +629,32 @@ async function interactive(): Promise<void> {
           console.log(chalk.dim(`[watch] watching ${abs}`));
           await runGenerate();
         }
+      }
+    }
+
+    if (cmd === "security") {
+      const { project } = await inquirer.prompt([
+        { type: "input", name: "project", message: "Path to the generated MCP project to scan:" },
+      ]);
+      const projectPath = path.resolve(project as string);
+      if (!fs.existsSync(projectPath)) {
+        console.error(chalk.red(`\n  ✗ Project not found: ${projectPath}\n`));
+        continue;
+      }
+
+      console.log(chalk.bold("\nmcp-gen security") + ` v${VERSION} — Security & Lint Scan\n`);
+      console.log(`  Project:    ${chalk.cyan(projectPath)}\n`);
+
+      const { scanProject, formatReport } = await import("../core/security-lint");
+      const spinner = ora("Scanning project...").start();
+
+      try {
+        const report = await scanProject(projectPath);
+        spinner.succeed("Scan complete");
+        console.log(formatReport(report));
+      } catch (err: unknown) {
+        spinner.fail("Scan failed");
+        console.error(chalk.red(err instanceof Error ? err.message : String(err)));
       }
     }
   }

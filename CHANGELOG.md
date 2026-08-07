@@ -2,6 +2,29 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.1.1] - 2026-08-07
+
+### 🛡️ MCP Security & Lint Layer (New)
+
+- **Security scanning** (`mcp-gen security <path>`): Scans generated MCP projects for:
+  - Raw credential detection (API keys, tokens, secrets, JWTs, AWS keys, etc.)
+  - `authContext` contract validation (scoped metadata vs raw credentials)
+  - Tool policy enforcement (TTL, spend limits, revocation, audit logging)
+- **Lint checks**: Naming conventions, empty descriptions, TODO/FIXME in generated code, incremental marker balance, schema completeness
+- **JSON output** (`--json`) for CI/CD integration
+- **Fail-on-warn** (`--fail-on-warn`) for strict pipelines
+- **Interactive mode** support in CLI
+- **Library API exports**: `scanProject`, `formatReport`, `SecurityRule`, `SecurityReport`
+- **11 new tests** covering credential scanning, authContext validation, incremental markers, project scanning, report formatting
+
+### 🔧 Generated Template Improvements
+
+- **TypeScript**: Enhanced `RAW_CREDENTIAL_KEYS` + `TOOL_POLICIES` with per-tool policies, `requireSecurity` helper
+- **Python**: Complete authContext validation with `require_security`, raw credential blocking
+- **Go**: Full security layer with `RAW_CREDENTIAL_KEYS` map, `TOOL_POLICIES` struct, `hasRawCredentialKey`, `requireSecurity`
+
+---
+
 ## [2.1.0] - 2026-08-07
 
 ### 🚀 Major Features

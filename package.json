@@ -1,6 +1,6 @@
 {
   "name": "mcp-gen",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "OpenAPI → MCP Server generator CLI",
   "main": "dist/index.js",
   "bin": {

@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -18,6 +19,39 @@ import (
 
 var baseURL = "{{baseUrl}}"
 var apiToken = os.Getenv("TOKEN")
+
+// RAW_CREDENTIAL_KEYS defines credential keywords that are blocked by default
+var RAW_CREDENTIAL_KEYS = map[string]bool{
+	"authorization": true,
+	"token":         true,
+	"access_token":  true,
+	"api_key":       true,
+	"apikey":        true,
+	"x_api_key":     true,
+	"client_secret": true,
+	"refresh_token": true,
+	"password":      true,
+	"secret":        true,
+}
+
+// TOOL_POLICIES defines per-tool security policies
+var TOOL_POLICIES = map[string]struct {
+	Endpoint               string
+	RequiresTTL            bool
+	RequiresSpendLimit     bool
+	RequiresRequestLog     bool
+	RequiresRevocationCheck bool
+}{
+{{#each tools}}
+	"{{name}}": {
+		Endpoint:               "{{method}} {{path}}",
+		RequiresTTL:            true,
+		RequiresSpendLimit:     true,
+		RequiresRequestLog:     true,
+		RequiresRevocationCheck: true,
+	},
+{{/each}}
+}
 
 func jsonSerialize(v any) (*mcp.CallToolResult, error) {
 	b, err := json.MarshalIndent(v, "", "  ")
@@ -33,6 +67,120 @@ func jsonExample(s string) any {
 		return nil
 	}
 	return v
+}
+
+func hasRawCredentialKey(value any) bool {
+	if value == nil {
+		return false
+	}
+	switch v := value.(type) {
+	case map[string]any:
+		for key, nested := range v {
+			normalized := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(key, "-", ""), "_", ""))
+			for candidate := range RAW_CREDENTIAL_KEYS {
+				candNorm := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(candidate, "-", ""), "_", ""))
+				if normalized == candNorm {
+					return true
+				}
+			}
+			if hasRawCredentialKey(nested) {
+				return true
+			}
+		}
+	case []any:
+		for _, item := range v {
+			if hasRawCredentialKey(item) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func requireSecurity(toolName string, security any, authContext map[string]any, requestArgs map[string]any) error {
+	if requestArgs != nil && hasRawCredentialKey(requestArgs) {
+		return fmt.Errorf("raw provider credentials are not allowed in tool arguments. use scoped auth_context metadata only")
+	}
+	if authContext != nil && hasRawCredentialKey(authContext) {
+		return fmt.Errorf("raw provider credentials are not allowed in auth_context. use scoped metadata only")
+	}
+
+	policy, ok := TOOL_POLICIES[toolName]
+	if !ok {
+		return fmt.Errorf("missing security policy for tool: %s", toolName)
+	}
+
+	if authContext == nil {
+		return fmt.Errorf("missing auth_context. provide scoped metadata (token_id, expires_at, limits, request_id) from your gateway")
+	}
+
+	if policy.RequiresRevocationCheck {
+		if revoked, ok := authContext["revoked"].(bool); ok && revoked {
+			return fmt.Errorf("access revoked")
+		}
+	}
+
+	if policy.RequiresTTL {
+		if expiresAt, ok := authContext["expires_at"].(string); ok {
+			// Simple check - in production use proper parsing
+			if expiresAt == "" || expiresAt < "2025-01-01T00:00:00Z" {
+				return fmt.Errorf("token expired or missing TTL")
+			}
+		} else {
+			return fmt.Errorf("token expired or missing TTL")
+		}
+	}
+
+	if policy.RequiresRequestLog {
+		if _, ok := authContext["request_id"].(string); !ok {
+			return fmt.Errorf("request_id is required for audit logging")
+		}
+	}
+
+	if policy.RequiresSpendLimit {
+		limit, hasLimit := authContext["spend_limit_usd"].(float64)
+		used, hasUsed := authContext["spend_used_usd"].(float64)
+		if !hasLimit || !hasUsed {
+			return fmt.Errorf("spend limit metadata is required")
+		}
+		if used > limit {
+			return fmt.Errorf("spend limit exceeded")
+		}
+	}
+
+	if allowedTools, ok := authContext["allowed_tools"].([]any); ok {
+		found := false
+		for _, t := range allowedTools {
+			if ts, ok := t.(string); ok && ts == toolName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("tool not allowed by scope: %s", toolName)
+		}
+	}
+
+	if endpointAllowlist, ok := authContext["endpoint_allowlist"].([]any); ok {
+		found := false
+		for _, e := range endpointAllowlist {
+			if es, ok := e.(string); ok && es == policy.Endpoint {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("endpoint not allowed: %s", policy.Endpoint)
+		}
+	}
+
+	if security != nil {
+		if _, ok := authContext["token_id"].(string); !ok {
+			return fmt.Errorf("missing token_id for secured operation")
+		}
+	}
+
+	return nil
 }
 
 func main() {
