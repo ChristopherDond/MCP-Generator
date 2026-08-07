@@ -2,15 +2,20 @@
 // Source: {{info.title}} v{{info.version}}
 
 {{#each models}}
+{{#if isEnum}}
 /** {{description}} */
-{{#if oneOf}}
+export type {{name}} = {{#each enumValues}}{{literal this}}{{#unless @last}} | {{/unless}}{{/each}};
+{{else if oneOf}}
+/** {{description}} */
 export type {{name}} = {{#each oneOf}}{{this}}{{#unless @last}} | {{/unless}}{{/each}};
 {{else if anyOf}}
+/** {{description}} */
 export type {{name}} = {{#each anyOf}}{{this}}{{#unless @last}} | {{/unless}}{{/each}};
 {{else}}
+/** {{description}} */
 export interface {{name}} {
   {{#each properties}}
-  {{name}}{{#unless (includes ../required name)}}?{{/unless}}: {{#if ref}}{{ref}}{{#if isArray}}[]{{/if}}{{else}}{{type}}{{/if}};{{#if description}} // {{description}}{{/if}}
+  {{name}}{{#unless (includes ../required name)}}?{{/unless}}: {{#if ref}}{{ref}}{{#if isArray}}[]{{/if}}{{else}}{{type}}{{/if}};{{#if description}} // {{escapeText description}}{{/if}}
   {{/each}}
 }
 

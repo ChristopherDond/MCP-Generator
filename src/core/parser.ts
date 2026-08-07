@@ -8,6 +8,31 @@ import type {
   MCPModelProperty,
 } from "./types";
 
+const TS_RESERVED = new Set([
+  "break", "case", "catch", "class", "const", "continue", "debugger",
+  "default", "delete", "do", "else", "enum", "export", "extends", "false",
+  "finally", "for", "function", "if", "import", "in", "instanceof", "new",
+  "null", "return", "super", "switch", "this", "throw", "true", "try",
+  "typeof", "var", "void", "while", "with", "implements", "interface",
+  "let", "package", "private", "protected", "public", "static", "yield",
+]);
+
+const PY_RESERVED = new Set([
+  "and", "as", "assert", "async", "await", "break", "class", "continue",
+  "def", "del", "elif", "else", "except", "finally", "for", "from",
+  "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or",
+  "pass", "raise", "return", "try", "while", "with", "yield",
+]);
+
+const GO_RESERVED = new Set([
+  "break", "case", "chan", "const", "continue", "default", "defer", "else",
+  "fallthrough", "for", "func", "go", "goto", "if", "import", "interface",
+  "map", "package", "range", "return", "select", "struct", "switch", "type",
+  "var",
+]);
+
+const ALL_RESERVED = new Set([...TS_RESERVED, ...PY_RESERVED, ...GO_RESERVED]);
+
 // Resolve a $ref string to its component name: "#/components/schemas/User" → "User"
 function refToName(ref: string): string {
   return ref.split("/").pop() ?? ref;
@@ -21,10 +46,26 @@ function openapiTypeToTS(type: string): string {
     case "boolean":
       return "boolean";
     case "object":
-      return "Record<string, unknown>";
+      return "object";
+    case "array":
+      return "array";
     default:
       return "string";
   }
+}
+
+/** Map an OpenAPI schema to an MCP tool-argument type, honoring enums. */
+function schemaToParamType(
+  schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject | undefined
+): { type: MCPToolParam["type"]; format?: string; enum?: (string | number)[] } {
+  if (!schema) return { type: "string" };
+  if ("$ref" in schema) {
+    // We don't resolve refs here — the template layer uses `schema` when available.
+    return { type: "object" };
+  }
+  const s = schema as OpenAPIV3.SchemaObject;
+  const t = openapiTypeToTS(s.type ?? "string") as MCPToolParam["type"];
+  return { type: t, format: s.format, enum: s.enum as (string | number)[] | undefined };
 }
 
 function resolveSchemaProperties(
@@ -107,16 +148,44 @@ function extractExampleResponse(
   return null;
 }
 
-function pathToToolName(method: string, path: string): string {
-  // GET /users/{id}/posts → get_users_id_posts
-  const slug = path
+/** Build a unique, valid identifier for a tool from method + path.
+ *  Handles reserved words and name collisions by appending an index. */
+function pathToToolName(method: string, path: string, used: Set<string>): string {
+  let name = `${method.toLowerCase()}_${path
     .replace(/\//g, "_")
     .replace(/[{}]/g, "")
     .replace(/[^a-zA-Z0-9_]/g, "")
     .replace(/^_/, "")
     .replace(/_+/g, "_")
-    .toLowerCase();
-  return `${method.toLowerCase()}_${slug}`;
+    .toLowerCase()}`;
+  name = name.replace(/-+$/g, "");
+  if (ALL_RESERVED.has(name) || name === "") name = `${name || "tool"}_handler`;
+  let candidate = name;
+  let i = 2;
+  while (used.has(candidate)) {
+    candidate = `${name}_${i}`;
+    i += 1;
+  }
+  used.add(candidate);
+  return candidate;
+}
+
+function collectParameters(
+  pathItem: OpenAPIV3.PathItemObject,
+  operation: OpenAPIV3.OperationObject
+): OpenAPIV3.ParameterObject[] {
+  const out: OpenAPIV3.ParameterObject[] = [];
+  const seen = new Set<string>();
+  const all = [...(pathItem.parameters ?? []), ...(operation.parameters ?? [])];
+  for (const raw of all) {
+    if ("$ref" in raw) continue;
+    const p = raw as OpenAPIV3.ParameterObject;
+    const key = `${p.in}:${p.name}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(p);
+  }
+  return out;
 }
 
 function buildTools(
@@ -124,7 +193,9 @@ function buildTools(
   components: OpenAPIV3.ComponentsObject | undefined
 ): MCPTool[] {
   const tools: MCPTool[] = [];
+  const usedNames = new Set<string>();
   const METHODS = ["get", "post", "put", "patch", "delete", "head", "options"] as const;
+  const REF_SCHEMAS = components?.schemas ?? {};
 
   for (const [path, pathItem] of Object.entries(paths)) {
     if (!pathItem) continue;
@@ -137,43 +208,71 @@ function buildTools(
 
       const params: MCPToolParam[] = [];
 
-      // Path + query parameters
-      const allParams = [
-        ...(pathItem.parameters ?? []),
-        ...(operation.parameters ?? []),
-      ];
-
-      for (const rawParam of allParams) {
-        if ("$ref" in rawParam) continue;
+      // Path + query + header + cookie parameters (path-level merged, deduped)
+      for (const rawParam of collectParameters(pathItem, operation)) {
         const param = rawParam as OpenAPIV3.ParameterObject;
         const schema = (param.schema ?? { type: "string" }) as OpenAPIV3.SchemaObject;
+        const typed = schemaToParamType(schema);
 
         params.push({
           name: param.name,
           description: param.description ?? `${param.in} parameter`,
-          type: openapiTypeToTS(schema.type ?? "string") as MCPToolParam["type"],
+          type: typed.type,
           required: param.required ?? param.in === "path",
+          in: (["path", "query", "header", "cookie"].includes(param.in)
+            ? param.in
+            : "query") as MCPToolParam["in"],
           schema,
+          format: typed.format,
+          enum: typed.enum,
         });
       }
 
-      // Request body → add as "body" param
-      if (operation.requestBody && !("$ref" in operation.requestBody)) {
-        const body = operation.requestBody as OpenAPIV3.RequestBodyObject;
-        const jsonSchema = body.content?.["application/json"]?.schema;
-        if (jsonSchema && !("$ref" in jsonSchema)) {
+      // Request body (resolving $ref) → add as "body" param
+      let requestBody: OpenAPIV3.RequestBodyObject | undefined;
+      const rawBody = operation.requestBody;
+      if (rawBody) {
+        if ("$ref" in rawBody) {
+          const refName = refToName(rawBody.$ref);
+          requestBody = (REF_SCHEMAS[refName] as OpenAPIV3.RequestBodyObject) ??
+            undefined;
+        } else {
+          requestBody = rawBody;
+        }
+      }
+
+      if (requestBody) {
+        const jsonSchema = requestBody.content?.["application/json"]?.schema;
+        if (jsonSchema) {
+          // If body schema is a $ref, use a "body" object whose schema points at the ref name.
+          let bodySchema: OpenAPIV3.SchemaObject;
+          let bodyEnum: (string | number)[] | undefined;
+          let bodyFormat: string | undefined;
+          if ("$ref" in jsonSchema) {
+            bodySchema = { type: "object" } as OpenAPIV3.SchemaObject;
+            const refName = refToName(jsonSchema.$ref);
+            // remember ref via format-less trick: store name in description? No — use enum-free schema.
+            (bodySchema as OpenAPIV3.SchemaObject & { mcpRef?: string }).mcpRef = refName;
+          } else {
+            bodySchema = jsonSchema as OpenAPIV3.SchemaObject;
+            bodyEnum = bodySchema.enum as (string | number)[] | undefined;
+            bodyFormat = bodySchema.format;
+          }
           params.push({
             name: "body",
-            description: body.description ?? "Request body",
+            description: requestBody.description ?? "Request body",
             type: "object",
-            required: body.required ?? false,
-            schema: jsonSchema as OpenAPIV3.SchemaObject,
+            required: requestBody.required ?? false,
+            in: "body",
+            schema: bodySchema,
+            format: bodyFormat,
+            enum: bodyEnum,
           });
         }
       }
 
       tools.push({
-        name: pathToToolName(method, path),
+        name: pathToToolName(method, path, usedNames),
         description:
           operation.summary ??
           operation.description ??
@@ -202,8 +301,18 @@ function buildModels(
     if ("$ref" in rawSchema) continue;
     const schema = rawSchema as OpenAPIV3.SchemaObject;
 
-    // Skip enums — they're rendered as literals in templates
-    if (schema.enum) continue;
+    // Enums become real model types (string/number unions)
+    if (schema.enum) {
+      models.push({
+        name,
+        description: schema.description ?? "",
+        properties: [],
+        required: [],
+        isEnum: true,
+        enumValues: schema.enum as (string | number)[],
+      });
+      continue;
+    }
 
     // Handle allOf (simple merge, no polymorphism in MVP)
     let resolvedSchema = schema;
@@ -248,6 +357,7 @@ function buildModels(
       description: schema.description ?? "",
       properties: resolveSchemaProperties(resolvedSchema, components),
       required: schema.required ?? [],
+      isEnum: false,
       oneOf,
       anyOf,
       discriminator: schema.discriminator ?? null,
@@ -277,7 +387,9 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
 
   if (!("openapi" in api) || !api.openapi.startsWith("3")) {
     throw new Error(
-      `Only OpenAPI v3.x is supported. Got: ${"swagger" in api ? (api as Record<string, string>).swagger : "unknown"}`
+      `Only OpenAPI v3.x is supported. Got: ${
+        "swagger" in api ? (api as Record<string, string>).swagger : "unknown"
+      }`
     );
   }
 
@@ -294,9 +406,15 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
   const baseUrl =
     api.servers?.[0]?.url ?? "https://api.example.com";
 
+  const requiresAuth =
+    tools.some((t) => t.security && t.security.length > 0) ||
+    Boolean(api.components?.securitySchemes &&
+      Object.keys(api.components.securitySchemes).length > 0);
+
   return {
     serverName,
     serverVersion: api.info.version ?? "1.0.0",
+    generatorVersion: "",
     tools,
     models,
     info: {
@@ -305,6 +423,7 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
       version: api.info.version ?? "1.0.0",
     },
     baseUrl,
+    requiresAuth,
     securitySchemes: api.components?.securitySchemes,
   };
 }

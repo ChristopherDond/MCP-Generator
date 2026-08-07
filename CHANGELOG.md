@@ -2,6 +2,43 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.1.0] - 2026-08-07
+
+### 🚀 Major Features
+
+- **Go target (new language)**: Generate MCP servers using `mark3labs/mcp-go` with full parity — `main.go`, `models.go`, `client.go`, `go.mod`, `README.md`, `Dockerfile`, GitHub Actions CI.
+- **HTTP mode (`--http`)**: Generated handlers call the **real API** over HTTP (`fetch` / `httpx` / `net/http`) instead of returning example stubs. Controlled by `--http` flag or `--env-file` for credential injection.
+- **Library API (programmatic usage)**: Export `generate`, `validateSpec`, `parseOpenAPI`, `extractHandlers`, `injectHandlers`, `listKnownSpecs`, `fetchSpecToCwd` + all types from `src/index.ts`.
+- **Rich `validate` command**: Detailed warnings for tool-name collisions, missing examples, unsupported schemas, duplicate operations, etc.
+- **Parser v3**: Full `$ref` resolution in parameters & requestBody; header/cookie params included; real enum union types (TypeScript `type X = "a" | "b"`, Python `Literal`, Go `type X = string` + `var` constants); unique tool names with collision suffixes; reserved-word sanitization (`new`, `delete`, `class`, etc. → `new_`).
+- **Safe description escaping**: Central `escapeText` helper prevents template injection/breakage from arbitrary OpenAPI descriptions.
+- **CLI version sync**: Single source of truth in `package.json`; CLI reads version at runtime.
+- **Interactive HTTP prompts**: When `--http` is used without `--env-file`, prompts ask for BASE_URL and TOKEN.
+
+### 🐛 Fixes
+
+- Tool-name collisions resolved with unique `_<hash>` suffixes
+- Reserved words in tool names sanitized
+- `$ref` in parameters/requestBody no longer silently skipped
+- Header/cookie parameters now included in tool signatures
+- Enums emitted as real union types (not loose `string`)
+- Descriptions with special chars (quotes, newlines) no longer break templates
+- Go `mcp.PropertyOption` API corrected (`mcp.Description`, `mcp.Required`)
+- Python `_call_api` made `async` (was sync with `async with`)
+
+### 📚 Documentation
+
+- README updated with Go target, `--http` mode, library API, authContext contract, programmatic usage
+- CHANGELOG v2.1.0 entry
+
+### ⚠️ Known Limitations
+
+- OpenAPI v2 (Swagger) not supported — v3.x only
+- `oneOf`/`anyOf`/`discriminator` generate union types but no runtime validation
+- Streaming/resources/prompts not yet implemented
+
+---
+
 ## [2.0.0] - 2026-05-11
 
 ### 🎉 Major Release 2.0

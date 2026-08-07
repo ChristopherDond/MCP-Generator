@@ -56,19 +56,19 @@ describe("generate (typescript)", () => {
   afterEach(() => { fs.rmSync(tmpDir, { recursive: true, force: true }); });
 
   it("generates 8 files", async () => {
-    const result = await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: true, incremental: false });
+    const result = await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: true, incremental: false, http: false });
     expect(result.success).toBe(true);
     expect(result.filesCreated).toHaveLength(8);
   });
 
   it("generates from YAML spec", async () => {
-    const result = await generate({ input: PETSTORE_YAML, lang: "typescript", out: tmpDir, force: true, incremental: false });
+    const result = await generate({ input: PETSTORE_YAML, lang: "typescript", out: tmpDir, force: true, incremental: false, http: false });
     expect(result.success).toBe(true);
     expect(result.filesCreated).toHaveLength(8);
   });
 
   it("server.ts contains tool names", async () => {
-    await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: true, incremental: false });
+    await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: true, incremental: false, http: false });
     const content = fs.readFileSync(path.join(tmpDir, "src/server.ts"), "utf-8");
     expect(content).toContain("get_pets");
     expect(content).toContain("@@mcp-gen:start:get_pets");
@@ -76,7 +76,7 @@ describe("generate (typescript)", () => {
   });
 
   it("server.ts enforces scoped authContext and blocks raw credentials", async () => {
-    await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: true, incremental: false });
+    await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: true, incremental: false, http: false });
     const content = fs.readFileSync(path.join(tmpDir, "src/server.ts"), "utf-8");
     expect(content).toContain("function ensureNoRawCredentials");
     expect(content).toContain("authContext");
@@ -86,13 +86,13 @@ describe("generate (typescript)", () => {
 
   it("fails on non-empty dir without --force", async () => {
     fs.writeFileSync(path.join(tmpDir, "existing.txt"), "block");
-    const result = await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: false, incremental: false });
+    const result = await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: false, incremental: false, http: false });
     expect(result.success).toBe(false);
   });
 
   it("allows incremental regeneration into a non-empty dir", async () => {
     fs.writeFileSync(path.join(tmpDir, "existing.txt"), "block");
-    const result = await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: false, incremental: true });
+    const result = await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: false, incremental: true, http: false });
     expect(result.success).toBe(true);
     expect(result.filesCreated.length).toBeGreaterThan(0);
   });
@@ -106,13 +106,13 @@ describe("generate (python)", () => {
   afterEach(() => { fs.rmSync(tmpDir, { recursive: true, force: true }); });
 
   it("generates 6 files", async () => {
-    const result = await generate({ input: PETSTORE_JSON, lang: "python", out: tmpDir, force: true, incremental: false });
+    const result = await generate({ input: PETSTORE_JSON, lang: "python", out: tmpDir, force: true, incremental: false, http: false });
     expect(result.success).toBe(true);
     expect(result.filesCreated).toHaveLength(6);
   });
 
   it("server.py contains tool functions with markers", async () => {
-    await generate({ input: PETSTORE_JSON, lang: "python", out: tmpDir, force: true, incremental: false });
+    await generate({ input: PETSTORE_JSON, lang: "python", out: tmpDir, force: true, incremental: false, http: false });
     const content = fs.readFileSync(path.join(tmpDir, "server.py"), "utf-8");
     expect(content).toContain("@mcp.tool()");
     expect(content).toContain("async def get_pets");
@@ -120,7 +120,7 @@ describe("generate (python)", () => {
   });
 
   it("server.py enforces auth_context policy and blocks raw credentials", async () => {
-    await generate({ input: PETSTORE_JSON, lang: "python", out: tmpDir, force: true, incremental: false });
+    await generate({ input: PETSTORE_JSON, lang: "python", out: tmpDir, force: true, incremental: false, http: false });
     const content = fs.readFileSync(path.join(tmpDir, "server.py"), "utf-8");
     expect(content).toContain("def ensure_no_raw_credentials");
     expect(content).toContain("auth_context: Optional[dict] = None");
@@ -129,7 +129,7 @@ describe("generate (python)", () => {
   });
 
   it("models.py contains Pydantic models", async () => {
-    await generate({ input: PETSTORE_JSON, lang: "python", out: tmpDir, force: true, incremental: false });
+    await generate({ input: PETSTORE_JSON, lang: "python", out: tmpDir, force: true, incremental: false, http: false });
     const content = fs.readFileSync(path.join(tmpDir, "models.py"), "utf-8");
     expect(content).toContain("class Pet(BaseModel)");
     expect(content).toContain("class NewPet(BaseModel)");

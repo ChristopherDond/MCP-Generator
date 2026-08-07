@@ -3,22 +3,30 @@ import { Command } from "commander";
 import chalk from "chalk";
 import ora from "ora";
 import path from "path";
-import { generate } from "../core/generator";
-import type { GeneratorOptions } from "../core/types";
+import { generate, validateSpec } from "../core/generator";
+import type { GeneratorOptions, Lang } from "../core/types";
 import { fetchSpecToCwd, listKnownSpecs, getSpecInfo } from "../core/registry";
 import fs from "fs";
 import inquirer from "inquirer";
 
-const SUPPORTED_LANGS = ["typescript", "python"] as const;
+const SUPPORTED_LANGS: Lang[] = ["typescript", "python", "go"];
 const SUPPORTED_EXTS = [".json", ".yaml", ".yml"];
+
+const VERSION = (() => {
+  try {
+    return require("../../package.json").version as string;
+  } catch {
+    return "0.0.0";
+  }
+})();
 
 function resolveInput(input: string): string {
   if (input.startsWith("http://") || input.startsWith("https://")) return input;
   return path.resolve(input);
 }
 
-function validateLang(lang: string): asserts lang is GeneratorOptions["lang"] {
-  if (!SUPPORTED_LANGS.includes(lang as GeneratorOptions["lang"])) {
+function validateLang(lang: string): asserts lang is Lang {
+  if (!SUPPORTED_LANGS.includes(lang as Lang)) {
     console.error(
       chalk.red(`\n  ✗ Unsupported language: "${lang}". Choose: ${SUPPORTED_LANGS.join(" | ")}\n`)
     );
@@ -42,7 +50,7 @@ const program = new Command();
 program
   .name("mcp-gen")
   .description("OpenAPI → MCP Server generator")
-  .version("0.2.0");
+  .version(VERSION);
 
 program
   .command("generate")
@@ -53,6 +61,8 @@ program
   .option("-o, --out <dir>", "Output directory for the generated project", "./mcp-server")
   .option("-f, --force", "Overwrite existing files without prompting", false)
   .option("--incremental", "Preserve custom handler code on re-generation (@@mcp-gen markers)", false)
+  .option("--http", "Generate handlers that call the real API over HTTP instead of returning example stubs", false)
+  .option("--env-file <path>", "Path to an .env-style file whose TOKEN/BASE_URL are embedded into the generated client",)
   .option("--name <name>", "Override the server name")
   .option("--server-version <version>", "Override the server version")
   .option("--plugin <path>", "Path to a plugin module or folder to load", (val, acc) => {
@@ -69,19 +79,24 @@ program
 
     const options: GeneratorOptions = {
       input,
-      lang: opts.lang as GeneratorOptions["lang"],
+      lang: opts.lang as Lang,
       out: path.resolve(opts.out),
       force: opts.force,
       incremental: opts.incremental,
+      http: opts.http,
+      envFile: opts.envFile,
       plugins,
       serverName: opts.name,
       serverVersion: opts.serverVersion,
     };
 
-    console.log(chalk.bold("\nmcp-gen") + " — OpenAPI → MCP Server\n");
+    console.log(chalk.bold("\nmcp-gen") + ` v${VERSION} — OpenAPI → MCP Server\n`);
     console.log(`  Input:       ${chalk.cyan(options.input)}`);
     console.log(`  Language:    ${chalk.cyan(options.lang)}`);
     console.log(`  Output:      ${chalk.cyan(options.out)}`);
+    if (options.http) {
+      console.log(`  HTTP mode:   ${chalk.green("on — handlers will call the real API")}`);
+    }
     if (options.incremental) {
       console.log(`  Incremental: ${chalk.yellow("on — custom handlers will be preserved")}`);
     }
@@ -116,11 +131,20 @@ program
       }
 
       const isTs = options.lang === "typescript";
+      const isPy = options.lang === "python";
       console.log(chalk.bold("\nNext steps:\n"));
       console.log(`  cd ${opts.out}`);
-      console.log(isTs ? "  npm install" : "  pip install -r requirements.txt");
-      if (isTs) console.log("  npm run build");
-      console.log(isTs ? "  npm start\n" : "  python server.py\n");
+      if (isTs) {
+        console.log("  npm install");
+        console.log("  npm run build");
+        console.log("  npm start\n");
+      } else if (isPy) {
+        console.log("  pip install -r requirements.txt");
+        console.log("  python server.py\n");
+      } else {
+        console.log("  go mod tidy");
+        console.log("  go run .\n");
+      }
     } catch (err: unknown) {
       spinner.fail("Unexpected error");
       console.error(chalk.red(err instanceof Error ? err.message : String(err)));
@@ -137,11 +161,20 @@ program
     const input = resolveInput(opts.input);
     validateInputExt(input);
     const spinner = ora("Validating spec…").start();
-    const { parseOpenAPI } = await import("../core/parser");
     try {
-      const ast = await parseOpenAPI(input);
+      const result = await validateSpec(input);
+      if (!result.valid) {
+        spinner.fail("Spec is invalid");
+        for (const err of result.errors) console.error(chalk.red(`  ✗ ${err}`));
+        process.exit(1);
+      }
       spinner.succeed("Spec is valid");
-      console.log(chalk.dim(`\n  Tools: ${ast.tools.length}  Models: ${ast.models.length}  Base URL: ${ast.baseUrl}\n`));
+      console.log(chalk.dim(`\n  Tools: ${result.tools}  Models: ${result.models}  Base URL: ${result.baseUrl}\n`));
+      if (result.warnings.length > 0) {
+        console.log(chalk.yellow(`  ${result.warnings.length} warning(s):`));
+        for (const w of result.warnings) console.log(chalk.yellow(`  ⚠ ${w}`));
+        console.log();
+      }
     } catch (err: unknown) {
       spinner.fail("Validation failed");
       console.error(chalk.red(err instanceof Error ? err.message : String(err)));
@@ -185,6 +218,7 @@ program
           out: path.resolve(opts.out),
           force: false,
           incremental: false,
+          http: false,
         };
         const result = await generate(options);
         if (!result.success) {
@@ -221,6 +255,7 @@ program
       out: path.resolve(opts.out),
       force: false,
       incremental: true,
+      http: false,
       plugins: opts.plugin as string[] | undefined,
     } as Partial<GeneratorOptions>;
 
@@ -231,6 +266,7 @@ program
         out: commonOptions.out!,
         force: false,
         incremental: true,
+        http: false,
         plugins: commonOptions.plugins,
       };
       console.log(chalk.dim(`[watch] regenerating from ${opts.input} → ${options.out}`));
@@ -328,6 +364,7 @@ async function interactive(): Promise<void> {
           { type: "input", name: "out", message: "Diretório de saída:", default: "./mcp-server" },
           { type: "confirm", name: "force", message: "Sobrescrever arquivos existentes?", default: false },
           { type: "confirm", name: "incremental", message: "Preservar handlers customizados?", default: false },
+          { type: "confirm", name: "http", message: "Gerar handlers HTTP reais (chamam a API)? / Generate real HTTP handlers?", default: false },
           { type: "input", name: "name", message: "Nome do servidor (opcional):", default: "" },
           { type: "input", name: "serverVersion", message: "Versão do servidor (opcional):", default: "" },
         ] as Parameters<typeof inquirer.prompt>[0]
@@ -343,6 +380,7 @@ async function interactive(): Promise<void> {
         out: path.resolve(answers.out as string),
         force: Boolean(answers.force),
         incremental: Boolean(answers.incremental),
+        http: Boolean(answers.http),
         plugins: [],
         serverName: answers.name || undefined,
         serverVersion: answers.serverVersion || undefined,
@@ -436,6 +474,7 @@ async function interactive(): Promise<void> {
             out: path.resolve(out as string),
             force: false,
             incremental: false,
+            http: false,
           };
           
           const genSpinner = ora("Generating MCP server…").start();
@@ -481,6 +520,7 @@ async function interactive(): Promise<void> {
         out: path.resolve(answers.out as string),
         force: false,
         incremental: false,
+        http: false,
         plugins: [],
       } as Partial<GeneratorOptions>;
 
@@ -491,6 +531,7 @@ async function interactive(): Promise<void> {
           out: commonOptions.out!,
           force: false,
           incremental: false,
+          http: false,
           plugins: commonOptions.plugins,
         };
         console.log(chalk.dim(`[watch] regenerating from ${answers.input} → ${options.out}`));

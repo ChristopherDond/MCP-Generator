@@ -1,6 +1,6 @@
 {
   "name": "mcp-gen",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "OpenAPI → MCP Server generator CLI",
   "main": "dist/index.js",
   "bin": {
@@ -28,8 +28,8 @@
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "handlebars": "^4.7.8",
-    "ora": "^8.0.1"
-    ,"inquirer": "^9.2.0"
+    "ora": "^8.0.1",
+    "inquirer": "^9.2.0"
   },
   "devDependencies": {
     "@types/handlebars": "^4.1.0",

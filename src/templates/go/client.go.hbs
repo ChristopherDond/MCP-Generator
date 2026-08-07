@@ -1,0 +1,86 @@
+// Auto-generated client SDK for {{info.title}} v{{info.version}}
+// Generated: {{generatedAt}}
+
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
+	"time"
+)
+
+type APIClient struct {
+	BaseURL string
+	Token   string
+	HTTP    *http.Client
+}
+
+func NewAPIClient(baseURL, token string) *APIClient {
+	if token == "" {
+		token = apiToken
+	}
+	return &APIClient{BaseURL: strings.TrimRight(baseURL, "/"), Token: token, HTTP: &http.Client{Timeout: 30 * time.Second}}
+}
+
+type APIError struct {
+	Status int
+	Body   string
+}
+
+func (e *APIError) Error() string {
+	return fmt.Sprintf("HTTP %d: %s", e.Status, e.Body)
+}
+
+func (c *APIClient) do(method, path string, params map[string]any) (any, error) {
+	path = c.expand(path, params)
+	var body io.Reader
+	if v, ok := params["body"]; ok {
+		b, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+		body = bytes.NewReader(b)
+	}
+	req, err := http.NewRequest(method, c.BaseURL+path, body)
+	if err != nil {
+		return nil, err
+	}
+	if c.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.Token)
+	}
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	{{#each (allHeaderParams tools)}}
+	if v, ok := params["{{name}}"]; ok {
+		req.Header.Set("{{name}}", fmt.Sprintf("%v", v))
+	}
+	{{/each}}
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 400 {
+		return nil, &APIError{Status: resp.StatusCode, Body: string(raw)}
+	}
+	var out any
+	if len(raw) > 0 {
+		if err := json.Unmarshal(raw, &out); err != nil {
+			return string(raw), nil
+		}
+	}
+	return out, nil
+}
+
+func (c *APIClient) expand(path string, params map[string]any) string {
+	for k, v := range params {
+		path = strings.ReplaceAll(path, "{"+k+"}", fmt.Sprintf("%v", v))
+	}
+	return path
+}

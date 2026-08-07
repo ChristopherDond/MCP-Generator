@@ -14,6 +14,15 @@ export class ApiClient {
     return this.baseUrl.replace(/\/$/, "") + url;
   }
 
+  private buildHeaders(params: Record<string, unknown>): Record<string, string> {
+    const headers: Record<string, string> = {};
+    {{#each (allHeaderParams tools)}}
+    const v{{@index}} = params["{{name}}"];
+    if (v{{@index}} !== undefined) headers["{{name}}"] = String(v{{@index}});
+    {{/each}}
+    return headers;
+  }
+
   private async request(method: string, url: string, body?: unknown, headers: Record<string,string> = {}) {
     if (this.token) headers["Authorization"] = `Bearer ${this.token}`;
     const opts: RequestInit = { method, headers };
@@ -28,13 +37,13 @@ export class ApiClient {
   }
 
   {{#each tools}}
-  /** {{description}} */
+  /** {{escapeText description}} */
   async {{name}}(params: Record<string, unknown> = {}): Promise<unknown> {
     const url = this.buildUrl("{{path}}", params);
     const method = "{{method}}";
     const hasBody = {{#if (includes (requiredParams params) "body")}}true{{else}}false{{/if}};
     const body = hasBody ? (params["body"] as unknown) : undefined;
-    return this.request(method, url, body);
+    return this.request(method, url, body, this.buildHeaders(params));
   }
   {{/each}}
 }
