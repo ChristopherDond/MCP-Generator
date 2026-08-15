@@ -327,7 +327,6 @@ program
       }
     };
 
-    // If input is http(s) — poll for changes
     if (opts.input.startsWith("http://") || opts.input.startsWith("https://")) {
       let last = "";
       const interval = Number(opts.interval) || 30000;
@@ -357,7 +356,6 @@ program
       return;
     }
 
-    // Local file — fs.watch
     const abs = path.resolve(opts.input);
     if (!fs.existsSync(abs)) {
       console.error(chalk.red(`File not found: ${abs}`));
@@ -377,7 +375,6 @@ program
     });
 
     console.log(chalk.dim(`[watch] watching ${abs}`));
-    // run once initially
     await runGenerate();
   });
 

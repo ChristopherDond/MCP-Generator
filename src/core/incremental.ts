@@ -84,23 +84,18 @@ export function injectHandlers(
     const startMarker = MARKER_START(toolName);
     const endMarker = MARKER_END(toolName);
 
-    // Find the region between the markers in the new rendered output
     const startIdx = result.indexOf(startMarker);
     const endIdx = result.indexOf(endMarker);
 
     if (startIdx === -1 || endIdx === -1) continue;
 
-    // Extract what the fresh generation put between the markers
     const afterStart = result.indexOf("\n", startIdx) + 1;
     const freshCode = result.slice(afterStart, endIdx).trimEnd();
 
-    // Don't replace if the user code is identical to the fresh stub (wasn't customized)
     if (customCode.trim() === freshCode.trim()) continue;
 
-    // Don't replace if the user code matches the default "not implemented" stub
     if (defaultStubPattern.test(customCode.trim())) continue;
 
-    // Replace fresh code with preserved custom code
     result = result.slice(0, afterStart) + customCode + "\n" + result.slice(endIdx);
     preserved.push(toolName);
   }

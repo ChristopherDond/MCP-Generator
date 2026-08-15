@@ -7,7 +7,6 @@ import { extractHandlers, injectHandlers, TS_DEFAULT_STUB_PATTERN, PY_DEFAULT_ST
 import { validateOutputPath, validatePluginPath, validatePluginModule } from "./security";
 import type { GeneratorOptions, GenerationResult, ValidateResult, MCPServerAST, Lang } from "./types";
 
-// From dist/core/generator.js → dist/templates/
 const TEMPLATES_ROOT = path.resolve(__dirname, "../templates");
 
 const PKG_VERSION = (() => {
@@ -146,7 +145,6 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
     warnings: [],
   };
 
-  // 1. Parse
   let ast: MCPServerAST;
   try {
     ast = await parseOpenAPI(options.input);
@@ -166,7 +164,6 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
     );
   }
 
-  // 2. Select template set
   const isTs = options.lang === "typescript";
   const isPy = options.lang === "python";
   const isGo = options.lang === "go";
@@ -178,10 +175,8 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
 
   const langDir = isTs ? "typescript" : isPy ? "python" : "go";
 
-  // Build template roots: plugin-provided templates first (allow overrides), then core templates
   const templateRoots: string[] = [];
 
-  // 2.a Load plugin-provided templates/helpers if any
   const pluginPaths = options.plugins ?? [];
   if (options.pluginsDir) {
     try {
@@ -191,30 +186,22 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
         if (fs.existsSync(candidate) && fs.lstatSync(candidate).isDirectory()) pluginPaths.push(candidate);
       }
     } catch (e) {
-      // ignore
     }
   }
 
   for (const p of pluginPaths) {
     try {
-      // Security: validate plugin path to prevent path traversal
       validatePluginPath(p);
 
       const pluginTemplates = path.join(p, "templates", langDir);
       if (fs.existsSync(pluginTemplates)) templateRoots.push(pluginTemplates);
 
-      // Security: Only load plugin modules if explicitly in safe mode
-      // By default, only templates are loaded, not dynamic code
       if (process.env.MCP_GEN_ALLOW_PLUGINS === "true") {
         try {
-          // dynamic import: plugin can be a folder with index.js or a module name
-          // prefer absolute path
           const modPath = require.resolve(p, { paths: [process.cwd(), __dirname] });
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
           const mod = require(modPath);
 
           if (mod) {
-            // Security: validate plugin module structure
             validatePluginModule(mod);
 
             if (typeof mod.registerHandlebars === "function") {
@@ -237,7 +224,6 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
   const templatesDir = path.join(TEMPLATES_ROOT, langDir);
   templateRoots.push(templatesDir);
 
-  // Register partials from plugin roots first, then core
   for (const root of templateRoots) {
     const partialsDir = path.join(root, "partials");
     registerPartials(partialsDir);
@@ -245,7 +231,6 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
 
   const fileSpecs = isTs ? getTypeScriptFileSpecs() : isPy ? getPythonFileSpecs() : getGoFileSpecs();
 
-  // 3. Check output dir
   if (fs.existsSync(result.outputDir) && !options.force && !options.incremental) {
     const contents = fs.readdirSync(result.outputDir);
     if (contents.length > 0) {
@@ -256,7 +241,6 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
     }
   }
 
-  // 4. Incremental — extract existing handlers before overwriting
   const serverFile = isTs
     ? path.join(result.outputDir, "src/server.ts")
     : isPy
@@ -267,7 +251,6 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
     ? extractHandlers(serverFile)
     : { handlers: new Map() };
 
-  // 5. Render and write
   const env = loadEnvFile(options.envFile);
 
   const context: Record<string, unknown> = {
@@ -281,7 +264,6 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
   };
 
   for (const spec of fileSpecs) {
-    // Find the first template file available from plugin roots then core templates
     let templatePath: string | null = null;
     for (const root of templateRoots) {
       const candidate = path.join(root, spec.templateFile);
@@ -298,7 +280,6 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
     try {
       let rendered = renderTemplate(templatePath, context);
 
-      // Apply incremental injection only to the server file
       const isServerFile =
         spec.outputFile === "src/server.ts" ||
         spec.outputFile === "server.py" ||
