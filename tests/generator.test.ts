@@ -7,6 +7,7 @@ import { extractHandlers, injectHandlers, TS_DEFAULT_STUB_PATTERN } from "../src
 
 const PETSTORE_JSON = path.resolve(__dirname, "../examples/petstore.json");
 const PETSTORE_YAML = path.resolve(__dirname, "../examples/petstore.yaml");
+const OPENAPI31_JSON = path.resolve(__dirname, "../examples/openapi31.json");
 
 // ─── Parser ──────────────────────────────────────────────────────────────────
 
@@ -41,6 +42,27 @@ describe("parseOpenAPI", () => {
     const ast = await parseOpenAPI(PETSTORE_JSON);
     const pet = ast.models.find((m) => m.name === "Pet")!;
     expect(pet.properties.find((p) => p.name === "id")!.type).toBe("number");
+  });
+
+  it("parses OpenAPI 3.1 auth and tools", async () => {
+    const ast = await parseOpenAPI(OPENAPI31_JSON);
+
+    expect(ast.serverName).toBe("example-api");
+    expect(ast.baseUrl).toBe("https://api.example.test");
+    expect(ast.tools.map((tool) => tool.name)).toEqual(
+      expect.arrayContaining([
+        "get_posts_search",
+        "get_users_id",
+        "post_compose",
+      ])
+    );
+    expect(Object.keys(ast.securitySchemes!)).toEqual(
+      expect.arrayContaining(["apiKey", "oauthBearer"])
+    );
+
+    const searchTool = ast.tools.find((tool) => tool.name === "get_posts_search")!;
+    expect(searchTool.params.find((param) => param.name === "q")!.required).toBe(true);
+    expect(searchTool.params.find((param) => param.name === "limit")!.type).toBe("number");
   });
 
   it("rejects invalid specs", async () => {
