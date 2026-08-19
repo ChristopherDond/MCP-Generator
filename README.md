@@ -1,10 +1,12 @@
+
+
 # MCP-Generator
 
 > **Also available in:** [Português (Versão em Português)](README.pt-BR.md)
 
 Generate MCP servers from OpenAPI specs.
 
-> **Status**: 🚀 Version `v2.1.0` Released! [View changes](https://github.com/ChristopherDond/MCP-Generator/releases/tag/v2.1.0)
+> **Status**: 🚀 Version `v2.1.1` Released! [View changes](https://github.com/ChristopherDond/MCP-Generator/releases/tag/v2.1.1)
 
 `mcp-gen` turns an OpenAPI v3 spec into an MCP server in **TypeScript**, **Python**, or **Go**. It maps each route to a tool, generates typed models (including enums, oneOf/anyOf), and keeps custom code when you regenerate.
 
