@@ -4,29 +4,36 @@
 
 Gere servidores MCP a partir de specs OpenAPI.
 
-> **Status**: 🚀 Versão `v2.0.0` Lançada! [Veja mudanças](https://github.com/ChristopherDond/MCP-Generator/releases/tag/v2.0.0)
+> **Status**: A tag Git mais recente e a versão do pacote são `v2.1.1`. `mcp-gen` não está publicado no npm (a instalação retorna E404); use o código-fonte local conforme abaixo. Os ajustes atuais de empacotamento e CI estão sem tag. Veja as [notas de release](RELEASE_NOTES.md).
 
-`mcp-gen` transforma uma spec OpenAPI v3 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript ou Python. Cada rota vira uma tool, e você pode regenerar sem perder o código customizado.
+`mcp-gen` transforma uma spec OpenAPI v3 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript, Python ou Go. Cada rota vira uma tool, e a geração incremental preserva o código customizado entre os marcadores indicados.
 
 
 ## Início rápido
 
+Com Git, Node.js 20+ e npm 9+ instalados, execute:
+
 ```bash
-npm install
+git clone https://github.com/ChristopherDond/MCP-Generator.git
+cd MCP-Generator
+npm ci
 npm run build
+node dist/cli/index.js --version
 ```
 
 Gerar um servidor a partir de uma spec local:
 
 ```bash
-mcp-gen generate -i examples/petstore.json -l typescript -o ./my-server
+node dist/cli/index.js generate -i examples/petstore.yaml -l typescript -o ./my-server
 ```
 
 Validar uma spec sem gerar arquivos:
 
 ```bash
-mcp-gen validate -i examples/petstore.yaml
+node dist/cli/index.js validate -i examples/petstore.yaml
 ```
+
+Execute esses comandos na raiz do repositório. Este fluxo pressupõe um checkout com os ajustes atuais de empacotamento e o lockfile; um novo clone só os recebe quando estiverem disponíveis na branch remota. A geração cria um scaffold; não instala dependências, compila ou inicia o servidor gerado.
 
 Use a CLI interativa se preferir prompts:
 
@@ -48,7 +55,7 @@ sequenceDiagram
     CLI->>Parser: valida e faz parse de OpenAPI v3 (JSON ou YAML)
     Parser->>Generator: AST interna (tools, models, examples)
     Generator->>Output: renderiza templates Handlebars
-    Output-->>User: projeto MCP em TypeScript ou Python
+    Output-->>User: projeto MCP em TypeScript, Python ou Go
 ```
 
 Cada rota vira uma tool MCP com:
@@ -60,23 +67,17 @@ Cada rota vira uma tool MCP com:
 ## Requisitos
 
 - Node.js 20+
-- npm 9+ ou yarn
+- npm 9+ (o início rápido usa o lockfile do repositório)
+- Git para clonar o repositório
 - (Opcional) Python 3.8+ para projetos Python
+- (Opcional) Go 1.22+ para projetos Go
 
-Para instalar:
+## Instalação local e comandos abreviados
 
-```bash
-npm install -g mcp-gen
-```
+Use o build do código-fonte em [Início rápido](#início-rápido), não uma instalação global pelo registry npm.
+Neste README, `mcp-gen` é uma abreviação de `node dist/cli/index.js`, executado na raiz do repositório. Por exemplo, `mcp-gen validate -i examples/petstore.yaml` equivale a `node dist/cli/index.js validate -i examples/petstore.yaml`.
 
-## Instalação
-
-```bash
-git clone https://github.com/ChristopherDond/MCP-Generator.git
-cd MCP-Generator
-npm install
-npm run build
-```
+Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o comando `mcp-gen` apontando para seu checkout local. Isso altera os links globais do npm; não baixa um pacote `mcp-gen` publicado.
 
 ## CLI
 
@@ -109,6 +110,15 @@ mcp-gen validate -i ./api/openapi.yaml
 ```
 
 Formatos aceitos: `.json`, `.yaml`, `.yml` ou uma URL.
+
+### Segurança e lint (v2.1.1)
+
+```bash
+node dist/cli/index.js security -p ./my-server
+node dist/cli/index.js security -p ./my-server --fail-on-warn
+```
+
+Analisa arquivos gerados buscando padrões semelhantes a credenciais, identificadores ligados à autorização, nomes, descrições e marcadores incrementais. `--json` imprime um relatório JSON, mas a CLI também imprime um cabeçalho; stdout não é um documento JSON puro. Erros resultam em código de saída 1; `--fail-on-warn` também falha com avisos. É análise estática, não garantia de segurança.
 
 ### Init
 
@@ -274,15 +284,14 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 
 ## Roadmap
 
-| Semana | Status | Escopo |
-|------|--------|-------|
-| 0–1 | ✅ Concluído | CLI, parser OpenAPI v3, gerador TypeScript, scaffold com 7 arquivos |
-| 2 | ✅ Concluído | Entrada YAML, target Python/FastMCP, geração incremental |
-| 3 | ✅ Concluído | Suporte a `oneOf`/`anyOf`, stubs de auth, testes de integração |
-| 4 | ✅ Concluído | CLI interativa, publicação npm/pip |
-| 5 | ✅ Concluído | `mcp-gen init --from stripe` — registry interno de specs |
-| 6 | ✅ Concluído | Release candidate `v1.0.0-rc.1` — em teste, feedback bem-vindo! |
-| 7+ | 📋 Planejado | Plugins customizados, melhorias a partir do feedback, versão final `v1.0.0` |
+| Etapa | Status | Escopo |
+|-------|--------|-------|
+| Recursos existentes | Implementados | CLI, parser OpenAPI v3, geração TypeScript/Python, geração incremental, modo interativo, registry de specs, plugins |
+| v2.1.0 | Com tag | Target Go, modo HTTP, enums, parâmetros header/cookie, API de biblioteca, validação detalhada |
+| v2.1.1 | Com tag | Análise estática de segurança/lint e verificações no template de servidor Go; templates TypeScript/Python sem alterações desde v2.1.0 |
+| Empacotamento e CI | Alterações sem tag | Cópia portátil de templates, lockfile, allowlist do pacote, build no prepack, smoke test do tarball |
+| Distribuição | Pendente | `mcp-gen` não publicado no npm (E404); publicação via pip não comprovada. Python é um target de geração, não uma forma de instalar esta CLI via pip |
+| Futuro | Planejado | Streaming/resources/prompts, OpenAPI v2, mais registries |
 
 ---
 
@@ -290,7 +299,11 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 
 - OpenAPI v2 (Swagger) não é suportado — apenas v3.x
 - `oneOf` / `anyOf` / `discriminator` são parcialmente tratados
-- O script `copy-templates` usa `cp` — no Windows, troque para `xcopy` no `package.json`
+- A análise de segurança/lint usa padrões estáticos de texto e pode gerar falsos positivos ou deixar problemas passar. Um relatório aprovado não garante segurança nem verifica autorização, revogação, gastos ou auditoria em execução
+- As verificações de autorização geradas são scaffolding, não um backend completo de segurança; revise e teste antes do deploy
+- Streaming/resources/prompts ainda não estão implementados
+
+O script `copy-templates` atual, ainda sem tag, usa `fs.cpSync` do Node.js no Windows, Linux e macOS; não depende mais de `cp` ou `xcopy`. A CI atual executa apenas no Ubuntu.
 
 ---
 

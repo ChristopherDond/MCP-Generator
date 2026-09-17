@@ -4,28 +4,35 @@
 
 Generate MCP servers from OpenAPI specs.
 
-> **Status**: 🚀 Version `v2.1.0` Released! [View changes](https://github.com/ChristopherDond/MCP-Generator/releases/tag/v2.1.0)
+> **Status**: The latest Git tag and package version are `v2.1.1`. `mcp-gen` is not published on npm (installation returns E404); use the local source flow below. Current packaging and CI fixes are untagged. See [release notes](RELEASE_NOTES.md) (PT-BR).
 
 `mcp-gen` turns an OpenAPI v3 spec into an MCP server in **TypeScript**, **Python**, or **Go**. It maps each route to a tool, generates typed models (including enums, oneOf/anyOf), and keeps custom code when you regenerate.
 
 ## Quick start
 
+With Git, Node.js 20+ and npm 9+ installed, run:
+
 ```bash
-npm install
+git clone https://github.com/ChristopherDond/MCP-Generator.git
+cd MCP-Generator
+npm ci
 npm run build
+node dist/cli/index.js --version
 ```
 
 Generate a server from a local spec:
 
 ```bash
-mcp-gen generate -i examples/petstore.json -l typescript -o ./my-server
+node dist/cli/index.js generate -i examples/petstore.yaml -l typescript -o ./my-server
 ```
 
 Validate a spec without generating files:
 
 ```bash
-mcp-gen validate -i examples/petstore.yaml
+node dist/cli/index.js validate -i examples/petstore.yaml
 ```
+
+Run these commands from the repository root. This flow assumes a checkout containing the current packaging fixes and lockfile; a fresh clone receives them only once they are available on the remote branch. Generation writes a scaffold; it does not install dependencies, build, or start the generated server.
 
 Run the interactive CLI if you prefer prompts:
 
@@ -56,30 +63,23 @@ Each route becomes an MCP tool with:
 - example responses from the spec
 - enum / oneOf / anyOf / discriminator schema support
 - real HTTP client mode (`--http`) that calls the actual API
-- scoped authContext contract (blocks raw credentials by default)
+- scaffolded authContext checks for scoped metadata and credential-like argument keys; review before deployment
 - optional incremental code preservation
 
 ## Requirements
 
 - Node.js 20+
-- npm 9+ or yarn
+- npm 9+ (the source quick start uses the repository lockfile)
+- Git to clone the repository
 - (Optional) Python 3.8+ for Python projects
 - (Optional) Go 1.22+ for Go projects
 
-To install globally:
+## Local installation and command shorthand
 
-```bash
-npm install -g mcp-gen
-```
+Use the source build in [Quick start](#quick-start), not a global npm registry install.
+Throughout this README, `mcp-gen` is shorthand for `node dist/cli/index.js` from the repository root. For example, `mcp-gen validate -i examples/petstore.yaml` means `node dist/cli/index.js validate -i examples/petstore.yaml`.
 
-## Installation
-
-```bash
-git clone https://github.com/ChristopherDond/MCP-Generator.git
-cd MCP-Generator
-npm install
-npm run build
-```
+Optionally, run `npm link` from the repository root after building to make the `mcp-gen` command point to your local checkout. This changes npm's global links; it does not download a published `mcp-gen` package.
 
 ## CLI
 
@@ -124,6 +124,15 @@ Spec is valid
   ⚠ Tool name collision resolved: "get_users" appears 2x (unique suffixes added)
   ⚠ 3 tool(s) have no example response: get_users_id, delete_user, patch_user
 ```
+
+### Security and lint (v2.1.1)
+
+```bash
+node dist/cli/index.js security -p ./my-server
+node dist/cli/index.js security -p ./my-server --fail-on-warn
+```
+
+Scans generated files for credential-like patterns, authorization-related identifiers, naming, descriptions, and incremental markers. `--json` prints a JSON report, but the CLI also prints a header; stdout is not a pure JSON document. Errors cause exit code 1; `--fail-on-warn` also fails on warnings. This is static analysis, not a security guarantee.
 
 ### Init
 
@@ -348,8 +357,10 @@ Code between `@@mcp-gen:start` and `@@mcp-gen:end` markers is preserved when you
 
 ## Programmatic API (Library Mode)
 
+After building locally, this example uses the compiled entry point from a file in the repository root; it does not require an npm registry package.
+
 ```typescript
-import { generate, validateSpec, parseOpenAPI } from "mcp-gen";
+import { generate, validateSpec, parseOpenAPI } from "./dist/index.js";
 
 const result = await generate({
   input: "./api/openapi.yaml",
@@ -392,16 +403,14 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 
 ## Roadmap
 
-| Week | Status | Scope |
-|------|--------|-------|
-| 0–1 | ✅ Done | CLI, OpenAPI v3 parser, TypeScript generator, 7-file scaffold |
-| 2 | ✅ Done | YAML input, Python/FastMCP target, incremental generation |
-| 3 | ✅ Done | `oneOf`/`anyOf` support, auth stubs, integration tests |
-| 4 | ✅ Done | Interactive CLI mode, npm/pip publish |
-| 5 | ✅ Done | `mcp-gen init --from stripe` — built-in spec registry |
-| 6 | ✅ Done | Release candidate `v1.0.0-rc.1` — in testing, feedback welcome! |
-| 7+ | 📋 Planned | **v2.1**: Go target, HTTP mode, enums, header/cookie params, library API, rich validate |
-| 8+ | 📋 Planned | Streaming/resources/prompts, OpenAPI v2, more registries |
+| Stage | Status | Scope |
+|-------|--------|-------|
+| Existing features | Implemented | CLI, OpenAPI v3 parser, TypeScript/Python generation, incremental generation, interactive mode, spec registry, plugins |
+| v2.1.0 | Tagged | Go target, HTTP mode, enums, header/cookie params, library API, rich validate |
+| v2.1.1 | Tagged | Static security/lint scanning and Go server template checks; TypeScript/Python templates unchanged from v2.1.0 |
+| Packaging and CI | Untagged changes | Portable template copy, lockfile, package allowlist, prepack build, tarball smoke test |
+| Distribution | Pending | `mcp-gen` is not published on npm (E404); pip publication is not established. Python is a generation target, not a pip installation path for this CLI |
+| Future | Planned | Streaming/resources/prompts, OpenAPI v2, more registries |
 
 ---
 
@@ -409,7 +418,11 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 
 - OpenAPI v2 (Swagger) is not supported — v3.x only
 - `oneOf` / `anyOf` / `discriminator` schemas generate union types but no runtime validation
-- `copy-templates` script uses `xcopy` on Windows (works in CI)
+- Security/lint scanning uses static text patterns and can produce false positives or miss issues. A passing report does not guarantee security or verify runtime authorization, revocation, spending, or audit logging
+- Generated authorization checks are scaffolding, not a complete security backend; review and test them before deployment
+- Streaming/resources/prompts are not implemented
+
+The current, untagged `copy-templates` script uses Node.js `fs.cpSync` on Windows, Linux, and macOS; it no longer requires `cp` or `xcopy`. CI currently runs on Ubuntu only.
 
 ---
 
