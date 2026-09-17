@@ -10,13 +10,25 @@
     "type": "git",
     "url": "https://github.com/ChristopherDond/MCP-Generator"
   },
+  "files": [
+    "dist/",
+    "examples/",
+    "README.md",
+    "README.pt-BR.md",
+    "CHANGELOG.md",
+    "RELEASE_NOTES.md",
+    "SECURITY.md",
+    "SECURITY.pt-BR.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc && npm run copy-templates",
-    "copy-templates": "xcopy /E /I /Y src\\templates dist\\templates",
+    "copy-templates": "node -e \"require('node:fs').cpSync('src/templates', 'dist/templates', { recursive: true })\"",
+    "prepack": "npm run build",
     "dev": "ts-node --prefer-ts-exts src/cli/index.ts",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
-    "release": "npm run build && npm run test && node scripts/release.js",
+    "release": "npm run build && npm run test",
     "release:patch": "npm run build && npm run test && npm version patch && git push origin main --tags",
     "release:rc": "npm run build && npm run test && npm version prerelease --preid=rc && git push origin main --tags"
   },
