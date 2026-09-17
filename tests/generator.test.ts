@@ -139,6 +139,47 @@ describe("generate (python)", () => {
 // ─── Incremental Engine ───────────────────────────────────────────────────────
 
 describe("incremental", () => {
+  it.each([
+    { lang: "typescript" as const, file: "src/server.ts", prefix: "//", code: '      const message = "preserved";\n      return { content: [{ type: "text", text: message }] };' },
+    { lang: "python" as const, file: "server.py", prefix: "#", code: '    message = "preserved"\n    return [{"message": message}]' },
+    { lang: "go" as const, file: "main.go", prefix: "//", code: '\t\tmessage := "preserved"\n\t\treturn mcp.NewToolResultText(message), nil' },
+  ])("preserves customized $lang handlers through two real regenerations", async ({ lang, file, prefix, code }) => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-incremental-"));
+    const clock = jest.spyOn(Date.prototype, "toISOString").mockReturnValue("2026-01-01T00:00:00.000Z");
+    try {
+      const options = { input: PETSTORE_JSON, lang, out: tmpDir, force: false, incremental: true, http: false };
+      const initial = await generate(options);
+      expect(initial.errors).toEqual([]);
+      expect(initial.success).toBe(true);
+      const serverFile = path.join(tmpDir, file);
+      const original = fs.readFileSync(serverFile, "utf-8");
+      const block = /^([\t ]*(?:\/\/|#) @@mcp-gen:start:get_pets\r?\n)[\s\S]*?^([\t ]*(?:\/\/|#) @@mcp-gen:end:get_pets\r?$)/m;
+      const match = original.match(block);
+      expect(match).not.toBeNull();
+      const eol = match![1].endsWith("\r\n") ? "\r\n" : "\n";
+      const customCode = code.replace(/\n/g, eol);
+      const edited = original.replace(block, (_, start, end) => start + customCode + eol + end);
+      expect(edited).not.toBe(original);
+      fs.writeFileSync(serverFile, edited);
+
+      for (let pass = 0; pass < 2; pass++) {
+        const regenerated = await generate({ ...options, incremental: true });
+        expect(regenerated.errors).toEqual([]);
+        expect(regenerated.success).toBe(true);
+        expect(regenerated.filesPreserved).toContain("get_pets");
+        const content = fs.readFileSync(serverFile, "utf-8");
+        expect(content).toBe(edited);
+        expect(extractHandlers(serverFile).handlers.get("get_pets")).toBe(customCode);
+        const markerLines = content.split(/\r?\n/).filter((line) => /@@mcp-gen:(start|end):/.test(line));
+        expect(markerLines).toHaveLength(8);
+        expect(markerLines.every((line) => line.trimStart().startsWith(`${prefix} @@mcp-gen:`))).toBe(true);
+      }
+    } finally {
+      clock.mockRestore();
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
   it("extracts handlers from marked file", () => {
     const content = `
 // @@mcp-gen:start:get_pets

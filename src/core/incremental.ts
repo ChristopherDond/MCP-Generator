@@ -90,13 +90,15 @@ export function injectHandlers(
     if (startIdx === -1 || endIdx === -1) continue;
 
     const afterStart = result.indexOf("\n", startIdx) + 1;
-    const freshCode = result.slice(afterStart, endIdx).trimEnd();
+    const endLineStart = result.lastIndexOf("\n", endIdx) + 1;
+    const lineEnding = result[afterStart - 2] === "\r" ? "\r\n" : "\n";
+    const freshCode = result.slice(afterStart, endLineStart).trimEnd();
 
     if (customCode.trim() === freshCode.trim()) continue;
 
     if (defaultStubPattern.test(customCode.trim())) continue;
 
-    result = result.slice(0, afterStart) + customCode + "\n" + result.slice(endIdx);
+    result = result.slice(0, afterStart) + customCode + lineEnding + result.slice(endLineStart);
     preserved.push(toolName);
   }
 
