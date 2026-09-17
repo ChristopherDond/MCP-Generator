@@ -37,6 +37,6 @@ jobs:
 
       - name: Smoke test installed tarball
         run: |
-          npm install --prefix "$RUNNER_TEMP/mcp-gen-smoke" "$RUNNER_TEMP/mcp-gen-"*.tgz --no-audit --no-fund
+          npm install --prefix "$RUNNER_TEMP/mcp-gen-smoke" "$RUNNER_TEMP/christopher_dondici-mcp-gen-"*.tgz --no-audit --no-fund
           "$RUNNER_TEMP/mcp-gen-smoke/node_modules/.bin/mcp-gen" --version
-          "$RUNNER_TEMP/mcp-gen-smoke/node_modules/.bin/mcp-gen" validate -i "$RUNNER_TEMP/mcp-gen-smoke/node_modules/mcp-gen/examples/petstore.yaml"
+          "$RUNNER_TEMP/mcp-gen-smoke/node_modules/.bin/mcp-gen" validate -i "$RUNNER_TEMP/mcp-gen-smoke/node_modules/@christopher_dondici/mcp-gen/examples/petstore.yaml"

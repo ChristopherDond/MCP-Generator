@@ -135,10 +135,10 @@ https://modelcontextprotocol.io
 
 **Comment 3: "Try it now"**
 ```
-Get started in 3 minutes:
+After npm publication of version 2.1.2 is confirmed:
 
 ```bash
-npm install -g mcp-gen
+npm install -g @christopher_dondici/mcp-gen@2.1.2
 mcp-gen init --from petstore --generate -o ./my-server
 cd my-server && npm start
 ```

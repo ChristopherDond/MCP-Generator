@@ -6,7 +6,9 @@ Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
 ### Packaging & Distribution
 
-- `mcp-gen` 2.1.2 prepared for release; npm publication has not been verified
+- `@christopher_dondici/mcp-gen` 2.1.2 prepared for release; not yet published to npm
+- Scoped npm name after rejection of `mcp-gen` for similarity to `mcpgen`; version, `mcp-gen` binary and repository unchanged
+- Public scoped publication configured; CI and release install and validate the scoped tarball before publication
 - Build, packaging, CI, and dependency fixes only; no new runtime features
 - Portable template copy (`fs.cpSync`) replacing Windows-only `xcopy`
 - Versioned `package-lock.json` enabling `npm ci`

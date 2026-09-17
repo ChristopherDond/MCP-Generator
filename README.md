@@ -4,7 +4,7 @@
 
 Generate MCP servers from OpenAPI specs.
 
-> **Status**: `mcp-gen` 2.1.2 is prepared for release; npm publication has not been verified. This release includes build, packaging, CI, and dependency fixes, with no new runtime features. Use the source quick start below. See [release notes](RELEASE_NOTES.md) (PT-BR).
+> **Status**: `@christopher_dondici/mcp-gen` 2.1.2 is prepared for release and has not been published to npm. This release includes build, packaging, CI, and dependency fixes, with no new runtime features. Use the source quick start below. See [release notes](RELEASE_NOTES.md) (PT-BR).
 
 `mcp-gen` turns an OpenAPI v3 spec into an MCP server in **TypeScript**, **Python**, or **Go**. It maps each route to a tool, generates typed models (including enums, oneOf/anyOf), and keeps custom code when you regenerate.
 
@@ -76,10 +76,18 @@ Each route becomes an MCP tool with:
 
 ## Local installation and command shorthand
 
-Use the source build in [Quick start](#quick-start) while npm publication remains unverified. Once version 2.1.2 is published and its availability on npm is confirmed, you can install it with `npm install -g mcp-gen@2.1.2`.
+Use the source build in [Quick start](#quick-start) while npm publication remains unverified. Once version 2.1.2 is published and its availability on npm is confirmed, you can install it with `npm install -g @christopher_dondici/mcp-gen@2.1.2`.
 Throughout this README, `mcp-gen` is shorthand for `node dist/cli/index.js` from the repository root. For example, `mcp-gen validate -i examples/petstore.yaml` means `node dist/cli/index.js validate -i examples/petstore.yaml`.
 
-Optionally, run `npm link` from the repository root after building to make the `mcp-gen` command point to your local checkout. This changes npm's global links; it does not download a published `mcp-gen` package.
+Optionally, run `npm link` from the repository root after building to make the `mcp-gen` command point to your local checkout. This changes npm's global links; it does not download a published `@christopher_dondici/mcp-gen` package. The npm package name changed because `mcp-gen` was rejected for similarity to `mcpgen`; the command remains `mcp-gen`.
+
+To install a locally produced tarball without publishing:
+
+```bash
+npm install ./christopher_dondici-mcp-gen-2.1.2.tgz
+./node_modules/.bin/mcp-gen --version
+./node_modules/.bin/mcp-gen validate -i node_modules/@christopher_dondici/mcp-gen/examples/petstore.yaml
+```
 
 ## CLI
 
@@ -357,10 +365,10 @@ Code between `@@mcp-gen:start` and `@@mcp-gen:end` markers is preserved when you
 
 ## Programmatic API (Library Mode)
 
-After building locally, this example uses the compiled entry point from a file in the repository root; it does not require an npm registry package.
+With the local tarball installed, import the scoped package as shown below. From the repository root after building, use `"./dist/index.js"` instead; neither approach requires npm publication.
 
 ```typescript
-import { generate, validateSpec, parseOpenAPI } from "./dist/index.js";
+import { generate, validateSpec, parseOpenAPI } from "@christopher_dondici/mcp-gen";
 
 const result = await generate({
   input: "./api/openapi.yaml",

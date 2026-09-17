@@ -1,6 +1,9 @@
 {
-  "name": "mcp-gen",
+  "name": "@christopher_dondici/mcp-gen",
   "version": "2.1.2",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "OpenAPI → MCP Server generator CLI",
   "main": "dist/index.js",
   "bin": {

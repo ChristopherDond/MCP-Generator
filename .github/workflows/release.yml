@@ -28,31 +28,41 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify release metadata
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node -e 'const assert = require("node:assert/strict"); const p = require("./package.json"); assert.equal(p.name, "@christopher_dondici/mcp-gen"); assert.equal(process.env.RELEASE_TAG, "v" + p.version); assert.equal(p.publishConfig.access, "public");'
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
       - name: Run tests
         run: npm test
 
       - name: Build
         run: npm run build
 
+      - name: Pack
+        run: npm pack --pack-destination "$RUNNER_TEMP"
+
+      - name: Smoke test installed tarball
+        run: |
+          npm install --prefix "$RUNNER_TEMP/mcp-gen-smoke" "$RUNNER_TEMP/christopher_dondici-mcp-gen-"*.tgz --no-audit --no-fund
+          "$RUNNER_TEMP/mcp-gen-smoke/node_modules/.bin/mcp-gen" --version
+          "$RUNNER_TEMP/mcp-gen-smoke/node_modules/.bin/mcp-gen" validate -i "$RUNNER_TEMP/mcp-gen-smoke/node_modules/@christopher_dondici/mcp-gen/examples/petstore.yaml"
+
       - name: Publish to npm
         if: env.HAS_NPM_TOKEN == 'true'
-        run: npm publish
+        run: npm publish "$RUNNER_TEMP/christopher_dondici-mcp-gen-"*.tgz --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/**/*
+          files: ${{ runner.temp }}/christopher_dondici-mcp-gen-*.tgz
           draft: false
-          prerelease: ${{ contains(github.ref, '-rc.') }}
+          prerelease: false
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Comment false
-        if: contains(github.ref, '-rc.')
-        run: |
-          echo "🚀 Release Candidate published!"
-          echo "📦 npm: npm install mcp-gen@rc"
-          echo "🔗 GitHub: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"

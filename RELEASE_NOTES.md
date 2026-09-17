@@ -2,7 +2,7 @@
 
 ## Estado e fontes
 
-A versão `2.1.2` está preparada para release, com `package.json` e `package-lock.json` alinhados. A publicação no npm não foi verificada; estas notas não confirmam publicação nem criação de tag. Uma tag Git ou um workflow de publicação não comprova disponibilidade no registry.
+A versão `2.1.2` do pacote `@christopher_dondici/mcp-gen` está preparada para release e ainda não foi publicada, com `package.json` e `package-lock.json` alinhados. O npm recusou `mcp-gen` por similaridade com `mcpgen`; a renomeação mantém a versão, o binário `mcp-gen` e o repositório. A publicação no npm não foi verificada; estas notas não confirmam publicação nem criação de tag. Uma tag Git ou um workflow de publicação não comprova disponibilidade no registry.
 
 A 2.1.2 reúne correções de build, empacotamento, CI e dependências, sem novas funcionalidades de runtime. Estas notas preservam o histórico da 2.1.1, confrontando o [CHANGELOG](CHANGELOG.md) com os diffs `v2.1.0..v2.1.1` e `v2.1.1..1629696`, e descrevem separadamente a preparação da 2.1.2. As seções históricas do changelog não foram alteradas; suas afirmações sobre publicação e segurança não confirmam o estado atual.
 
@@ -47,6 +47,8 @@ As alterações abaixo fazem parte da preparação da 2.1.2 e abrangem build, em
 
 ### Build e pacote
 
+- `publishConfig.access` é `public` para o pacote scoped. O tarball da 2.1.2 se chama `christopher_dondici-mcp-gen-2.1.2.tgz` e a instalação local usa `node_modules/@christopher_dondici/mcp-gen`.
+- Para o pacote final, use um clone ou worktree limpo fora do checkout de desenvolvimento; `prepack` não remove arquivos antigos nem caches já existentes em `dist/`.
 - `copy-templates` usa uma chamada inline de Node.js a `fs.cpSync`, com cópia recursiva de `src/templates` para `dist/templates`. Não depende mais de `xcopy` nem de comandos de cópia específicos do shell.
 - A allowlist `files` inclui `dist/`, `examples/`, `README.md`, `README.pt-BR.md`, `CHANGELOG.md`, `RELEASE_NOTES.md`, `SECURITY.md`, `SECURITY.pt-BR.md` e `LICENSE`. O npm também inclui seu manifesto automaticamente.
 - `prepack` executa `npm run build`, preparando o código compilado e os templates antes do empacotamento.
@@ -60,7 +62,8 @@ As alterações abaixo fazem parte da preparação da 2.1.2 e abrangem build, em
 - A nova CI é acionada por pushes em qualquer branch e por pull requests, em `ubuntu-latest` com Node.js 20.
 - Executa `npm ci`, `npx tsc --noEmit`, testes, build e `npm pack` real. Instala o tarball em um diretório temporário e verifica `--version` e `validate` usando o exemplo Petstore incluído no pacote.
 - O smoke test verifica instalação e execução básica do tarball; não compila nem executa servidores gerados em todas as linguagens. A CI não publica no npm e não testa Windows/macOS.
-- O workflow separado de release mantém o mesmo gatilho de tags estáveis (`v[0-9]+.[0-9]+.[0-9]+`). A presença de lógica de RC no arquivo não amplia esse gatilho.
+- O workflow separado de release mantém o mesmo gatilho de tags estáveis (`v[0-9]+.[0-9]+.[0-9]+`). Verifica nome scoped, acesso público e correspondência entre tag e versão; executa typecheck, testes, build, pack e smoke test antes da publicação.
+- A publicação usa `--access public` sobre o mesmo tarball validado, também anexado à release GitHub. A lógica de RC inalcançável foi removida. Uma release GitHub sem publicação npm continua possível quando o segredo não está disponível; não comprova publicação no registry.
 - A variável de ambiente booleana `HAS_NPM_TOKEN` representa apenas a presença do segredo. O passo de publicação usa `if: env.HAS_NPM_TOKEN == 'true'`, em vez de consultar `secrets` diretamente no `if`. Isso não confirma que o pacote já foi publicado.
 
 ### Dependências
@@ -83,9 +86,9 @@ node dist/cli/index.js validate -i examples/petstore.yaml
 
 O fluxo acima usa a branch `main`, com as correções de build e empacotamento incluídas na 2.1.2, não um checkout isolado da tag histórica `v2.1.1`. A geração cria arquivos; não instala dependências nem inicia o servidor gerado.
 
-Quando a versão 2.1.2 for publicada e sua disponibilidade no npm for confirmada, a instalação pelo registry poderá ser feita com `npm install -g mcp-gen@2.1.2`. Até essa confirmação, use o fluxo pelo código-fonte.
+Quando a versão 2.1.2 for publicada e sua disponibilidade no npm for confirmada, a instalação pelo registry poderá ser feita com `npm install -g @christopher_dondici/mcp-gen@2.1.2`. Até essa confirmação, use o fluxo pelo código-fonte.
 
-Nos READMEs, `mcp-gen` é uma abreviação de `node dist/cli/index.js` na raiz do repositório. Opcionalmente, `npm link` após o build cria o comando apontando para o checkout local, alterando os links globais do npm sem depender de uma publicação de `mcp-gen` no registry. Não há fluxo de instalação desta CLI via pip confirmado.
+Nos READMEs, `mcp-gen` é uma abreviação de `node dist/cli/index.js` na raiz do repositório. Opcionalmente, `npm link` após o build cria o comando apontando para o checkout local, alterando os links globais do npm sem depender de uma publicação de `@christopher_dondici/mcp-gen` no registry. Não há fluxo de instalação desta CLI via pip confirmado.
 
 ## Limitações
 

@@ -1,4 +1,6 @@
-# Release Strategy - MCP-Generator v2.0.0
+# Release Strategy - MCP-Generator
+
+A versão `@christopher_dondici/mcp-gen@2.1.2` ainda não foi publicada. O binário continua `mcp-gen`. Os exemplos de RC abaixo são históricos e não devem ser executados para preparar a 2.1.2; publicar, aumentar versão e enviar commits/tags exigem autorização separada.
 
 ## Versioning
 
@@ -42,8 +44,8 @@ npm publish --tag rc
 
 Verificar:
 ```bash
-npm info mcp-gen versions
-npm view mcp-gen@1.0.0-rc.1
+npm info @christopher_dondici/mcp-gen versions
+npm view @christopher_dondici/mcp-gen@2.1.2
 ```
 
 ### 4. Anunciar (Product Hunt, Twitter, etc.)
@@ -52,26 +54,29 @@ Veja [PRODUCT_HUNT.md](./PRODUCT_HUNT.md)
 ## Automated Release Workflow
 
 O GitHub Actions workflow (`release.yml`) automatiza:
-- ✅ Build e testes
-- ✅ Publicação no npm (com tag `rc`)
-- ✅ Criação de release no GitHub
-- ✅ Validação de changelog
+- Verificação do nome scoped, acesso público e versão correspondente à tag
+- Typecheck, testes e build em checkout limpo
+- Pack e instalação isolada do tarball, com `--version` e validação Petstore
+- Publicação pública do tarball validado somente quando `NPM_TOKEN` está disponível
+- Criação de release no GitHub com o tarball anexado
 
-**Trigger**: Push de tags seguindo padrão `v*.*.*-rc.*`
+**Trigger**: Push de tags estáveis seguindo o padrão `v[0-9]+.[0-9]+.[0-9]+`. Não publica RC nem valida changelog. A criação de release GitHub não comprova publicação npm.
 
 ## CI/CD Pipeline
 
 ```
-Push tag v1.0.0-rc.1
+Push tag estável (somente com autorização)
     ↓
 GitHub Actions (release.yml)
-    ├→ npm ci
-    ├→ npm run build
+    ├→ npm ci e verificação dos metadados
+    ├→ npx tsc --noEmit
     ├→ npm test
-    ├→ npm publish --tag rc
-    └→ Create Release on GitHub
+    ├→ npm run build
+    ├→ npm pack e smoke test isolado
+    ├→ npm publish <tarball> --access public (se houver NPM_TOKEN)
+    └→ Create Release on GitHub com tarball
     ↓
-Available on npm as @latest and @rc
+Verificar disponibilidade de @christopher_dondici/mcp-gen no npm
 ```
 
 ## Comunicação

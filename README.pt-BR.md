@@ -4,7 +4,7 @@
 
 Gere servidores MCP a partir de specs OpenAPI.
 
-> **Status**: `mcp-gen` 2.1.2 está preparado para release; a publicação no npm não foi verificada. Esta versão inclui correções de build, empacotamento, CI e dependências, sem novas funcionalidades de runtime. Use o início rápido pelo código-fonte abaixo. Veja as [notas de release](RELEASE_NOTES.md).
+> **Status**: `@christopher_dondici/mcp-gen` 2.1.2 está preparado para release e ainda não foi publicado no npm. Esta versão inclui correções de build, empacotamento, CI e dependências, sem novas funcionalidades de runtime. Use o início rápido pelo código-fonte abaixo. Veja as [notas de release](RELEASE_NOTES.md).
 
 `mcp-gen` transforma uma spec OpenAPI v3 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript, Python ou Go. Cada rota vira uma tool, e a geração incremental preserva o código customizado entre os marcadores indicados.
 
@@ -74,10 +74,18 @@ Cada rota vira uma tool MCP com:
 
 ## Instalação local e comandos abreviados
 
-Use o build do código-fonte em [Início rápido](#início-rápido) enquanto a publicação no npm não estiver verificada. Quando a versão 2.1.2 for publicada e sua disponibilidade no npm for confirmada, você poderá instalá-la com `npm install -g mcp-gen@2.1.2`.
+Use o build do código-fonte em [Início rápido](#início-rápido) enquanto a publicação no npm não estiver verificada. Quando a versão 2.1.2 for publicada e sua disponibilidade no npm for confirmada, você poderá instalá-la com `npm install -g @christopher_dondici/mcp-gen@2.1.2`.
 Neste README, `mcp-gen` é uma abreviação de `node dist/cli/index.js`, executado na raiz do repositório. Por exemplo, `mcp-gen validate -i examples/petstore.yaml` equivale a `node dist/cli/index.js validate -i examples/petstore.yaml`.
 
-Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o comando `mcp-gen` apontando para seu checkout local. Isso altera os links globais do npm; não baixa um pacote `mcp-gen` publicado.
+Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o comando `mcp-gen` apontando para seu checkout local. Isso altera os links globais do npm; não baixa um pacote `@christopher_dondici/mcp-gen` publicado. O nome npm mudou porque `mcp-gen` foi recusado por similaridade com `mcpgen`; o comando continua sendo `mcp-gen`.
+
+Para instalar um tarball produzido localmente sem publicar:
+
+```bash
+npm install ./christopher_dondici-mcp-gen-2.1.2.tgz
+./node_modules/.bin/mcp-gen --version
+./node_modules/.bin/mcp-gen validate -i node_modules/@christopher_dondici/mcp-gen/examples/petstore.yaml
+```
 
 ## CLI
 

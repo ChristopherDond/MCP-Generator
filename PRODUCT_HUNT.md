@@ -132,7 +132,7 @@ Key points:
 ## 🔗 Links Importantes
 
 - **GitHub**: https://github.com/ChristopherDond/MCP-Generator
-- **npm**: https://www.npmjs.com/package/mcp-gen
+- **npm (após publicação confirmada)**: https://www.npmjs.com/package/@christopher_dondici/mcp-gen
 - **Docs**: README.md (multi-language support)
 - **Live Demo**: [preparar URL]
 
