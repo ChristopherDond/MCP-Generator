@@ -10,6 +10,9 @@ Handlebars.registerHelper("and", (a: unknown, b: unknown) => Boolean(a && b));
 Handlebars.registerHelper("or", (a: unknown, b: unknown) => Boolean(a || b));
 Handlebars.registerHelper("not", (a: unknown) => !a);
 Handlebars.registerHelper("gt", (a: number, b: number) => a > b);
+Handlebars.registerHelper("hasBodyParam", (params: Array<{ in: string }>) =>
+  (params ?? []).some((p) => p.in === "body")
+);
 
 /** snake_case → PascalCase */
 Handlebars.registerHelper("pascal", (str: string) => {
