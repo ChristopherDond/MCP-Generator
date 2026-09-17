@@ -32,6 +32,10 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Build and smoke test generated TypeScript
+        timeout-minutes: 6
+        run: npm run test:generated
+
       - name: Pack
         run: npm pack --pack-destination "$RUNNER_TEMP"
 
