@@ -2,6 +2,23 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.1.2] - Prepared for release (2026-09-17)
+
+### Packaging & Distribution
+
+- `mcp-gen` 2.1.2 prepared for release; npm publication has not been verified
+- Build, packaging, CI, and dependency fixes only; no new runtime features
+- Portable template copy (`fs.cpSync`) replacing Windows-only `xcopy`
+- Versioned `package-lock.json` enabling `npm ci`
+- Package `files` allowlist + `prepack` build so tarballs are complete
+- Release workflow gates `npm publish` on `HAS_NPM_TOKEN` env instead of `secrets` in `if`
+- New CI workflow: typecheck, tests, build, `npm pack` and tarball install smoke test on push/PR
+- Dependency updates: fast-uri 3.1.8, hono 4.13.8, js-yaml 4.3.2, qs 6.16.0
+- Package and lockfile versions aligned to 2.1.2; repository URL normalized to the official `git+https` format
+- English/Portuguese READMEs and `RELEASE_NOTES.md` aligned with 2.1.2 preparation, source quick start, and conditional npm installation; 2.1.1 history preserved
+
+---
+
 ## [2.1.1] - 2026-08-07
 
 ### 🛡️ MCP Security & Lint Layer (New)

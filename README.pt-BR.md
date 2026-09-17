@@ -4,7 +4,7 @@
 
 Gere servidores MCP a partir de specs OpenAPI.
 
-> **Status**: A tag Git mais recente e a versão do pacote são `v2.1.1`. `mcp-gen` não está publicado no npm (a instalação retorna E404); use o código-fonte local conforme abaixo. Os ajustes atuais de empacotamento e CI estão sem tag. Veja as [notas de release](RELEASE_NOTES.md).
+> **Status**: `mcp-gen` 2.1.2 está preparado para release; a publicação no npm não foi verificada. Esta versão inclui correções de build, empacotamento, CI e dependências, sem novas funcionalidades de runtime. Use o início rápido pelo código-fonte abaixo. Veja as [notas de release](RELEASE_NOTES.md).
 
 `mcp-gen` transforma uma spec OpenAPI v3 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript, Python ou Go. Cada rota vira uma tool, e a geração incremental preserva o código customizado entre os marcadores indicados.
 
@@ -33,7 +33,7 @@ Validar uma spec sem gerar arquivos:
 node dist/cli/index.js validate -i examples/petstore.yaml
 ```
 
-Execute esses comandos na raiz do repositório. Este fluxo pressupõe um checkout com os ajustes atuais de empacotamento e o lockfile; um novo clone só os recebe quando estiverem disponíveis na branch remota. A geração cria um scaffold; não instala dependências, compila ou inicia o servidor gerado.
+Execute esses comandos na raiz do repositório, na branch `main`. As correções de build e empacotamento fazem parte da 2.1.2. A geração cria um scaffold; não instala dependências, compila ou inicia o servidor gerado.
 
 Use a CLI interativa se preferir prompts:
 
@@ -74,7 +74,7 @@ Cada rota vira uma tool MCP com:
 
 ## Instalação local e comandos abreviados
 
-Use o build do código-fonte em [Início rápido](#início-rápido), não uma instalação global pelo registry npm.
+Use o build do código-fonte em [Início rápido](#início-rápido) enquanto a publicação no npm não estiver verificada. Quando a versão 2.1.2 for publicada e sua disponibilidade no npm for confirmada, você poderá instalá-la com `npm install -g mcp-gen@2.1.2`.
 Neste README, `mcp-gen` é uma abreviação de `node dist/cli/index.js`, executado na raiz do repositório. Por exemplo, `mcp-gen validate -i examples/petstore.yaml` equivale a `node dist/cli/index.js validate -i examples/petstore.yaml`.
 
 Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o comando `mcp-gen` apontando para seu checkout local. Isso altera os links globais do npm; não baixa um pacote `mcp-gen` publicado.
@@ -289,8 +289,8 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | Recursos existentes | Implementados | CLI, parser OpenAPI v3, geração TypeScript/Python, geração incremental, modo interativo, registry de specs, plugins |
 | v2.1.0 | Com tag | Target Go, modo HTTP, enums, parâmetros header/cookie, API de biblioteca, validação detalhada |
 | v2.1.1 | Com tag | Análise estática de segurança/lint e verificações no template de servidor Go; templates TypeScript/Python sem alterações desde v2.1.0 |
-| Empacotamento e CI | Alterações sem tag | Cópia portátil de templates, lockfile, allowlist do pacote, build no prepack, smoke test do tarball |
-| Distribuição | Pendente | `mcp-gen` não publicado no npm (E404); publicação via pip não comprovada. Python é um target de geração, não uma forma de instalar esta CLI via pip |
+| v2.1.2 | Preparada para release | Cópia portátil de templates, lockfile, allowlist do pacote, build no prepack, workflow de release corrigido, smoke test do tarball na CI, atualização de dependências |
+| Distribuição | Não verificada | A publicação da 2.1.2 no npm precisa ser confirmada antes da instalação pelo registry; publicação via pip não comprovada. Python é um target de geração, não uma forma de instalar esta CLI via pip |
 | Futuro | Planejado | Streaming/resources/prompts, OpenAPI v2, mais registries |
 
 ---
@@ -303,7 +303,7 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 - As verificações de autorização geradas são scaffolding, não um backend completo de segurança; revise e teste antes do deploy
 - Streaming/resources/prompts ainda não estão implementados
 
-O script `copy-templates` atual, ainda sem tag, usa `fs.cpSync` do Node.js no Windows, Linux e macOS; não depende mais de `cp` ou `xcopy`. A CI atual executa apenas no Ubuntu.
+A correção de `copy-templates` incluída na 2.1.2 usa `fs.cpSync` do Node.js no Windows, Linux e macOS; não depende mais de `cp` ou `xcopy`. A CI atual executa apenas no Ubuntu.
 
 ---
 

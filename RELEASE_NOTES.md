@@ -2,9 +2,9 @@
 
 ## Estado e fontes
 
-A versão do pacote permanece `2.1.1`, e a tag mais recente é `v2.1.1`. Este documento não anuncia uma nova versão nem uma nova tag. O pacote `mcp-gen` não está publicado no npm: a tentativa de instalação retorna E404, conforme o status informado pelo mantenedor. Uma tag Git ou um workflow de publicação não comprova disponibilidade no registry.
+A versão `2.1.2` está preparada para release, com `package.json` e `package-lock.json` alinhados. A publicação no npm não foi verificada; estas notas não confirmam publicação nem criação de tag. Uma tag Git ou um workflow de publicação não comprova disponibilidade no registry.
 
-Estas notas confrontam o [CHANGELOG](CHANGELOG.md) com os diffs reais `v2.1.0..v2.1.1` e `v2.1.1..1629696`, além das alterações locais de empacotamento e CI. O changelog histórico não foi alterado; suas afirmações sobre publicação e segurança não devem ser tomadas como confirmação do estado atual.
+A 2.1.2 reúne correções de build, empacotamento, CI e dependências, sem novas funcionalidades de runtime. Estas notas preservam o histórico da 2.1.1, confrontando o [CHANGELOG](CHANGELOG.md) com os diffs `v2.1.0..v2.1.1` e `v2.1.1..1629696`, e descrevem separadamente a preparação da 2.1.2. As seções históricas do changelog não foram alteradas; suas afirmações sobre publicação e segurança não confirmam o estado atual.
 
 ## Funcionalidade histórica da v2.1.1
 
@@ -38,19 +38,20 @@ Go, modo HTTP, enums, parâmetros header/cookie, API de biblioteca e validação
 Comparação: `v2.1.1..1629696`.
 
 - `690de37`: remoção de comentários em `src/cli/index.ts`, `src/core/generator.ts` e `src/core/incremental.ts`, sem mudança de lógica executável nesse diff.
-- `1629696`: alteração da sintaxe do `if` referente a `NPM_TOKEN` no workflow de release. Ainda era uma referência direta a `secrets` na condição; os ajustes locais abaixo substituem essa abordagem.
+- `1629696`: alteração da sintaxe do `if` referente a `NPM_TOKEN` no workflow de release. Ainda era uma referência direta a `secrets` na condição; a correção incluída na 2.1.2 abaixo substitui essa abordagem.
 - Nenhum template mudou nesse intervalo. Esses commits posteriores à tag não constituem uma nova versão publicada.
 
-## Ajustes atuais de preparação, ainda sem tag
+## Correções incluídas na 2.1.2
 
-As alterações locais abaixo são de build, empacotamento e automação; não adicionam funcionalidades aos servidores gerados e não fazem parte do conteúdo histórico da tag `v2.1.1`.
+As alterações abaixo fazem parte da preparação da 2.1.2 e abrangem build, empacotamento, automação e dependências. Não adicionam funcionalidades aos servidores gerados e não fazem parte do conteúdo histórico da tag `v2.1.1`.
 
 ### Build e pacote
 
 - `copy-templates` usa uma chamada inline de Node.js a `fs.cpSync`, com cópia recursiva de `src/templates` para `dist/templates`. Não depende mais de `xcopy` nem de comandos de cópia específicos do shell.
 - A allowlist `files` inclui `dist/`, `examples/`, `README.md`, `README.pt-BR.md`, `CHANGELOG.md`, `RELEASE_NOTES.md`, `SECURITY.md`, `SECURITY.pt-BR.md` e `LICENSE`. O npm também inclui seu manifesto automaticamente.
 - `prepack` executa `npm run build`, preparando o código compilado e os templates antes do empacotamento.
-- `package-lock.json` deixa de ser ignorado e passa a ser versionado com metadados alinhados a `2.1.1`, permitindo o fluxo `npm ci` com dependências fixadas pelo lockfile.
+- `package-lock.json` deixa de ser ignorado e passa a ser versionado com metadados alinhados a `2.1.2`, permitindo o fluxo `npm ci` com dependências fixadas pelo lockfile.
+- `repository.url` usa o formato normalizado `git+https://github.com/ChristopherDond/MCP-Generator.git`.
 - `npm run release` agora executa somente build e testes, removendo a chamada ao inexistente `scripts/release.js`. Esse comando não aumenta versão nem faz push.
 - **Os comandos explícitos `release:patch` e `release:rc` continuam presentes e podem aumentar a versão e fazer push de commits/tags.** `scripts/release.sh` e `scripts/release.bat` também permanecem, com operações de atualização de versão, push e criação de release no GitHub. Não são comandos de verificação local e não foram executados nesta tarefa.
 
@@ -61,6 +62,10 @@ As alterações locais abaixo são de build, empacotamento e automação; não a
 - O smoke test verifica instalação e execução básica do tarball; não compila nem executa servidores gerados em todas as linguagens. A CI não publica no npm e não testa Windows/macOS.
 - O workflow separado de release mantém o mesmo gatilho de tags estáveis (`v[0-9]+.[0-9]+.[0-9]+`). A presença de lógica de RC no arquivo não amplia esse gatilho.
 - A variável de ambiente booleana `HAS_NPM_TOKEN` representa apenas a presença do segredo. O passo de publicação usa `if: env.HAS_NPM_TOKEN == 'true'`, em vez de consultar `secrets` diretamente no `if`. Isso não confirma que o pacote já foi publicado.
+
+### Dependências
+
+- Atualizações fixadas no lockfile da 2.1.2: `fast-uri` 3.1.8, `hono` 4.13.8, `js-yaml` 4.3.2 e `qs` 6.16.0. Resultados de auditoria dependem da data da consulta; essas versões não são uma garantia de ausência de vulnerabilidades.
 
 ## Uso local
 
@@ -76,7 +81,9 @@ node dist/cli/index.js generate -i examples/petstore.yaml -l typescript -o ./my-
 node dist/cli/index.js validate -i examples/petstore.yaml
 ```
 
-O fluxo acima corresponde ao checkout com os ajustes atuais e seu lockfile, não a um checkout isolado da tag histórica. Enquanto esses ajustes não estiverem no remoto, um novo clone não os receberá. A geração cria arquivos; não instala dependências nem inicia o servidor gerado.
+O fluxo acima usa a branch `main`, com as correções de build e empacotamento incluídas na 2.1.2, não um checkout isolado da tag histórica `v2.1.1`. A geração cria arquivos; não instala dependências nem inicia o servidor gerado.
+
+Quando a versão 2.1.2 for publicada e sua disponibilidade no npm for confirmada, a instalação pelo registry poderá ser feita com `npm install -g mcp-gen@2.1.2`. Até essa confirmação, use o fluxo pelo código-fonte.
 
 Nos READMEs, `mcp-gen` é uma abreviação de `node dist/cli/index.js` na raiz do repositório. Opcionalmente, `npm link` após o build cria o comando apontando para o checkout local, alterando os links globais do npm sem depender de uma publicação de `mcp-gen` no registry. Não há fluxo de instalação desta CLI via pip confirmado.
 

@@ -1,6 +1,6 @@
 {
   "name": "mcp-gen",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "OpenAPI → MCP Server generator CLI",
   "main": "dist/index.js",
   "bin": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ChristopherDond/MCP-Generator"
+    "url": "git+https://github.com/ChristopherDond/MCP-Generator.git"
   },
   "files": [
     "dist/",
@@ -32,7 +32,12 @@
     "release:patch": "npm run build && npm run test && npm version patch && git push origin main --tags",
     "release:rc": "npm run build && npm run test && npm version prerelease --preid=rc && git push origin main --tags"
   },
-  "keywords": ["mcp", "openapi", "generator", "cli"],
+  "keywords": [
+    "mcp",
+    "openapi",
+    "generator",
+    "cli"
+  ],
   "license": "MIT",
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",

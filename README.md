@@ -4,7 +4,7 @@
 
 Generate MCP servers from OpenAPI specs.
 
-> **Status**: The latest Git tag and package version are `v2.1.1`. `mcp-gen` is not published on npm (installation returns E404); use the local source flow below. Current packaging and CI fixes are untagged. See [release notes](RELEASE_NOTES.md) (PT-BR).
+> **Status**: `mcp-gen` 2.1.2 is prepared for release; npm publication has not been verified. This release includes build, packaging, CI, and dependency fixes, with no new runtime features. Use the source quick start below. See [release notes](RELEASE_NOTES.md) (PT-BR).
 
 `mcp-gen` turns an OpenAPI v3 spec into an MCP server in **TypeScript**, **Python**, or **Go**. It maps each route to a tool, generates typed models (including enums, oneOf/anyOf), and keeps custom code when you regenerate.
 
@@ -32,7 +32,7 @@ Validate a spec without generating files:
 node dist/cli/index.js validate -i examples/petstore.yaml
 ```
 
-Run these commands from the repository root. This flow assumes a checkout containing the current packaging fixes and lockfile; a fresh clone receives them only once they are available on the remote branch. Generation writes a scaffold; it does not install dependencies, build, or start the generated server.
+Run these commands from the repository root on `main`. The build and packaging fixes are part of 2.1.2. Generation writes a scaffold; it does not install dependencies, build, or start the generated server.
 
 Run the interactive CLI if you prefer prompts:
 
@@ -76,7 +76,7 @@ Each route becomes an MCP tool with:
 
 ## Local installation and command shorthand
 
-Use the source build in [Quick start](#quick-start), not a global npm registry install.
+Use the source build in [Quick start](#quick-start) while npm publication remains unverified. Once version 2.1.2 is published and its availability on npm is confirmed, you can install it with `npm install -g mcp-gen@2.1.2`.
 Throughout this README, `mcp-gen` is shorthand for `node dist/cli/index.js` from the repository root. For example, `mcp-gen validate -i examples/petstore.yaml` means `node dist/cli/index.js validate -i examples/petstore.yaml`.
 
 Optionally, run `npm link` from the repository root after building to make the `mcp-gen` command point to your local checkout. This changes npm's global links; it does not download a published `mcp-gen` package.
@@ -408,8 +408,8 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | Existing features | Implemented | CLI, OpenAPI v3 parser, TypeScript/Python generation, incremental generation, interactive mode, spec registry, plugins |
 | v2.1.0 | Tagged | Go target, HTTP mode, enums, header/cookie params, library API, rich validate |
 | v2.1.1 | Tagged | Static security/lint scanning and Go server template checks; TypeScript/Python templates unchanged from v2.1.0 |
-| Packaging and CI | Untagged changes | Portable template copy, lockfile, package allowlist, prepack build, tarball smoke test |
-| Distribution | Pending | `mcp-gen` is not published on npm (E404); pip publication is not established. Python is a generation target, not a pip installation path for this CLI |
+| v2.1.2 | Prepared for release | Portable template copy, lockfile, package allowlist, prepack build, corrected release workflow, CI tarball smoke test, dependency updates |
+| Distribution | Unverified | npm publication of 2.1.2 must be confirmed before registry installation; pip publication is not established. Python is a generation target, not a pip installation path for this CLI |
 | Future | Planned | Streaming/resources/prompts, OpenAPI v2, more registries |
 
 ---
@@ -422,7 +422,7 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 - Generated authorization checks are scaffolding, not a complete security backend; review and test them before deployment
 - Streaming/resources/prompts are not implemented
 
-The current, untagged `copy-templates` script uses Node.js `fs.cpSync` on Windows, Linux, and macOS; it no longer requires `cp` or `xcopy`. CI currently runs on Ubuntu only.
+The `copy-templates` fix included in 2.1.2 uses Node.js `fs.cpSync` on Windows, Linux, and macOS; it no longer requires `cp` or `xcopy`. CI currently runs on Ubuntu only.
 
 ---
 
