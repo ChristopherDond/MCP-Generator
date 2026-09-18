@@ -66,6 +66,11 @@ program
   .option("--env-file <path>", "Path to an .env-style file whose TOKEN/BASE_URL are embedded into the generated client")
   .option("--name <name>", "Override the server name")
   .option("--server-version <version>", "Override the server version")
+  .option("--include-tags <tags>", "Comma-separated tags to include")
+  .option("--exclude-tags <tags>", "Comma-separated tags to exclude")
+  .option("--path-prefix <prefix>", "Only include operations whose path starts with this prefix")
+  .option("--operation-allowlist <file>", "Path to allowlist file (JSON array or line/comma separated)")
+  .option("--group-by <mode>", "Group endpoints into one tool per group: tag | path-prefix")
   .option("--plugin <path>", "Path to a plugin module or folder to load", (val, acc) => {
     if (!acc) return [val];
     acc.push(val);
@@ -89,6 +94,11 @@ program
       plugins,
       serverName: opts.name,
       serverVersion: opts.serverVersion,
+      includeTags: opts.includeTags ? [opts.includeTags] : undefined,
+      excludeTags: opts.excludeTags ? [opts.excludeTags] : undefined,
+      pathPrefix: opts.pathPrefix,
+      operationAllowlistFile: opts.operationAllowlist,
+      groupBy: opts.groupBy,
     };
 
     console.log(chalk.bold("\nmcp-gen") + ` v${VERSION} — OpenAPI to MCP Server\n`);

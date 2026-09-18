@@ -287,6 +287,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // {{method}} {{path}}
       // @@mcp-gen:start:{{name}}
       requireSecurity("{{name}}", args as Record<string, unknown> | undefined, {{#if security}}{{json security}}{{else}}null{{/if}});
+      {{#if isGroup}}
+      const __action = (args as Record<string, unknown> | undefined)?.action as string;
+      switch (__action) {
+        {{#each groupMembers}}
+        case "{{name}}": {
+          {{#if exampleResponse}}
+          return {
+            content: [{ type: "text" as const, text: safeSerialize({{json exampleResponse}}) }],
+          };
+          {{else}}
+          throw new McpError(ErrorCode.InternalError, "Handler not implemented: {{name}}");
+          {{/if}}
+        }
+        {{/each}}
+        default:
+          throw new McpError(ErrorCode.MethodNotFound, `Unknown action: ${String(__action)}`);
+      }
+      {{else}}
       {{#if ../http}}
       {{#if ../requiresAuth}}requireApiAuth();{{/if}}
       const out = await client.{{name}}(extractCustomArgs(args as Record<string, unknown> | undefined));
@@ -298,6 +316,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
       {{else}}
       throw new McpError(ErrorCode.InternalError, "Handler not implemented: {{name}}");
+      {{/if}}
       {{/if}}
       {{/if}}
       // @@mcp-gen:end:{{name}}
