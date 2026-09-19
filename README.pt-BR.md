@@ -4,11 +4,13 @@
 
 Gere servidores MCP a partir de specs OpenAPI.
 
-> **Status**: `@christopher_dondici/mcp-gen` 2.1.2 é a última versão publicada no npm. A versão 2.1.3 está em preparação na branch `fix/stabilization-2.1.3` com os recursos de filtro, agrupamento e preservação incremental abaixo; ainda não foi publicada. Veja as [notas de release](RELEASE_NOTES.md).
+> **Status**: `@christopher_dondici/mcp-gen` 2.1.4 é a última versão publicada no npm e inclui os recursos de filtro, agrupamento e preservação incremental abaixo. Veja as [notas de release](RELEASE_NOTES.md).
 
 `mcp-gen` transforma uma spec OpenAPI v3 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript, Python ou Go. Cada rota vira uma tool, e a geração incremental preserva o código customizado entre os marcadores indicados.
 
-## Novidades da 2.1.3 (não publicada)
+## Novidades da 2.1.4
+
+(A tag `v2.1.3` foi substituída antes de chegar ao npm; tudo abaixo saiu na 2.1.4, além da correção do middleware de auth gerado para specs sem `securitySchemes`.)
 
 - Filtro de paths com globs: `--path-prefix "/users/**"`, `--include-paths`, `--exclude-paths`; `--operation-allowlist op1,op2` inline (arquivo continua suportado).
 - Agregação com `--group-by tag | path-prefix`: uma tool lógica por tag ou segmento de path, com roteamento interno por `action` (nome da operação + method).
@@ -82,7 +84,7 @@ Cada rota vira uma tool MCP com:
 
 ## Instalação local e comandos abreviados
 
-A versão 2.1.2 está disponível no npm e pode ser instalada com `npm install -g @christopher_dondici/mcp-gen@2.1.2`. Para testar os recursos da 2.1.3 ainda não publicada, use o build do código-fonte em [Início rápido](#início-rápido).
+Instale a última versão com `npm install -g @christopher_dondici/mcp-gen@2.1.4`. Para trabalhar pelo código-fonte, use o build em [Início rápido](#início-rápido).
 Neste README, `mcp-gen` é uma abreviação de `node dist/cli/index.js`, executado na raiz do repositório. Por exemplo, `mcp-gen validate -i examples/petstore.yaml` equivale a `node dist/cli/index.js validate -i examples/petstore.yaml`.
 
 Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o comando `mcp-gen` apontando para seu checkout local. Isso altera os links globais do npm; não baixa um pacote `@christopher_dondici/mcp-gen` publicado. O nome npm mudou porque `mcp-gen` foi recusado por similaridade com `mcpgen`; o comando continua sendo `mcp-gen`.
@@ -90,7 +92,7 @@ Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o co
 Para instalar um tarball produzido localmente sem publicar:
 
 ```bash
-npm install ./christopher_dondici-mcp-gen-2.1.2.tgz
+npm install ./christopher_dondici-mcp-gen-2.1.4.tgz
 ./node_modules/.bin/mcp-gen --version
 ./node_modules/.bin/mcp-gen validate -i node_modules/@christopher_dondici/mcp-gen/examples/petstore.yaml
 ```
@@ -365,8 +367,9 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.0 | Com tag | Target Go, modo HTTP, enums, parâmetros header/cookie, API de biblioteca, validação detalhada |
 | v2.1.1 | Com tag | Análise estática de segurança/lint e verificações no template de servidor Go; templates TypeScript/Python sem alterações desde v2.1.0 |
 | v2.1.2 | Publicada no npm | Cópia portátil de templates, lockfile, allowlist do pacote, build no prepack, workflow de release corrigido, smoke test do tarball na CI, atualização de dependências |
-| v2.1.3 | Em preparação (`fix/stabilization-2.1.3`, não publicada) | Filtros de path com glob, allowlist inline, group-by tag/path-prefix com roteamento por action, dedup com method/hash, guardas `<generated:handlers>` com merge 3-way, middleware de auth separado, `handlers.custom.*` nunca sobrescrito |
-| Distribuição | Não verificada | A publicação da 2.1.2 no npm precisa ser confirmada antes da instalação pelo registry; publicação via pip não comprovada. Python é um target de geração, não uma forma de instalar esta CLI via pip |
+| v2.1.3 | Só tagueada, substituída (nunca publicada no npm) | Conteúdo da branch de features, substituído pela 2.1.4 antes da publicação |
+| v2.1.4 | Publicada no npm (atual) | Filtros de path com glob, allowlist inline, group-by tag/path-prefix com roteamento por action, dedup com method/hash, guardas `<generated:handlers>` com merge 3-way, middleware de auth separado, `handlers.custom.*` nunca sobrescrito, correção do template de auth para specs sem `securitySchemes` |
+| Distribuição | Verificada para a 2.1.4 | Instalação pelo registry funciona com `npm install -g @christopher_dondici/mcp-gen`; publicação via pip não comprovada. Python é um target de geração, não uma forma de instalar esta CLI via pip |
 | Futuro | Planejado | Streaming/resources/prompts, OpenAPI v2, mais registries |
 
 ---

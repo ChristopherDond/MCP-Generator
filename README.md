@@ -4,11 +4,13 @@
 
 Generate MCP servers from OpenAPI specs.
 
-> **Status**: `@christopher_dondici/mcp-gen` 2.1.2 is the latest release on npm. Version 2.1.3 is in preparation on `fix/stabilization-2.1.3` with the filtering, grouping, and incremental-preservation features below; it has not been published yet. See [release notes](RELEASE_NOTES.md) (PT-BR).
+> **Status**: `@christopher_dondici/mcp-gen` 2.1.4 is the latest release on npm and includes the filtering, grouping, and incremental-preservation features below. See [release notes](RELEASE_NOTES.md) (PT-BR).
 
 `mcp-gen` turns an OpenAPI v3 spec into an MCP server in **TypeScript**, **Python**, or **Go**. It maps each route to a tool, generates typed models (including enums, oneOf/anyOf), and keeps custom code when you regenerate.
 
-## What's new in 2.1.3 (unreleased)
+## What's new in 2.1.4
+
+(The `v2.1.3` tag was superseded before reaching npm; everything below shipped in 2.1.4, plus a fix for the generated auth middleware on specs without `securitySchemes`.)
 
 - Path filtering with globs: `--path-prefix "/users/**"`, `--include-paths`, `--exclude-paths`; inline `--operation-allowlist op1,op2` (file still supported).
 - Aggregation with `--group-by tag | path-prefix`: one logical tool per tag or path segment, routing internally by `action` (operation name + method).
@@ -84,7 +86,7 @@ Each route becomes an MCP tool with:
 
 ## Local installation and command shorthand
 
-Version 2.1.2 is available on npm and can be installed with `npm install -g @christopher_dondici/mcp-gen@2.1.2`. To try the unreleased 2.1.3 features, use the source build in [Quick start](#quick-start) or the `What's new in 2.1.3` flags above.
+Install the latest release with `npm install -g @christopher_dondici/mcp-gen@2.1.4`. To work from source, use the build in [Quick start](#quick-start).
 Throughout this README, `mcp-gen` is shorthand for `node dist/cli/index.js` from the repository root. For example, `mcp-gen validate -i examples/petstore.yaml` means `node dist/cli/index.js validate -i examples/petstore.yaml`.
 
 Optionally, run `npm link` from the repository root after building to make the `mcp-gen` command point to your local checkout. This changes npm's global links; it does not download a published `@christopher_dondici/mcp-gen` package. The npm package name changed because `mcp-gen` was rejected for similarity to `mcpgen`; the command remains `mcp-gen`.
@@ -92,7 +94,7 @@ Optionally, run `npm link` from the repository root after building to make the `
 To install a locally produced tarball without publishing:
 
 ```bash
-npm install ./christopher_dondici-mcp-gen-2.1.2.tgz
+npm install ./christopher_dondici-mcp-gen-2.1.4.tgz
 ./node_modules/.bin/mcp-gen --version
 ./node_modules/.bin/mcp-gen validate -i node_modules/@christopher_dondici/mcp-gen/examples/petstore.yaml
 ```
@@ -486,8 +488,9 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.0 | Tagged | Go target, HTTP mode, enums, header/cookie params, library API, rich validate |
 | v2.1.1 | Tagged | Static security/lint scanning and Go server template checks; TypeScript/Python templates unchanged from v2.1.0 |
 | v2.1.2 | Released on npm | Portable template copy, lockfile, package allowlist, prepack build, corrected release workflow, CI tarball smoke test, dependency updates |
-| v2.1.3 | In preparation (`fix/stabilization-2.1.3`, unreleased) | Path glob filters, inline operation allowlist, group-by tag/path-prefix with action routing, method/hash dedup, `<generated:handlers>` guards with 3-way merge, separate auth middleware, never-overwritten `handlers.custom.*` |
-| Distribution | Unverified | npm publication of 2.1.2 must be confirmed before registry installation; pip publication is not established. Python is a generation target, not a pip installation path for this CLI |
+| v2.1.3 | Tagged only, superseded (never published to npm) | Feature branch content, replaced by 2.1.4 before publication |
+| v2.1.4 | Released on npm (latest) | Path glob filters, inline operation allowlist, group-by tag/path-prefix with action routing, method/hash dedup, `<generated:handlers>` guards with 3-way merge, separate auth middleware, never-overwritten `handlers.custom.*`, auth template fix for specs without `securitySchemes` |
+| Distribution | Verified for 2.1.4 | Registry installation works via `npm install -g @christopher_dondici/mcp-gen`; pip publication is not established. Python is a generation target, not a pip installation path for this CLI |
 | Future | Planned | Streaming/resources/prompts, OpenAPI v2, more registries |
 
 ---
