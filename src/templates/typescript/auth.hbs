@@ -1,6 +1,10 @@
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 
+{{#if securitySchemes}}
 export const securitySchemes = {{{json securitySchemes}}} as Record<string, unknown>;
+{{else}}
+export const securitySchemes = {} as Record<string, unknown>;
+{{/if}}
 
 export type AuthContext = {
   tokenId?: string;

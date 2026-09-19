@@ -1,7 +1,11 @@
 from datetime import datetime, timezone
 from typing import Optional
 
+{{#if securitySchemes}}
 SECURITY_SCHEMES = {{json securitySchemes}}
+{{else}}
+SECURITY_SCHEMES = {}
+{{/if}}
 
 def _is_expired(expires_at: Optional[str]) -> bool:
     if not expires_at:
