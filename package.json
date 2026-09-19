@@ -31,6 +31,7 @@
     "dev": "ts-node --prefer-ts-exts src/cli/index.ts",
     "test": "jest",
     "test:generated": "npm run build && node --test scripts/generated-typescript.test.cjs",
+    "test:generated:py": "npm run build && node --test scripts/generated-python.test.cjs",
     "lint": "eslint src/**/*.ts",
     "release": "npm run build && npm run test",
     "release:patch": "npm run build && npm run test && npm version patch && git push origin main --tags",

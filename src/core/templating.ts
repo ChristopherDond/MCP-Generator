@@ -4,12 +4,36 @@ import path from "path";
 
 // Register helpers used across templates
 
-Handlebars.registerHelper("eq", (a: unknown, b: unknown) => a === b);
-Handlebars.registerHelper("ne", (a: unknown, b: unknown) => a !== b);
-Handlebars.registerHelper("and", (a: unknown, b: unknown) => Boolean(a && b));
-Handlebars.registerHelper("or", (a: unknown, b: unknown) => Boolean(a || b));
-Handlebars.registerHelper("not", (a: unknown) => !a);
-Handlebars.registerHelper("gt", (a: number, b: number) => a > b);
+Handlebars.registerHelper("eq", function (this: unknown, a: unknown, b: unknown, options: { fn: (ctx: unknown) => string; inverse: (ctx: unknown) => string }) {
+  const cond = a === b;
+  if (options && typeof options.fn === "function") return cond ? options.fn(this) : options.inverse(this);
+  return cond;
+});
+Handlebars.registerHelper("ne", function (this: unknown, a: unknown, b: unknown, options: { fn: (ctx: unknown) => string; inverse: (ctx: unknown) => string }) {
+  const cond = a !== b;
+  if (options && typeof options.fn === "function") return cond ? options.fn(this) : options.inverse(this);
+  return cond;
+});
+Handlebars.registerHelper("and", function (this: unknown, a: unknown, b: unknown, options: { fn: (ctx: unknown) => string; inverse: (ctx: unknown) => string }) {
+  const cond = Boolean(a && b);
+  if (options && typeof options.fn === "function") return cond ? options.fn(this) : options.inverse(this);
+  return cond;
+});
+Handlebars.registerHelper("or", function (this: unknown, a: unknown, b: unknown, options: { fn: (ctx: unknown) => string; inverse: (ctx: unknown) => string }) {
+  const cond = Boolean(a || b);
+  if (options && typeof options.fn === "function") return cond ? options.fn(this) : options.inverse(this);
+  return cond;
+});
+Handlebars.registerHelper("not", function (this: unknown, a: unknown, options: { fn: (ctx: unknown) => string; inverse: (ctx: unknown) => string }) {
+  const cond = !a;
+  if (options && typeof options.fn === "function") return cond ? options.fn(this) : options.inverse(this);
+  return cond;
+});
+Handlebars.registerHelper("gt", function (this: unknown, a: number, b: number, options: { fn: (ctx: unknown) => string; inverse: (ctx: unknown) => string }) {
+  const cond = a > b;
+  if (options && typeof options.fn === "function") return cond ? options.fn(this) : options.inverse(this);
+  return cond;
+});
 Handlebars.registerHelper("hasBodyParam", (params: Array<{ in: string }>) =>
   (params ?? []).some((p) => p.in === "body")
 );
