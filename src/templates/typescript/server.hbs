@@ -277,6 +277,9 @@ function buildHttpArgs(args: Record<string, unknown> | undefined): Record<string
 {{/if}}
 
 // ─── Tool Handlers ───────────────────────────────────────────────────────────
+// <generated:handlers>
+// Business logic lives between @@mcp-gen markers and is preserved with --incremental.
+// Auth and validation run in src/auth.ts so guards only cover business logic.
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
@@ -326,6 +329,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
   }
 });
+// </generated:handlers>
 
 // ─── Resources (from OpenAPI parameter schemas) ────────────────────────────
 

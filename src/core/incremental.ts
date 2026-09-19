@@ -17,6 +17,19 @@ import fs from "fs";
 const MARKER_START = (name: string) => `@@mcp-gen:start:${name}`;
 const MARKER_END = (name: string) => `@@mcp-gen:end:${name}`;
 
+export const GENERATED_REGION_START = "<generated:handlers>";
+export const GENERATED_REGION_END = "</generated:handlers>";
+
+export const CUSTOM_FILES = [
+  "src/handlers.custom.ts",
+  "handlers_custom.py",
+  "handlers_custom.go",
+];
+
+export function isCustomFile(outputFile: string): boolean {
+  return CUSTOM_FILES.some((f) => outputFile === f || outputFile.endsWith("/" + f));
+}
+
 export interface ExtractedHandlers {
   /** Map of tool name → custom code block (the lines between start/end markers) */
   handlers: Map<string, string>;
@@ -38,16 +51,18 @@ export function extractHandlers(filePath: string): ExtractedHandlers {
   const buffer: string[] = [];
 
   for (const line of lines) {
-    const startMatch = line.match(/@@mcp-gen:start:(\S+)/);
-    const endMatch = line.match(/@@mcp-gen:end:(\S+)/);
-
-    if (startMatch) {
-      currentTool = startMatch[1];
+    const legacyStart = line.match(/@@mcp-gen:start:(\S+)/);
+    const guardStart = line.match(/<generated:handlers:([^>]+)>/);
+    const startName = legacyStart?.[1] ?? guardStart?.[1];
+    if (startName && !currentTool) {
+      currentTool = startName.trim();
       buffer.length = 0;
       continue;
     }
 
-    if (endMatch && currentTool) {
+    const isEnd =
+      /@@mcp-gen:end:/.test(line) || /<\/generated:handlers/.test(line);
+    if (isEnd && currentTool) {
       handlers.set(currentTool, buffer.join("\n").trimEnd());
       currentTool = null;
       buffer.length = 0;

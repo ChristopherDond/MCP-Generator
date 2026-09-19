@@ -55,16 +55,16 @@ describe("generate (typescript)", () => {
   beforeEach(() => { tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-ts-")); });
   afterEach(() => { fs.rmSync(tmpDir, { recursive: true, force: true }); });
 
-  it("generates 8 files", async () => {
+  it("generates 10 files", async () => {
     const result = await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: true, incremental: false, http: false });
     expect(result.success).toBe(true);
-    expect(result.filesCreated).toHaveLength(8);
+    expect(result.filesCreated).toHaveLength(10);
   });
 
   it("generates from YAML spec", async () => {
     const result = await generate({ input: PETSTORE_YAML, lang: "typescript", out: tmpDir, force: true, incremental: false, http: false });
     expect(result.success).toBe(true);
-    expect(result.filesCreated).toHaveLength(8);
+    expect(result.filesCreated).toHaveLength(10);
   });
 
   it("server.ts contains tool names", async () => {
@@ -105,10 +105,10 @@ describe("generate (python)", () => {
   beforeEach(() => { tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-py-")); });
   afterEach(() => { fs.rmSync(tmpDir, { recursive: true, force: true }); });
 
-  it("generates 6 files", async () => {
+  it("generates 8 files", async () => {
     const result = await generate({ input: PETSTORE_JSON, lang: "python", out: tmpDir, force: true, incremental: false, http: false });
     expect(result.success).toBe(true);
-    expect(result.filesCreated).toHaveLength(6);
+    expect(result.filesCreated).toHaveLength(8);
   });
 
   it("server.py contains tool functions with markers", async () => {

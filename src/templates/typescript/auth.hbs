@@ -1,0 +1,41 @@
+import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+
+export const securitySchemes = {{{json securitySchemes}}} as Record<string, unknown>;
+
+export type AuthContext = {
+  tokenId?: string;
+  principal?: string;
+  expiresAt?: string;
+  allowedTools?: string[];
+  endpointAllowlist?: string[];
+  spendLimitUsd?: number;
+  spendUsedUsd?: number;
+  revoked?: boolean;
+  requestId?: string;
+};
+
+export function isExpired(expiresAt?: string): boolean {
+  if (!expiresAt) return true;
+  const ts = Date.parse(expiresAt);
+  if (Number.isNaN(ts)) return true;
+  return ts <= Date.now();
+}
+
+export function assertAuth(toolName: string, endpoint: string, ctx: AuthContext | undefined): void {
+  if (!ctx) {
+    throw new McpError(ErrorCode.InvalidParams, "Missing authContext with scoped metadata.");
+  }
+  if (ctx.revoked) throw new McpError(ErrorCode.InvalidRequest, "Access revoked");
+  if (isExpired(ctx.expiresAt)) throw new McpError(ErrorCode.InvalidRequest, "Token expired or missing TTL");
+  if (!ctx.requestId) throw new McpError(ErrorCode.InvalidParams, "requestId is required for audit logging");
+  if (typeof ctx.spendLimitUsd !== "number" || typeof ctx.spendUsedUsd !== "number") {
+    throw new McpError(ErrorCode.InvalidParams, "Spend limit metadata is required");
+  }
+  if (ctx.spendUsedUsd > ctx.spendLimitUsd) throw new McpError(ErrorCode.InvalidRequest, "Spend limit exceeded");
+  if (ctx.allowedTools && !ctx.allowedTools.includes(toolName)) {
+    throw new McpError(ErrorCode.InvalidRequest, `Tool not allowed by scope: ${toolName}`);
+  }
+  if (ctx.endpointAllowlist && !ctx.endpointAllowlist.includes(endpoint)) {
+    throw new McpError(ErrorCode.InvalidRequest, `Endpoint not allowed: ${endpoint}`);
+  }
+}

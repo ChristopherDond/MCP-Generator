@@ -148,26 +148,69 @@ function extractExampleResponse(
   return null;
 }
 
-/** Build a unique, valid identifier for a tool from method + path.
- *  Handles reserved words and name collisions by appending an index. */
-function pathToToolName(method: string, path: string, used: Set<string>): string {
-  let name = `${method.toLowerCase()}_${path
+export function shortHash(input: string): string {
+  let hash = 5381;
+  for (let i = 0; i < input.length; i++) {
+    hash = ((hash << 5) + hash + input.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0").slice(0, 6);
+}
+
+export function sanitizeToolName(raw: string): string {
+  let name = raw
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[^a-zA-Z0-9_]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "")
+    .toLowerCase();
+  if (ALL_RESERVED.has(name) || name === "") name = `${name || "tool"}_handler`;
+  return name;
+}
+
+export function resolveToolName(
+  operationId: string | undefined,
+  method: string,
+  path: string,
+  used: Set<string>
+): string {
+  void operationId;
+  let base = `${method.toLowerCase()}_${path
     .replace(/\//g, "_")
     .replace(/[{}]/g, "")
     .replace(/[^a-zA-Z0-9_]/g, "")
     .replace(/^_/, "")
     .replace(/_+/g, "_")
     .toLowerCase()}`;
-  name = name.replace(/-+$/g, "");
-  if (ALL_RESERVED.has(name) || name === "") name = `${name || "tool"}_handler`;
-  let candidate = name;
+  base = base.replace(/-+$/g, "");
+  if (ALL_RESERVED.has(base) || base === "") base = `${base || "tool"}_handler`;
+  if (!used.has(base)) {
+    used.add(base);
+    return base;
+  }
+  const withMethod = `${base}_${method.toLowerCase()}`;
+  if (!used.has(withMethod)) {
+    used.add(withMethod);
+    return withMethod;
+  }
+  const withHash = `${base}_${shortHash(`${method.toUpperCase()} ${path}`)}`;
+  if (!used.has(withHash)) {
+    used.add(withHash);
+    return withHash;
+  }
+  let candidate = withHash;
   let i = 2;
   while (used.has(candidate)) {
-    candidate = `${name}_${i}`;
+    candidate = `${withHash}_${i}`;
     i += 1;
   }
   used.add(candidate);
   return candidate;
+}
+
+/** Build a unique, valid identifier for a tool from method + path.
+ *  Handles reserved words and name collisions by appending an index. */
+function pathToToolName(method: string, path: string, used: Set<string>): string {
+  return resolveToolName(undefined, method, path, used);
 }
 
 function collectParameters(
@@ -272,7 +315,7 @@ function buildTools(
       }
 
       tools.push({
-        name: pathToToolName(method, path, usedNames),
+        name: resolveToolName(operation.operationId, method, path, usedNames),
         description:
           operation.summary ??
           operation.description ??
@@ -283,6 +326,7 @@ function buildTools(
         security: operation.security,
         exampleResponse: extractExampleResponse(operation),
         tags: operation.tags ?? [],
+        operationId: operation.operationId,
       });
     }
   }

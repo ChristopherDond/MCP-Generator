@@ -1,0 +1,7 @@
+package main
+
+import "fmt"
+
+func customHandler(toolName string, args map[string]any) (any, error) {
+	return nil, fmt.Errorf("custom handler not implemented: %s (edit handlers_custom.go, this file is never overwritten)", toolName)
+}

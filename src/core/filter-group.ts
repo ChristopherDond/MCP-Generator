@@ -15,6 +15,62 @@ export function parseTagList(value?: string | string[]): string[] {
   return out;
 }
 
+export function parsePathList(value?: string | string[]): string[] {
+  return parseTagList(value);
+}
+
+export function globToRegExp(glob: string): RegExp {
+  let out = "^";
+  let i = 0;
+  while (i < glob.length) {
+    const c = glob[i];
+    if (c === "*") {
+      if (glob[i + 1] === "*") {
+        out += ".*";
+        i += 2;
+        if (glob[i] === "/") {
+          i += 1;
+          if (i < glob.length) out += "(?:/)?";
+        }
+      } else {
+        out += "[^/]*";
+        i += 1;
+      }
+    } else if (c === "?") {
+      out += "[^/]";
+      i += 1;
+    } else if ("+()|^$.{}[]\\".includes(c)) {
+      out += "\\" + c;
+      i += 1;
+    } else {
+      out += c;
+      i += 1;
+    }
+  }
+  out += "$";
+  return new RegExp(out);
+}
+
+export function matchPathPattern(path: string, pattern: string): boolean {
+  const p = pattern.trim();
+  if (!p) return false;
+  if (p.includes("*") || p.includes("?")) return globToRegExp(p).test(path);
+  return path.startsWith(p);
+}
+
+export function matchesAnyPattern(path: string, patterns: string[]): boolean {
+  return patterns.some((p) => matchPathPattern(path, p));
+}
+
+export function resolveAllowlistValue(value?: string): { inline: string[]; file?: string } {
+  if (!value) return { inline: [] };
+  const trimmed = String(value).trim();
+  if (!trimmed) return { inline: [] };
+  if (fs.existsSync(trimmed) && fs.lstatSync(trimmed).isFile()) return { inline: [], file: trimmed };
+  const looksLikeFile = /[/\\]/.test(trimmed) || /\.(json|txt|yaml|yml|list|allowlist)$/i.test(trimmed);
+  if (looksLikeFile) return { inline: [], file: trimmed };
+  return { inline: parseTagList(trimmed) };
+}
 export function parseGroupBy(value?: string): GroupByMode | undefined {
   if (value === undefined || value === null) return undefined;
   const normalized = String(value).trim();
@@ -48,17 +104,21 @@ function matchesAllowlist(tool: MCPTool, allow: Set<string>): boolean {
 
 export function filterTools(
   tools: MCPTool[],
-  opts: { includeTags?: string[]; excludeTags?: string[]; pathPrefix?: string; allowlist?: string[] }
+  opts: { includeTags?: string[]; excludeTags?: string[]; pathPrefix?: string; includePaths?: string[]; excludePaths?: string[]; allowlist?: string[] }
 ): MCPTool[] {
   const include = (opts.includeTags ?? []).map((s) => s.trim()).filter(Boolean);
   const exclude = (opts.excludeTags ?? []).map((s) => s.trim()).filter(Boolean);
   const prefix = (opts.pathPrefix ?? "").trim();
+  const includePaths = (opts.includePaths ?? []).map((s) => s.trim()).filter(Boolean);
+  const excludePaths = (opts.excludePaths ?? []).map((s) => s.trim()).filter(Boolean);
   const allowRaw = (opts.allowlist ?? []).map((s) => String(s).trim()).filter(Boolean);
   const allow = new Set(allowRaw);
   return tools.filter((tool) => {
     if (include.length > 0 && !tool.tags.some((t) => include.includes(t))) return false;
     if (exclude.length > 0 && tool.tags.some((t) => exclude.includes(t))) return false;
-    if (prefix && !tool.path.startsWith(prefix)) return false;
+    if (prefix && !matchPathPattern(tool.path, prefix)) return false;
+    if (includePaths.length > 0 && !matchesAnyPattern(tool.path, includePaths)) return false;
+    if (excludePaths.length > 0 && matchesAnyPattern(tool.path, excludePaths)) return false;
     if (allow.size > 0 && !matchesAllowlist(tool, allow)) return false;
     return true;
   });

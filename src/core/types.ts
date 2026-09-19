@@ -23,6 +23,8 @@ export interface GeneratorOptions {
   includeTags?: string[];
   excludeTags?: string[];
   pathPrefix?: string;
+  includePaths?: string[];
+  excludePaths?: string[];
   operationAllowlist?: string[];
   operationAllowlistFile?: string;
   groupBy?: GroupByMode;

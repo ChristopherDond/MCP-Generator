@@ -108,13 +108,68 @@ mcp-gen generate -i ./api/openapi.yaml -l go -o ./my-server
 
 **Useful flags:**
 
-- `--force`, `-f` overwrites existing files.
-- `--incremental` keeps code between `@@mcp-gen:start` and `@@mcp-gen:end`.
+- `--force`, `-f` overwrites existing files, ignoring preserved handlers and custom files (skips 3-way merge).
+- `--incremental` keeps code between `@@mcp-gen:start` and `@@mcp-gen:end` (also `<generated:handlers:name>`). Uses 3-way merge: base stub vs your custom code vs new template.
 - `--http` generates handlers that **call the real API** over HTTP instead of returning example stubs.
 - `--env-file <path>` embeds TOKEN/BASE_URL from a .env-style file into the generated client.
 - `--name <name>` sets the server name.
 - `--server-version <version>` sets the server version.
 - `--plugin <path>` loads a plugin module or folder (can be repeated).
+- `--include-tags <a,b>` only includes tools with one of these tags.
+- `--exclude-tags <a,b>` excludes tools with these tags.
+- `--path-prefix <glob>` only includes paths matching a prefix or glob (`/users`, `/users/**`, `/pets/*`).
+- `--include-paths <globs>` comma-separated path globs to include.
+- `--exclude-paths <globs>` comma-separated path globs to exclude.
+- `--operation-allowlist <ops>` comma-separated `operationId`, tool name, or `METHOD /path` list, or a path to an allowlist file (JSON array or line/comma separated).
+- `--group-by <mode>` aggregates to one logical tool per group: `tag` or `path-prefix`. Each group routes by `action` (operation name) internally.
+
+### Filtering examples
+
+```bash
+mcp-gen generate -i api.yaml -o ./out --include-tags pets,orders
+mcp-gen generate -i api.yaml -o ./out --exclude-tags admin
+mcp-gen generate -i api.yaml -o ./out --path-prefix "/users/**"
+mcp-gen generate -i api.yaml -o ./out --include-paths "/users/**,/orders/*" --exclude-paths "/users/internal/*"
+mcp-gen generate -i api.yaml -o ./out --operation-allowlist listPets,createPet
+mcp-gen generate -i api.yaml -o ./out --operation-allowlist ./allow.json
+mcp-gen generate -i api.yaml -o ./out --include-tags pets --group-by tag
+```
+
+### Grouping
+
+`--group-by tag` emits one tool per tag (plus `untagged`), e.g. 200 operations across 8 tags become ~8 tools. `--group-by path-prefix` emits one tool per first path segment (`/users/**` becomes `users_group`). Each grouped tool takes a required `action` enum (member operation names) and routes internally by `METHOD` + `path`. Member params are unioned as optional.
+
+### Tool name dedup
+
+Tool names come from `METHOD + path` (`GET /pets/{id}` becomes `get_pets_petid`). `operationId` is stored for allowlist matching. On collision the generator suffixes with the method first, then with a short path hash, instead of emitting duplicate tools.
+
+### Auth middleware
+
+Generated projects include a separate auth layer built from `securitySchemes`:
+
+- TypeScript: `src/auth.ts`
+- Python: `auth.py`
+- Go: `auth.go`
+
+Put business logic in guards; keep auth and schema validation in the middleware so you do not need a guard for auth.
+
+### How not to overwrite your edits
+
+Generated handlers are wrapped in two markers:
+
+```typescript
+// <generated:handlers>
+// @@mcp-gen:start:get_pets
+// ... your code here ...
+// @@mcp-gen:end:get_pets
+// </generated:handlers>
+```
+
+Rules:
+
+1. Edit only between `@@mcp-gen:start:<tool>` and `@@mcp-gen:end:<tool>` (or `<generated:handlers:<tool>>`). That body is preserved on regen.
+2. Put reusable business logic in `src/handlers.custom.ts` (TS), `handlers_custom.py` (Python), or `handlers_custom.go` (Go). That file is created once and never overwritten unless you pass `--force`.
+3. Re-run with `generate --incremental`. The generator does a 3-way merge (fresh stub vs your custom body vs new template) and reports `preserved` handlers plus `Merged ... custom handlers preserved`. Pass `--force` to ignore preservation and overwrite everything.
 
 ### Validate (v2.1+)
 
@@ -202,6 +257,8 @@ Plugin templates override core templates when they use the same path under `temp
 my-server/
 ├── src/
 │   ├── server.ts        # MCP server — tool definitions + handlers
+│   ├── auth.ts          # Auth/validation middleware from securitySchemes
+│   ├── handlers.custom.ts # Your code — never overwritten without --force
 │   ├── models.ts        # TypeScript interfaces from OpenAPI schemas (enums, unions)
 │   └── client.ts        # HTTP client (used in --http mode)
 ├── .github/
@@ -218,6 +275,8 @@ my-server/
 ```
 my-server/
 ├── server.py            # FastMCP server — tool definitions + handlers
+├── auth.py              # Auth/validation middleware from securitySchemes
+├── handlers_custom.py   # Your code — never overwritten without --force
 ├── models.py            # Pydantic models from OpenAPI schemas (enums, unions)
 ├── requirements.txt
 ├── .github/
@@ -232,6 +291,8 @@ my-server/
 ```
 my-server/
 ├── main.go              # MCP server using mark3labs/mcp-go
+├── auth.go              # Auth/validation middleware from securitySchemes
+├── handlers_custom.go   # Your code — never overwritten without --force
 ├── models.go            # Go types from OpenAPI schemas (enums, unions)
 ├── client.go            # HTTP client (used in --http mode)
 ├── go.mod
