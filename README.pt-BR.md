@@ -18,7 +18,6 @@ Gere servidores MCP a partir de specs OpenAPI.
 - Guardas incrementais: regiões `<generated:handlers>` mais marcadores `@@mcp-gen` por tool, merge 3-way com `--incremental`, `--force` para sobrescrever.
 - Middleware de auth separado (`src/auth.ts`, `auth.py`, `auth.go`) gerado a partir de `securitySchemes`, e arquivos `handlers.custom.*` que nunca são sobrescritos sem `--force`.
 
-
 ## Início rápido
 
 Com Git, Node.js 20+ e npm 9+ instalados, execute:
@@ -70,8 +69,11 @@ sequenceDiagram
 
 Cada rota vira uma tool MCP com:
 
-- entrada tipada a partir de parâmetros e request body
+- entrada tipada a partir de parâmetros (path, query, header, cookie, body) e request bodies
 - respostas de exemplo da spec
+- suporte a schemas enum / oneOf / anyOf / discriminator
+- modo HTTP client real (`--http`) que chama a API de verdade
+- verificações scaffold de authContext para metadados com escopo e bloqueio de chaves parecidas com credenciais; revise antes do deploy
 - preservação opcional de código incremental
 
 ## Requisitos
@@ -111,13 +113,15 @@ npm install ./christopher_dondici-mcp-gen-2.1.4.tgz
 ```bash
 mcp-gen generate -i ./api/openapi.yaml -l typescript -o ./my-server
 mcp-gen generate -i ./api/openapi.yaml -l python -o ./my-server
+mcp-gen generate -i ./api/openapi.yaml -l go -o ./my-server
 ```
 
 Flags úteis:
 
 - `--force`, `-f` sobrescreve arquivos, ignorando handlers preservados e arquivos custom (pula o merge 3-way).
 - `--incremental` mantém o código entre `@@mcp-gen:start` e `@@mcp-gen:end` (também `<generated:handlers:name>`). Usa merge 3-way: stub novo vs seu código vs template novo.
-- `--http` gera handlers que chamam a API real via HTTP.
+- `--http` gera handlers que chamam a API real via HTTP em vez de retornar stubs de exemplo.
+- `--env-file <path>` embute TOKEN/BASE_URL de um arquivo estilo .env no client gerado.
 - `--name <name>` define o nome do servidor.
 - `--server-version <version>` define a versão do servidor.
 - `--plugin <path>` carrega um plugin.
@@ -138,6 +142,7 @@ mcp-gen generate -i api.yaml -o ./out --path-prefix "/users/**"
 mcp-gen generate -i api.yaml -o ./out --include-paths "/users/**,/orders/*" --exclude-paths "/users/internal/*"
 mcp-gen generate -i api.yaml -o ./out --operation-allowlist listPets,createPet
 mcp-gen generate -i api.yaml -o ./out --operation-allowlist ./allow.json
+mcp-gen generate -i api.yaml -o ./out --include-tags pets --group-by tag
 ```
 
 ### Agrupamento
@@ -233,7 +238,7 @@ Plugins podem sobrescrever templates e registrar helpers extras do Handlebars.
 
 Estrutura básica:
 
-- `templates/typescript/...` ou `templates/python/...` para sobrescrever templates `.hbs`
+- `templates/typescript/...`, `templates/python/...` ou `templates/go/...` para sobrescrever templates `.hbs`
 - `index.js` que exporta `registerHandlebars(handlebars)` para helpers customizados
 
 Exemplo:
@@ -281,6 +286,22 @@ my-server/
 └── README.md
 ```
 
+**Go:**
+```
+my-server/
+├── main.go              # Servidor MCP usando mark3labs/mcp-go
+├── auth.go              # Middleware de auth/validação a partir de securitySchemes
+├── handlers_custom.go   # Seu código — nunca sobrescrito sem --force
+├── models.go            # Tipos Go gerados a partir dos schemas OpenAPI
+├── client.go            # HTTP client (usado no modo --http)
+├── go.mod
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── Dockerfile
+└── README.md
+```
+
 ---
 
 ## Conectar ao Claude Desktop
@@ -304,6 +325,18 @@ my-server/
     "my-server": {
       "command": "python",
       "args": ["/absolute/path/to/my-server/server.py"]
+    }
+  }
+}
+```
+
+**Go:**
+```json
+{
+  "mcpServers": {
+    "my-server": {
+      "command": "go",
+      "args": ["run", "/absolute/path/to/my-server/main.go"]
     }
   }
 }
@@ -337,7 +370,16 @@ async def get_users_id(id: float) -> Any:
     # @@mcp-gen:end:get_users_id
 ```
 
-Código entre os marcadores `@@mcp-gen:start` e `@@mcp-gen:end` é preservado quando você roda `generate --incremental` novamente.
+**Go** (`main.go`):
+```go
+s.AddTool(get_users_idTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+    // @@mcp-gen:start:get_users_id
+    return jsonSerialize(jsonExample(`{"id": 1, "name": "Alice"}`))
+    // @@mcp-gen:end:get_users_id
+})
+```
+
+Código entre os marcadores `@@mcp-gen:start` e `@@mcp-gen:end` é preservado quando você roda `generate --incremental` novamente (veja [Como não sobrescrever suas edições](#como-não-sobrescrever-suas-edições)).
 
 ---
 
@@ -352,6 +394,12 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 
 # Exemplo Python
 node dist/cli/index.js generate --input examples/petstore.yaml --lang python --out /tmp/py-test --force
+
+# Exemplo Go
+node dist/cli/index.js generate --input examples/petstore.json --lang go --out /tmp/go-test --force
+
+# Modo HTTP (chamadas reais à API)
+node dist/cli/index.js generate --input examples/petstore.json --lang typescript --out /tmp/ts-http --force --http
 
 # Exemplo incremental
 node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-test --incremental

@@ -430,13 +430,13 @@ s.AddTool(get_users_idTool, func(ctx context.Context, request mcp.CallToolReques
 })
 ```
 
-Code between `@@mcp-gen:start` and `@@mcp-gen:end` markers is preserved when you re-run `generate --incremental`.
+Code between `@@mcp-gen:start` and `@@mcp-gen:end` markers is preserved when you re-run `generate --incremental` (see [How not to overwrite your edits](#how-not-to-overwrite-your-edits)).
 
 ---
 
 ## Programmatic API (Library Mode)
 
-With the local tarball installed, import the scoped package as shown below. From the repository root after building, use `"./dist/index.js"` instead; neither approach requires npm publication.
+With the package installed from npm, import the scoped package as shown below. From the repository root after building, use `"./dist/index.js"` instead.
 
 ```typescript
 import { generate, validateSpec, parseOpenAPI } from "@christopher_dondici/mcp-gen";
