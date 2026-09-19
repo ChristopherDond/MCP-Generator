@@ -3,9 +3,10 @@ import path from "path";
 import Handlebars from "handlebars";
 import { parseOpenAPI } from "./parser";
 import { renderTemplate, registerPartials } from "./templating";
-import { extractHandlers, injectHandlers, TS_DEFAULT_STUB_PATTERN, PY_DEFAULT_STUB_PATTERN } from "./incremental";
+import { extractHandlers, injectHandlers, isCustomFile, TS_DEFAULT_STUB_PATTERN, PY_DEFAULT_STUB_PATTERN } from "./incremental";
 import { validateOutputPath, validatePluginPath, validatePluginModule } from "./security";
-import type { GeneratorOptions, GenerationResult, ValidateResult, MCPServerAST, Lang } from "./types";
+import { parseTagList, parsePathList, parseGroupBy, loadOperationAllowlistFile, resolveAllowlistValue, filterTools, groupTools, toGroupMetadata } from "./filter-group";
+import type { GeneratorOptions, GenerationResult, ValidateResult, MCPServerAST, Lang, GroupByMode } from "./types";
 
 const TEMPLATES_ROOT = path.resolve(__dirname, "../templates");
 
@@ -30,6 +31,8 @@ interface FileSpec {
 function getTypeScriptFileSpecs(): FileSpec[] {
   return [
     { templateFile: "server.hbs",          outputFile: "src/server.ts" },
+    { templateFile: "auth.hbs",            outputFile: "src/auth.ts" },
+    { templateFile: "handlers.custom.hbs", outputFile: "src/handlers.custom.ts" },
     { templateFile: "models.hbs",          outputFile: "src/models.ts" },
     { templateFile: "package.json.hbs",    outputFile: "package.json" },
     { templateFile: "tsconfig.json.hbs",   outputFile: "tsconfig.json" },
@@ -43,6 +46,8 @@ function getTypeScriptFileSpecs(): FileSpec[] {
 function getPythonFileSpecs(): FileSpec[] {
   return [
     { templateFile: "server.py.hbs",       outputFile: "server.py" },
+    { templateFile: "auth.py.hbs",         outputFile: "auth.py" },
+    { templateFile: "handlers_custom.py.hbs", outputFile: "handlers_custom.py" },
     { templateFile: "models.py.hbs",       outputFile: "models.py" },
     { templateFile: "requirements.txt.hbs",outputFile: "requirements.txt" },
     { templateFile: "Dockerfile.hbs",      outputFile: "Dockerfile" },
@@ -54,6 +59,8 @@ function getPythonFileSpecs(): FileSpec[] {
 function getGoFileSpecs(): FileSpec[] {
   return [
     { templateFile: "server.go.hbs",       outputFile: "main.go" },
+    { templateFile: "auth.go.hbs",         outputFile: "auth.go" },
+    { templateFile: "handlers_custom.go.hbs", outputFile: "handlers_custom.go" },
     { templateFile: "models.go.hbs",       outputFile: "models.go" },
     { templateFile: "client.go.hbs",       outputFile: "client.go" },
     { templateFile: "go.mod.hbs",          outputFile: "go.mod" },
@@ -157,7 +164,42 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
   if (options.serverName) ast.serverName = options.serverName;
   if (options.serverVersion) ast.serverVersion = options.serverVersion;
 
-  const stubTools = ast.tools.filter((t) => t.exampleResponse === null && !options.http);
+  let groupBy: GroupByMode | undefined;
+  try {
+    groupBy = parseGroupBy(options.groupBy);
+  } catch (err: unknown) {
+    result.errors.push(err instanceof Error ? err.message : String(err));
+    return result;
+  }
+  let allowlist: string[] = [];
+  try {
+    allowlist = [...parseTagList(options.operationAllowlist ?? [])];
+    if (options.operationAllowlistFile) {
+      const resolved = resolveAllowlistValue(options.operationAllowlistFile);
+      if (resolved.file) allowlist.push(...loadOperationAllowlistFile(resolved.file));
+      else allowlist.push(...resolved.inline);
+    }
+  } catch (err: unknown) {
+    result.errors.push(err instanceof Error ? err.message : String(err));
+    return result;
+  }
+  ast.tools = filterTools(ast.tools, {
+    includeTags: parseTagList(options.includeTags ?? []),
+    excludeTags: parseTagList(options.excludeTags ?? []),
+    pathPrefix: options.pathPrefix ?? "",
+    includePaths: parsePathList(options.includePaths ?? []),
+    excludePaths: parsePathList(options.excludePaths ?? []),
+    allowlist,
+  });
+  if (groupBy) {
+    const grouped = groupTools(ast.tools, groupBy);
+    ast.groups = toGroupMetadata(grouped);
+    ast.tools = grouped;
+  } else {
+    ast.groups = [];
+  }
+
+  const stubTools = ast.tools.filter((t) => t.exampleResponse === null && !options.http && !t.isGroup);
   if (stubTools.length > 0) {
     result.warnings.push(
       `${stubTools.length} tool(s) have no example response and will throw NotImplemented: ${stubTools.map((t) => t.name).join(", ")}`
@@ -293,7 +335,15 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
       }
 
       const outputPath = path.join(result.outputDir, spec.outputFile);
+      if (isCustomFile(spec.outputFile) && fs.existsSync(outputPath) && !options.force) {
+        result.warnings.push(`Skipped custom file (never overwritten without --force): ${spec.outputFile}`);
+        continue;
+      }
+      const existing = fs.existsSync(outputPath) ? fs.readFileSync(outputPath, "utf-8") : null;
       writeFile(outputPath, rendered, options.force || options.incremental, result.outputDir);
+      if (existing !== null && isServerFile && existing !== rendered && !options.force && options.incremental) {
+        result.warnings.push(`Merged ${spec.outputFile}: custom handlers preserved (3-way: base stub vs custom vs new template). Use --force to ignore.`);
+      }
       result.filesCreated.push(spec.outputFile);
     } catch (err: unknown) {
       result.errors.push(

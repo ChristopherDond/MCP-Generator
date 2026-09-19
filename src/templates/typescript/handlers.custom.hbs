@@ -1,0 +1,5 @@
+export async function customHandler(toolName: string, args: Record<string, unknown>): Promise<unknown> {
+  void toolName;
+  void args;
+  throw new Error(`Custom handler not implemented: ${toolName}. Edit src/handlers.custom.ts, this file is never overwritten.`);
+}

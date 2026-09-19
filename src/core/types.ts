@@ -2,6 +2,8 @@ import type { OpenAPIV3 } from "openapi-types";
 
 export type Lang = "typescript" | "python" | "go";
 
+export type GroupByMode = "tag" | "path-prefix";
+
 export interface GeneratorOptions {
   input: string;
   lang: Lang;
@@ -18,6 +20,14 @@ export interface GeneratorOptions {
   pluginsDir?: string;
   serverName?: string;
   serverVersion?: string;
+  includeTags?: string[];
+  excludeTags?: string[];
+  pathPrefix?: string;
+  includePaths?: string[];
+  excludePaths?: string[];
+  operationAllowlist?: string[];
+  operationAllowlistFile?: string;
+  groupBy?: GroupByMode;
 }
 
 export interface MCPToolParam {
@@ -43,6 +53,18 @@ export interface MCPTool {
   security?: OpenAPIV3.SecurityRequirementObject[];
   exampleResponse: unknown | null;
   tags: string[];
+  operationId?: string;
+  isGroup?: boolean;
+  groupKey?: string;
+  groupMode?: GroupByMode;
+  groupMembers?: MCPTool[];
+}
+
+export interface MCPToolGroup {
+  name: string;
+  key: string;
+  mode: GroupByMode;
+  members: string[];
 }
 
 export interface MCPModel {
@@ -83,6 +105,7 @@ export interface MCPServerAST {
   /** mcp-gen version, injected at render time by the generator. */
   generatorVersion: string;
   tools: MCPTool[];
+  groups?: MCPToolGroup[];
   models: MCPModel[];
   info: {
     title: string;

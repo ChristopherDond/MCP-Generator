@@ -105,11 +105,66 @@ mcp-gen generate -i ./api/openapi.yaml -l python -o ./my-server
 
 Flags úteis:
 
-- `--force`, `-f` sobrescreve arquivos existentes.
-- `--incremental` mantém o código entre `@@mcp-gen:start` e `@@mcp-gen:end`.
+- `--force`, `-f` sobrescreve arquivos, ignorando handlers preservados e arquivos custom (pula o merge 3-way).
+- `--incremental` mantém o código entre `@@mcp-gen:start` e `@@mcp-gen:end` (também `<generated:handlers:name>`). Usa merge 3-way: stub novo vs seu código vs template novo.
+- `--http` gera handlers que chamam a API real via HTTP.
 - `--name <name>` define o nome do servidor.
 - `--server-version <version>` define a versão do servidor.
 - `--plugin <path>` carrega um plugin.
+- `--include-tags <a,b>` inclui só tools com essas tags.
+- `--exclude-tags <a,b>` exclui tools com essas tags.
+- `--path-prefix <glob>` inclui só paths com esse prefixo ou glob (`/users`, `/users/**`, `/pets/*`).
+- `--include-paths <globs>` globs de path separados por vírgula para incluir.
+- `--exclude-paths <globs>` globs de path separados por vírgula para excluir.
+- `--operation-allowlist <ops>` lista `operationId`, nome da tool ou `METHOD /path` separada por vírgula, ou caminho de arquivo allowlist (array JSON ou separado por linha/vírgula).
+- `--group-by <mode>` agrega em uma tool lógica por grupo: `tag` ou `path-prefix`. Cada grupo roteia por `action` internamente.
+
+### Exemplos de filtro
+
+```bash
+mcp-gen generate -i api.yaml -o ./out --include-tags pets,orders
+mcp-gen generate -i api.yaml -o ./out --exclude-tags admin
+mcp-gen generate -i api.yaml -o ./out --path-prefix "/users/**"
+mcp-gen generate -i api.yaml -o ./out --include-paths "/users/**,/orders/*" --exclude-paths "/users/internal/*"
+mcp-gen generate -i api.yaml -o ./out --operation-allowlist listPets,createPet
+mcp-gen generate -i api.yaml -o ./out --operation-allowlist ./allow.json
+```
+
+### Agrupamento
+
+`--group-by tag` emite uma tool por tag (mais `untagged`): 200 operações em 8 tags viram ~8 tools. `--group-by path-prefix` emite uma tool por primeiro segmento (`/users/**` vira `users_group`). Cada grupo recebe um `action` obrigatório (enum com os nomes das operações) e roteia por `METHOD` + `path`. Parâmetros dos membros são unidos como opcionais.
+
+### Dedup de nomes
+
+Nomes vêm de `METHOD + path` (`GET /pets/{id}` vira `get_pets_petid`). O `operationId` é guardado para o allowlist. Em colisão, o gerador sufixa com o method e depois com um hash curto do path, em vez de gerar tools duplicadas.
+
+### Middleware de auth
+
+Projetos gerados incluem camada de auth separada a partir de `securitySchemes`:
+
+- TypeScript: `src/auth.ts`
+- Python: `auth.py`
+- Go: `auth.go`
+
+Deixe a lógica de negócio nos guardas; auth e validação ficam no middleware.
+
+### Como não sobrescrever suas edições
+
+Handlers gerados vêm com duas marcas:
+
+```typescript
+// <generated:handlers>
+// @@mcp-gen:start:get_pets
+// ... seu código aqui ...
+// @@mcp-gen:end:get_pets
+// </generated:handlers>
+```
+
+Regras:
+
+1. Edite só entre `@@mcp-gen:start:<tool>` e `@@mcp-gen:end:<tool>` (ou `<generated:handlers:<tool>>`). Esse corpo é preservado no regen.
+2. Coloque lógica reutilizável em `src/handlers.custom.ts` (TS), `handlers_custom.py` (Python) ou `handlers_custom.go` (Go). Esse arquivo é criado uma vez e nunca sobrescrito sem `--force`.
+3. Regenere com `generate --incremental`. O gerador faz merge 3-way (stub novo vs seu código vs template novo) e lista handlers `preserved` e avisos `Merged ... custom handlers preserved`. Use `--force` para ignorar e sobrescrever tudo.
 
 ### Validar
 
@@ -188,8 +243,10 @@ Os templates do plugin substituem os do core quando usam o mesmo caminho em `tem
 ```
 my-server/
 ├── src/
-│   ├── server.ts        # MCP server — definições de tools + handlers
-│   └── models.ts        # Interfaces TypeScript geradas a partir dos schemas OpenAPI
+│   ├── server.ts          # MCP server — definições de tools + handlers
+│   ├── auth.ts            # Middleware de auth/validação a partir de securitySchemes
+│   ├── handlers.custom.ts # Seu código — nunca sobrescrito sem --force
+│   └── models.ts          # Interfaces TypeScript geradas a partir dos schemas OpenAPI
 ├── .github/
 │   └── workflows/
 │       └── ci.yml
@@ -203,6 +260,8 @@ my-server/
 ```
 my-server/
 ├── server.py            # Servidor FastMCP — definições de tools + handlers
+├── auth.py              # Middleware de auth/validação a partir de securitySchemes
+├── handlers_custom.py   # Seu código — nunca sobrescrito sem --force
 ├── models.py            # Modelos Pydantic gerados a partir dos schemas OpenAPI
 ├── requirements.txt
 ├── .github/

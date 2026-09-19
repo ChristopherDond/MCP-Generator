@@ -161,6 +161,9 @@ def _expand_path(path: str, params: dict) -> str:
 
 
 # ─── Tools ───────────────────────────────────────────────────────────────────
+# <generated:handlers>
+# Business logic lives between @@mcp-gen markers and is preserved with --incremental.
+# Auth and validation run in auth.py so guards only cover business logic.
 
 {{#each tools}}
 @mcp.tool()
@@ -176,6 +179,22 @@ async def {{name}}({{#each params}}{{name}}: {{#if required}}{{#eq type "string"
         if key not in {"auth_context", "request_args"}
     }
     require_security("{{name}}", {{#if security}}{{json security}}{{else}}None{{/if}}, auth_context, request_args)
+    {{#if isGroup}}
+    __action = request_args.get("action")
+    {{#each groupMembers}}
+    if __action == "{{name}}":
+        {{#if ../http}}
+        return await _call_api("{{method}}", "{{path}}", request_args)
+        {{else}}
+        {{#if exampleResponse}}
+        return {{json exampleResponse}}
+        {{else}}
+        raise NotImplementedError("Handler not implemented: {{name}}")
+        {{/if}}
+        {{/if}}
+    {{/each}}
+    raise ValueError(f"Unknown action: {__action}")
+    {{else}}
     {{#if ../http}}
     return {{#if ../requiresAuth}}await _call_api("{{method}}", "{{path}}", request_args){{else}}await _call_api("{{method}}", "{{path}}", request_args){{/if}}
     {{else}}
@@ -185,10 +204,12 @@ async def {{name}}({{#each params}}{{name}}: {{#if required}}{{#eq type "string"
     raise NotImplementedError("Handler not implemented: {{name}}")
     {{/if}}
     {{/if}}
+    {{/if}}
     # @@mcp-gen:end:{{name}}
 
 
-{{/each}}
+ {{/each}}
+# </generated:handlers>
 # ─── Start ───────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":

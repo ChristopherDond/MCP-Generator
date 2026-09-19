@@ -1,0 +1,54 @@
+package main
+
+import "fmt"
+
+var securitySchemes = `{{json securitySchemes}}`
+
+func assertAuth(toolName string, endpoint string, ctx map[string]any) error {
+	if ctx == nil {
+		return fmt.Errorf("missing auth_context with scoped metadata")
+	}
+	if revoked, ok := ctx["revoked"].(bool); ok && revoked {
+		return fmt.Errorf("access revoked")
+	}
+	expiresAt, _ := ctx["expires_at"].(string)
+	if expiresAt == "" {
+		return fmt.Errorf("token expired or missing TTL")
+	}
+	if _, ok := ctx["request_id"].(string); !ok {
+		return fmt.Errorf("request_id is required for audit logging")
+	}
+	limit, hasLimit := ctx["spend_limit_usd"].(float64)
+	used, hasUsed := ctx["spend_used_usd"].(float64)
+	if !hasLimit || !hasUsed {
+		return fmt.Errorf("spend limit metadata is required")
+	}
+	if used > limit {
+		return fmt.Errorf("spend limit exceeded")
+	}
+	if allowed, ok := ctx["allowed_tools"].([]any); ok {
+		found := false
+		for _, t := range allowed {
+			if s, ok := t.(string); ok && s == toolName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("tool not allowed by scope: %s", toolName)
+		}
+	}
+	if endpoints, ok := ctx["endpoint_allowlist"].([]any); ok {
+		found := false
+		for _, e := range endpoints {
+			if s, ok := e.(string); ok && s == endpoint {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("endpoint not allowed: %s", endpoint)
+		}
+	}
+	return nil
+}

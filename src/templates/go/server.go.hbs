@@ -186,6 +186,8 @@ func requireSecurity(toolName string, security any, authContext map[string]any, 
 func main() {
 	s := server.NewMCPServer("{{serverName}}", "{{serverVersion}}")
 
+	// <generated:handlers>
+	// Business logic lives between @@mcp-gen markers and is preserved with --incremental.
 {{#each tools}}
 	// {{method}} {{path}}
 	{{name}}Tool := mcp.NewTool("{{name}}",
@@ -202,6 +204,21 @@ func main() {
 	s.AddTool({{name}}Tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		_ = request.Params.Arguments
 		// @@mcp-gen:start:{{name}}
+		{{#if isGroup}}
+		__action, _ := request.Params.Arguments["action"].(string)
+		switch (__action) {
+		{{#each groupMembers}}
+		case "{{name}}":
+			{{#if exampleResponse}}
+			return jsonSerialize(jsonExample(`{{json exampleResponse}}`))
+			{{else}}
+			return nil, fmt.Errorf("handler not implemented: {{name}}")
+			{{/if}}
+		{{/each}}
+		default:
+			return nil, fmt.Errorf("unknown action: %s", __action)
+		}
+		{{else}}
 		{{#if http}}
 		return nil, fmt.Errorf("impl via client not yet wired: {{name}} (edit inside @@mcp-gen markers to call {{method}} {{path}})")
 		{{else if exampleResponse}}
@@ -209,10 +226,12 @@ func main() {
 		{{else}}
 		return nil, fmt.Errorf("handler not implemented: {{name}}")
 		{{/if}}
+		{{/if}}
 		// @@mcp-gen:end:{{name}}
 	})
 
 {{/each}}
+	// </generated:handlers>
 	if err := server.ServeStdio(s); err != nil {
 		fmt.Fprintf(os.Stderr, "Fatal: %v\n", err)
 		os.Exit(1)

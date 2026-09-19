@@ -60,12 +60,19 @@ program
   .requiredOption("-i, --input <path>", "Path or URL to the OpenAPI spec (.json | .yaml | .yml)")
   .option("-l, --lang <language>", `Target language: ${SUPPORTED_LANGS.join(" | ")}`, "typescript")
   .option("-o, --out <dir>", "Output directory for the generated project", "./mcp-server")
-  .option("-f, --force", "Overwrite existing files without prompting", false)
-  .option("--incremental", "Preserve custom handler code on re-generation (@@mcp-gen markers)", false)
+  .option("-f, --force", "Overwrite existing files, ignoring preserved handlers and custom files (skips 3-way merge)", false)
+  .option("--incremental", "Preserve custom code between @@mcp-gen markers and <generated:handlers> on re-generation (3-way merge; handlers.custom.* is never overwritten without --force)", false)
   .option("--http", "Generate handlers that call the real API over HTTP instead of returning example stubs", false)
   .option("--env-file <path>", "Path to an .env-style file whose TOKEN/BASE_URL are embedded into the generated client")
   .option("--name <name>", "Override the server name")
   .option("--server-version <version>", "Override the server version")
+  .option("--include-tags <tags>", "Comma-separated tags to include (only tools with one of these tags)")
+  .option("--exclude-tags <tags>", "Comma-separated tags to exclude")
+  .option("--path-prefix <glob>", "Only include operations whose path matches this prefix or glob (/users/**, /pets/*)")
+  .option("--include-paths <globs>", "Comma-separated path globs to include (/users/**,/orders/*)")
+  .option("--exclude-paths <globs>", "Comma-separated path globs to exclude")
+  .option("--operation-allowlist <ops>", "Comma-separated operationIds/tool names/METHOD path list, or path to allowlist file (JSON array or line/comma separated)")
+  .option("--group-by <mode>", "Group endpoints into one tool per group: tag | path-prefix")
   .option("--plugin <path>", "Path to a plugin module or folder to load", (val, acc) => {
     if (!acc) return [val];
     acc.push(val);
@@ -89,6 +96,13 @@ program
       plugins,
       serverName: opts.name,
       serverVersion: opts.serverVersion,
+      includeTags: opts.includeTags ? [opts.includeTags] : undefined,
+      excludeTags: opts.excludeTags ? [opts.excludeTags] : undefined,
+      pathPrefix: opts.pathPrefix,
+      includePaths: opts.includePaths ? [opts.includePaths] : undefined,
+      excludePaths: opts.excludePaths ? [opts.excludePaths] : undefined,
+      operationAllowlistFile: opts.operationAllowlist,
+      groupBy: opts.groupBy,
     };
 
     console.log(chalk.bold("\nmcp-gen") + ` v${VERSION} — OpenAPI to MCP Server\n`);

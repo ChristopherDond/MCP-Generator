@@ -1,0 +1,5 @@
+from typing import Any
+
+
+async def custom_handler(tool_name: str, args: dict) -> Any:
+    raise NotImplementedError(f"Custom handler not implemented: {tool_name}. Edit handlers_custom.py, this file is never overwritten.")

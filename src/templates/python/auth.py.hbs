@@ -1,0 +1,38 @@
+from datetime import datetime, timezone
+from typing import Optional
+
+SECURITY_SCHEMES = {{json securitySchemes}}
+
+def _is_expired(expires_at: Optional[str]) -> bool:
+    if not expires_at:
+        return True
+    try:
+        parsed = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+    except ValueError:
+        return True
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed <= datetime.now(timezone.utc)
+
+
+def assert_auth(tool_name: str, endpoint: str, ctx: Optional[dict]) -> None:
+    if not isinstance(ctx, dict):
+        raise ValueError("Missing auth_context with scoped metadata.")
+    if ctx.get("revoked") is True:
+        raise PermissionError("Access revoked")
+    if _is_expired(ctx.get("expires_at")):
+        raise PermissionError("Token expired or missing TTL")
+    if not ctx.get("request_id"):
+        raise ValueError("request_id is required for audit logging")
+    limit = ctx.get("spend_limit_usd")
+    used = ctx.get("spend_used_usd")
+    if not isinstance(limit, (int, float)) or not isinstance(used, (int, float)):
+        raise ValueError("Spend limit metadata is required")
+    if used > limit:
+        raise PermissionError("Spend limit exceeded")
+    allowed = ctx.get("allowed_tools")
+    if isinstance(allowed, list) and tool_name not in allowed:
+        raise PermissionError(f"Tool not allowed by scope: {tool_name}")
+    endpoints = ctx.get("endpoint_allowlist")
+    if isinstance(endpoints, list) and endpoint not in endpoints:
+        raise PermissionError(f"Endpoint not allowed: {endpoint}")
