@@ -136,15 +136,41 @@ def require_security(tool_name: str, security: Any, auth_context: Optional[dict]
             raise PermissionError("Missing token_id for secured operation")
 
 
-async def _call_api(method: str, path: str, params: dict, headers: Optional[dict] = None) -> Any:
+def _build_query(params: dict, names: list) -> dict:
+    out: Dict[str, Any] = {}
+    for k in names:
+        v = params.get(k)
+        if v is None:
+            continue
+        out[k] = v
+    return out
+
+
+def _build_headers(params: dict, names: list) -> Dict[str, str]:
+    out: Dict[str, str] = {}
+    for k in names:
+        v = params.get(k)
+        if v is not None:
+            out[k] = str(v)
+    return out
+
+
+async def _call_api(method: str, path: str, params: dict, headers: Optional[dict] = None, query: Optional[dict] = None) -> Any:
     """Real HTTP call to the underlying API (used in --http mode)."""
-    url = BASE_URL.rstrip("/") + _expand_path(path, params)
+    from urllib.parse import quote
+
+    url = BASE_URL.rstrip("/") + _expand_path(path, params, quote)
     merged_headers = dict(_http_headers)
     if headers:
         merged_headers.update(headers)
     body = params.get("body")
+    kwargs: Dict[str, Any] = {"headers": merged_headers}
+    if query:
+        kwargs["params"] = query
+    if body is not None:
+        kwargs["json"] = body
     async with httpx.AsyncClient() as client:
-        r = await client.request(method, url, json=body, headers=merged_headers)
+        r = await client.request(method, url, **kwargs)
         if r.status_code >= 400:
             raise RuntimeError(f"HTTP {r.status_code}: {r.text}")
         try:
@@ -153,10 +179,17 @@ async def _call_api(method: str, path: str, params: dict, headers: Optional[dict
             return r.text
 
 
-def _expand_path(path: str, params: dict) -> str:
+def _expand_path(path: str, params: dict, quote=None) -> str:
+    from urllib.parse import quote as _quote
+
+    enc = quote or _quote
     out = path
     for k, v in params.items():
-        out = out.replace("{" + k + "}", str(v))
+        if v is None:
+            continue
+        token = "{" + k + "}"
+        if token in out:
+            out = out.replace(token, enc(str(v), safe=""))
     return out
 
 
@@ -183,8 +216,10 @@ async def {{name}}({{#each params}}{{name}}: {{#if required}}{{#eq type "string"
     __action = request_args.get("action")
     {{#each groupMembers}}
     if __action == "{{name}}":
-        {{#if ../http}}
-        return await _call_api("{{method}}", "{{path}}", request_args)
+        {{#if @root.http}}
+        __query = _build_query(request_args, [{{#each (queryParams params)}}"{{name}}", {{/each}}])
+        __headers = _build_headers(request_args, [{{#each (headerParams params)}}"{{name}}", {{/each}}])
+        return await _call_api("{{method}}", "{{path}}", request_args, headers=__headers, query=__query)
         {{else}}
         {{#if exampleResponse}}
         return {{json exampleResponse}}
@@ -196,7 +231,9 @@ async def {{name}}({{#each params}}{{name}}: {{#if required}}{{#eq type "string"
     raise ValueError(f"Unknown action: {__action}")
     {{else}}
     {{#if ../http}}
-    return {{#if ../requiresAuth}}await _call_api("{{method}}", "{{path}}", request_args){{else}}await _call_api("{{method}}", "{{path}}", request_args){{/if}}
+    __query = _build_query(request_args, [{{#each (queryParams params)}}"{{name}}", {{/each}}])
+    __headers = _build_headers(request_args, [{{#each (headerParams params)}}"{{name}}", {{/each}}])
+    return await _call_api("{{method}}", "{{path}}", request_args, headers=__headers, query=__query)
     {{else}}
     {{#if exampleResponse}}
     return {{json exampleResponse}}
