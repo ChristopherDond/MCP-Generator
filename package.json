@@ -1,6 +1,6 @@
 {
   "name": "@christopher_dondici/mcp-gen",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "publishConfig": {
     "access": "public"
   },

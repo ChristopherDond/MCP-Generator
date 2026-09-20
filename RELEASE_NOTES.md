@@ -1,5 +1,17 @@
 # Notas de release
 
+## 2.1.5 - Fase 0 (2026-09-20)
+
+Merge do PR #4 (`christopherdondici/fix/fase-0-p0-fixes`) sobre a 2.1.4.
+
+- TypeScript com query string real (`get_pets({ limit: 5 })` → `/pets?limit=5`).
+- Python com `_build_query` / `_build_headers` no modo `--http`.
+- Go com modo `--http` ligado no `APIClient` (sem stub).
+- Registry só v3, com guia para chaves removidas (`slack`, `kubernetes`, `digitalocean`, `azure`) e erro acionável para spec v2.
+- Validação: `npm run build` ok, `npm test` 11 suites / 196 testes, incluindo `tests/fase0.test.ts` (8 testes).
+
+Para publicar: `npm install -g @christopher_dondici/mcp-gen@2.1.5` após `npm publish --access public` ou via tag `v2.1.5` no workflow de release.
+
 ## Estado e fontes
 
 A versão `2.1.2` do pacote `@christopher_dondici/mcp-gen` está preparada para release e ainda não foi publicada, com `package.json` e `package-lock.json` alinhados. O npm recusou `mcp-gen` por similaridade com `mcpgen`; a renomeação mantém a versão, o binário `mcp-gen` e o repositório. A publicação no npm não foi verificada; estas notas não confirmam publicação nem criação de tag. Uma tag Git ou um workflow de publicação não comprova disponibilidade no registry.

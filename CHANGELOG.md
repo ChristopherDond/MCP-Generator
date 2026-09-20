@@ -2,6 +2,16 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.1.5] - 2026-09-20
+
+### Fase 0 - correções P0 (PR #4)
+
+- **TypeScript**: cliente gerado serializa query params (`queryNames` + `URLSearchParams`). Exemplo: `get_pets({ limit: 5 })` chama `/pets?limit=5`.
+- **Python**: `server.py` gerado com `_build_query` / `_build_headers` e `kwargs["params"]` no modo `--http`, inclusive em tools agrupadas.
+- **Go**: modo `--http` ligado no client real (`__client.do("GET", "/pets"...`), com `q.Encode()`, `PathEscape` e guards de `nil`. Remove stubs `not yet wired`.
+- **Registry**: só v3 (`stripe`, `github`, `openai`, `petstore`, `twilio`, `shopify`). Chaves `slack`, `kubernetes`, `digitalocean`, `azure` removidas com mensagem de orientação. Chave desconhecida lista `Known keys`. Spec v2 falha com `Only OpenAPI v3`.
+- **Testes**: 8 novos em `tests/fase0.test.ts`. Suite: 11 suites, 196 testes passando.
+
 ## [2.1.2] - Prepared for release (2026-09-17)
 
 ### Packaging & Distribution

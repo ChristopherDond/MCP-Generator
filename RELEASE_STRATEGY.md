@@ -1,6 +1,6 @@
 # Release Strategy - MCP-Generator
 
-A versão `@christopher_dondici/mcp-gen@2.1.2` ainda não foi publicada. O binário continua `mcp-gen`. Os exemplos de RC abaixo são históricos e não devem ser executados para preparar a 2.1.2; publicar, aumentar versão e enviar commits/tags exigem autorização separada.
+A versão `@christopher_dondici/mcp-gen@2.1.5` reúne a Fase 0 (PR #4) sobre a 2.1.4 já publicada. O binário continua `mcp-gen`. Os exemplos de RC abaixo são históricos e não devem ser executados para preparar a 2.1.5; publicar, aumentar versão e enviar commits/tags exigem autorização separada.
 
 ## Versioning
 
