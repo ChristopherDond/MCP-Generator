@@ -430,10 +430,16 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
   }
 
   if (!("openapi" in api) || !api.openapi.startsWith("3")) {
+    const rec = api as unknown as Record<string, unknown>;
+    const got =
+      "swagger" in api
+        ? `swagger ${String(rec["swagger"] ?? "unknown")}`
+        : "openapi" in api
+          ? String(rec["openapi"] ?? "unknown")
+          : "unknown";
     throw new Error(
-      `Only OpenAPI v3.x is supported. Got: ${
-        "swagger" in api ? (api as Record<string, string>).swagger : "unknown"
-      }`
+      `Only OpenAPI v3.x is supported. Got: ${got}. ` +
+        `Swagger 2.0 specs need conversion to OpenAPI v3 first (v2 support is on the v2.3.0 roadmap).`
     );
   }
 
