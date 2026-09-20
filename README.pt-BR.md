@@ -214,14 +214,12 @@ Chaves disponíveis no registry:
 |-----|-------------|
 | `stripe` | Stripe Payment API |
 | `github` | GitHub REST API |
-| `slack` | Slack Web API |
 | `openai` | OpenAI API |
 | `petstore` | Exemplo Swagger Petstore |
 | `twilio` | Twilio Communications API |
 | `shopify` | Shopify Admin API |
-| `kubernetes` | Kubernetes API |
-| `digitalocean` | DigitalOcean API |
-| `azure` | Azure Resource Manager API |
+
+Somente specs OpenAPI v3 são suportadas. As chaves removidas (`slack`, `kubernetes`, `digitalocean`, `azure`) eram OpenAPI v2 ou fragmentos — suporte a Swagger 2.0 está no roadmap da v2.3.0.
 
 ### Watch
 

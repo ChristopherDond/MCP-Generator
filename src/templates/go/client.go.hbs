@@ -9,9 +9,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
+
+var headerParams = map[string]bool{
+{{#each (allHeaderParams tools)}}
+	"{{name}}": true,
+{{/each}}
+}
 
 type APIClient struct {
 	BaseURL string
@@ -36,14 +43,46 @@ func (e *APIError) Error() string {
 }
 
 func (c *APIClient) do(method, path string, params map[string]any) (any, error) {
+	orig := path
 	path = c.expand(path, params)
 	var body io.Reader
-	if v, ok := params["body"]; ok {
+	if v, ok := params["body"]; ok && v != nil {
 		b, err := json.Marshal(v)
 		if err != nil {
 			return nil, err
 		}
 		body = bytes.NewReader(b)
+	}
+	q := url.Values{}
+	for k, v := range params {
+		if v == nil {
+			continue
+		}
+		if k == "body" {
+			continue
+		}
+		if strings.Contains(orig, "{"+k+"}") {
+			continue
+		}
+		if headerParams[k] {
+			continue
+		}
+		switch tv := v.(type) {
+		case []any:
+			for _, item := range tv {
+				q.Add(k, fmt.Sprintf("%v", item))
+			}
+		case []string:
+			for _, item := range tv {
+				q.Add(k, item)
+			}
+		default:
+			_ = tv
+			q.Add(k, fmt.Sprintf("%v", v))
+		}
+	}
+	if len(q) > 0 {
+		path = path + "?" + q.Encode()
 	}
 	req, err := http.NewRequest(method, c.BaseURL+path, body)
 	if err != nil {
@@ -56,7 +95,7 @@ func (c *APIClient) do(method, path string, params map[string]any) (any, error) 
 		req.Header.Set("Content-Type", "application/json")
 	}
 	{{#each (allHeaderParams tools)}}
-	if v, ok := params["{{name}}"]; ok {
+	if v, ok := params["{{name}}"]; ok && v != nil {
 		req.Header.Set("{{name}}", fmt.Sprintf("%v", v))
 	}
 	{{/each}}
@@ -80,7 +119,12 @@ func (c *APIClient) do(method, path string, params map[string]any) (any, error) 
 
 func (c *APIClient) expand(path string, params map[string]any) string {
 	for k, v := range params {
-		path = strings.ReplaceAll(path, "{"+k+"}", fmt.Sprintf("%v", v))
+		if v == nil {
+			continue
+		}
+		if strings.Contains(path, "{"+k+"}") {
+			path = strings.ReplaceAll(path, "{"+k+"}", url.PathEscape(fmt.Sprintf("%v", v)))
+		}
 	}
 	return path
 }

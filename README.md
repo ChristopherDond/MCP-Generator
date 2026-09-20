@@ -223,14 +223,12 @@ Available registry keys:
 |-----|-------------|
 | `stripe` | Stripe Payment API |
 | `github` | GitHub REST API |
-| `slack` | Slack Web API |
 | `openai` | OpenAI API |
 | `petstore` | Swagger Petstore example |
 | `twilio` | Twilio Communications API |
 | `shopify` | Shopify Admin API |
-| `kubernetes` | Kubernetes API |
-| `digitalocean` | DigitalOcean API |
-| `azure` | Azure Resource Manager API |
+
+Only OpenAPI v3 specs are supported. Removed keys (`slack`, `kubernetes`, `digitalocean`, `azure`) were OpenAPI v2 or fragments — Swagger 2.0 support is on the v2.3.0 roadmap.
 
 ### Watch
 

@@ -92,6 +92,17 @@ Handlebars.registerHelper("allHeaderParams", (tools: Array<{ params: Array<{ nam
   return out;
 });
 
+type ParamLike = { name: string; in: string };
+
+function filterParamsByIn(params: unknown, kind: string): ParamLike[] {
+  if (!Array.isArray(params)) return [];
+  return (params as ParamLike[]).filter((p) => p && p.in === kind);
+}
+
+Handlebars.registerHelper("queryParams", (params: unknown) => filterParamsByIn(params, "query"));
+
+Handlebars.registerHelper("headerParams", (params: unknown) => filterParamsByIn(params, "header"));
+
 Handlebars.registerHelper(
   "optionalParams",
   (params: Array<{ required: boolean }>) =>

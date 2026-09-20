@@ -295,12 +295,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       switch (__action) {
         {{#each groupMembers}}
         case "{{name}}": {
+          {{#if @root.http}}
+          {{#if @root.requiresAuth}}requireApiAuth();{{/if}}
+          const out = await client.{{name}}(extractCustomArgs(args as Record<string, unknown> | undefined));
+          return { content: [{ type: "text" as const, text: safeSerialize(out) }] };
+          {{else}}
           {{#if exampleResponse}}
           return {
             content: [{ type: "text" as const, text: safeSerialize({{json exampleResponse}}) }],
           };
           {{else}}
           throw new McpError(ErrorCode.InternalError, "Handler not implemented: {{name}}");
+          {{/if}}
           {{/if}}
         }
         {{/each}}

@@ -3,20 +3,15 @@ import path from "path";
 import { validateRemoteUrl, validateContentType, validateContentSize } from "./security";
 
 export const KNOWN_SPECS: Record<string, { url: string; filename?: string; description?: string }> = {
-  stripe: { 
-    url: "https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.json", 
+  stripe: {
+    url: "https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.json",
     filename: "openapi.stripe.json",
     description: "Stripe Payment API — comprehensive payment processing"
   },
-  github: { 
-    url: "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json", 
+  github: {
+    url: "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json",
     filename: "openapi.github.json",
     description: "GitHub REST API — version control and collaboration platform"
-  },
-  slack: {
-    url: "https://raw.githubusercontent.com/slackapi/slack-api-specs/master/web-api/slack_web_openapi_v2.json",
-    filename: "openapi.slack.json",
-    description: "Slack Web API — messaging and workspace automation"
   },
   openai: {
     url: "https://raw.githubusercontent.com/openai/openai-openapi/master/openapi.yaml",
@@ -38,26 +33,23 @@ export const KNOWN_SPECS: Record<string, { url: string; filename?: string; descr
     filename: "openapi.shopify.json",
     description: "Shopify Admin API — e-commerce platform management"
   },
-  kubernetes: {
-    url: "https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json",
-    filename: "openapi.kubernetes.json",
-    description: "Kubernetes API — container orchestration platform"
-  },
-  digitalocean: {
-    url: "https://raw.githubusercontent.com/digitalocean/openapi/main/specification/DigitalOcean-public.v2.json",
-    filename: "openapi.digitalocean.json",
-    description: "DigitalOcean API — cloud infrastructure management"
-  },
-  azure: {
-    url: "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/common-types/resource-management/v3/types.json",
-    filename: "openapi.azure.json",
-    description: "Azure Resource Manager API — cloud resource management"
-  }
+};
+
+export const REMOVED_SPECS: Record<string, string> = {
+  slack: "Slack only publishes OpenAPI v2 (slack_web_openapi_v2.json). mcp-gen supports OpenAPI v3 only for now. Track Swagger 2.0 support in the v2.3.0 roadmap.",
+  kubernetes: "Kubernetes publishes OpenAPI v2 at api/openapi-spec/swagger.json. mcp-gen supports OpenAPI v3 only for now. Track Swagger 2.0 support in the v2.3.0 roadmap.",
+  digitalocean: "DigitalOcean-public.v2.json is OpenAPI v2. mcp-gen supports OpenAPI v3 only for now. Track Swagger 2.0 support in the v2.3.0 roadmap.",
+  azure: "The previous azure entry pointed at a common-types fragment (types.json), not a full OpenAPI document. mcp-gen supports OpenAPI v3 only for now.",
 };
 
 export async function fetchSpecToCwd(key: string, targetPath?: string): Promise<string> {
+  const removed = REMOVED_SPECS[key];
+  if (removed) throw new Error(`Registry key "${key}" was removed: ${removed}`);
   const entry = KNOWN_SPECS[key];
-  if (!entry) throw new Error(`Unknown registry key: ${key}`);
+  if (!entry) {
+    const known = Object.keys(KNOWN_SPECS).join(", ");
+    throw new Error(`Unknown registry key: "${key}". Known keys: ${known}. Use 'mcp-gen init --from list' to see them.`);
+  }
 
   // Security: validate URL
   validateRemoteUrl(entry.url);

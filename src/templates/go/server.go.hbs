@@ -209,18 +209,36 @@ func main() {
 		switch (__action) {
 		{{#each groupMembers}}
 		case "{{name}}":
+			{{#if @root.http}}
+			{
+				__client := NewAPIClient(baseURL, apiToken)
+				__res, __err := __client.do("{{method}}", "{{path}}", request.Params.Arguments)
+				if __err != nil {
+					return nil, __err
+				}
+				return jsonSerialize(__res)
+			}
+			{{else}}
 			{{#if exampleResponse}}
 			return jsonSerialize(jsonExample(`{{json exampleResponse}}`))
 			{{else}}
 			return nil, fmt.Errorf("handler not implemented: {{name}}")
+			{{/if}}
 			{{/if}}
 		{{/each}}
 		default:
 			return nil, fmt.Errorf("unknown action: %s", __action)
 		}
 		{{else}}
-		{{#if http}}
-		return nil, fmt.Errorf("impl via client not yet wired: {{name}} (edit inside @@mcp-gen markers to call {{method}} {{path}})")
+		{{#if ../http}}
+		{
+			__client := NewAPIClient(baseURL, apiToken)
+			__res, __err := __client.do("{{method}}", "{{path}}", request.Params.Arguments)
+			if __err != nil {
+				return nil, __err
+			}
+			return jsonSerialize(__res)
+		}
 		{{else if exampleResponse}}
 		return jsonSerialize(jsonExample(`{{json exampleResponse}}`))
 		{{else}}

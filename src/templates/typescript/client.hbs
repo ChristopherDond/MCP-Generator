@@ -4,14 +4,33 @@
 export class ApiClient {
   constructor(public baseUrl: string = "{{baseUrl}}", public token?: string) {}
 
-  private buildUrl(path: string, params: Record<string, unknown> | undefined): string {
+  private buildUrl(path: string, params: Record<string, unknown> | undefined, queryNames: string[] = []): string {
     let url = path;
     if (params) {
       for (const [k, v] of Object.entries(params)) {
-        url = url.replace(`{${k}}`, encodeURIComponent(String(v ?? "")));
+        if (v === undefined || v === null) continue;
+        if (url.includes(`{${k}}`)) {
+          url = url.replace(`{${k}}`, encodeURIComponent(String(v)));
+        }
       }
     }
-    return this.baseUrl.replace(/\/$/, "") + url;
+    const qs = new URLSearchParams();
+    if (params) {
+      for (const name of queryNames) {
+        const v = params[name];
+        if (v === undefined || v === null) continue;
+        if (Array.isArray(v)) {
+          for (const item of v) {
+            if (item === undefined || item === null) continue;
+            qs.append(name, String(item));
+          }
+        } else {
+          qs.append(name, String(v));
+        }
+      }
+    }
+    const q = qs.toString();
+    return this.baseUrl.replace(/\/$/, "") + url + (q ? `?${q}` : "");
   }
 
   private buildHeaders(params: Record<string, unknown>): Record<string, string> {
@@ -39,10 +58,21 @@ export class ApiClient {
   {{#each tools}}
   /** {{escapeText description}} */
   async {{name}}(params: Record<string, unknown> = {}): Promise<unknown> {
-    const url = this.buildUrl("{{path}}", params);
+    const url = this.buildUrl("{{path}}", params, [{{#each (queryParams params)}}"{{name}}", {{/each}}]);
     const method = "{{method}}";
     const body = {{#if (hasBodyParam params)}}params["body"]{{else}}undefined{{/if}};
     return this.request(method, url, body, this.buildHeaders(params));
   }
+  {{#if isGroup}}
+  {{#each groupMembers}}
+  /** {{escapeText description}} */
+  async {{name}}(params: Record<string, unknown> = {}): Promise<unknown> {
+    const url = this.buildUrl("{{path}}", params, [{{#each (queryParams params)}}"{{name}}", {{/each}}]);
+    const method = "{{method}}";
+    const body = {{#if (hasBodyParam params)}}params["body"]{{else}}undefined{{/if}};
+    return this.request(method, url, body, this.buildHeaders(params));
+  }
+  {{/each}}
+  {{/if}}
   {{/each}}
 }
