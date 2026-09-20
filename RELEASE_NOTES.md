@@ -10,11 +10,22 @@ Merge do PR #4 (`christopherdondici/fix/fase-0-p0-fixes`) sobre a 2.1.4.
 - Registry só v3, com guia para chaves removidas (`slack`, `kubernetes`, `digitalocean`, `azure`) e erro acionável para spec v2.
 - Validação: `npm run build` ok, `npm test` 11 suites / 196 testes, incluindo `tests/fase0.test.ts` (8 testes).
 
-Para publicar: `npm install -g @christopher_dondici/mcp-gen@2.1.5` após `npm publish --access public` ou via tag `v2.1.5` no workflow de release.
+Instalação: `npm install -g @christopher_dondici/mcp-gen@2.1.5` (tag `v2.1.5` no workflow de release).
+
+## 2.1.4 - Filtros, agrupamento e incremental (2026-09-19)
+
+Merge do PR #3 sobre a 2.1.2 (a tag `v2.1.3` foi substituída antes de chegar ao npm).
+
+- Filtros de path com globs: `--path-prefix "/users/**"`, `--include-paths`, `--exclude-paths`; `--operation-allowlist op1,op2` inline (arquivo continua suportado).
+- Agregação com `--group-by tag | path-prefix`: uma tool lógica por tag ou segmento de path, com roteamento interno por `action`.
+- Dedup de nomes: em colisão, sufixa com o method e depois com hash curto do path.
+- Guardas incrementais: regiões `<generated:handlers>` mais marcadores `@@mcp-gen` por tool, merge 3-way com `--incremental`, `--force` para sobrescrever.
+- Middleware de auth separado (`src/auth.ts`, `auth.py`, `auth.go`) e arquivos `handlers.custom.*` nunca sobrescritos sem `--force`.
+- Fix: middleware de auth gerado com default para specs sem `securitySchemes`.
 
 ## Estado e fontes
 
-A versão `2.1.2` do pacote `@christopher_dondici/mcp-gen` está preparada para release e ainda não foi publicada, com `package.json` e `package-lock.json` alinhados. O npm recusou `mcp-gen` por similaridade com `mcpgen`; a renomeação mantém a versão, o binário `mcp-gen` e o repositório. A publicação no npm não foi verificada; estas notas não confirmam publicação nem criação de tag. Uma tag Git ou um workflow de publicação não comprova disponibilidade no registry.
+A versão `2.1.5` do pacote `@christopher_dondici/mcp-gen` é a release atual, com `package.json` e `package-lock.json` alinhados. O npm recusou `mcp-gen` por similaridade com `mcpgen`; a renomeação mantém a versão, o binário `mcp-gen` e o repositório. As versões 2.1.2 e 2.1.4 já foram publicadas; a 2.1.5 reúne a Fase 0 (PR #4) sobre a 2.1.4. Uma tag Git ou um workflow de publicação não comprova disponibilidade no registry — confirme com `npm view`.
 
 A 2.1.2 reúne correções de build, empacotamento, CI e dependências, sem novas funcionalidades de runtime. Estas notas preservam o histórico da 2.1.1, confrontando o [CHANGELOG](CHANGELOG.md) com os diffs `v2.1.0..v2.1.1` e `v2.1.1..1629696`, e descrevem separadamente a preparação da 2.1.2. As seções históricas do changelog não foram alteradas; suas afirmações sobre publicação e segurança não confirmam o estado atual.
 
@@ -96,9 +107,9 @@ node dist/cli/index.js generate -i examples/petstore.yaml -l typescript -o ./my-
 node dist/cli/index.js validate -i examples/petstore.yaml
 ```
 
-O fluxo acima usa a branch `main`, com as correções de build e empacotamento incluídas na 2.1.2, não um checkout isolado da tag histórica `v2.1.1`. A geração cria arquivos; não instala dependências nem inicia o servidor gerado.
+O fluxo acima usa a branch `main`, com as correções de build e empacotamento incluídas desde a 2.1.2 e os recursos da 2.1.4 mais as correções P0 da 2.1.5, não um checkout isolado da tag histórica `v2.1.1`. A geração cria arquivos; não instala dependências nem inicia o servidor gerado.
 
-Quando a versão 2.1.2 for publicada e sua disponibilidade no npm for confirmada, a instalação pelo registry poderá ser feita com `npm install -g @christopher_dondici/mcp-gen@2.1.2`. Até essa confirmação, use o fluxo pelo código-fonte.
+A instalação pelo registry usa `npm install -g @christopher_dondici/mcp-gen@2.1.5`. Para versões anteriores, troque o número (ex.: `@2.1.4`).
 
 Nos READMEs, `mcp-gen` é uma abreviação de `node dist/cli/index.js` na raiz do repositório. Opcionalmente, `npm link` após o build cria o comando apontando para o checkout local, alterando os links globais do npm sem depender de uma publicação de `@christopher_dondici/mcp-gen` no registry. Não há fluxo de instalação desta CLI via pip confirmado.
 

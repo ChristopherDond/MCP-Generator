@@ -45,7 +45,7 @@ npm publish --tag rc
 Verificar:
 ```bash
 npm info @christopher_dondici/mcp-gen versions
-npm view @christopher_dondici/mcp-gen@2.1.2
+npm view @christopher_dondici/mcp-gen@2.1.5
 ```
 
 ### 4. Anunciar (Product Hunt, Twitter, etc.)

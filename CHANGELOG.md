@@ -12,11 +12,24 @@ Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 - **Registry**: só v3 (`stripe`, `github`, `openai`, `petstore`, `twilio`, `shopify`). Chaves `slack`, `kubernetes`, `digitalocean`, `azure` removidas com mensagem de orientação. Chave desconhecida lista `Known keys`. Spec v2 falha com `Only OpenAPI v3`.
 - **Testes**: 8 novos em `tests/fase0.test.ts`. Suite: 11 suites, 196 testes passando.
 
-## [2.1.2] - Prepared for release (2026-09-17)
+## [2.1.4] - 2026-09-19
+
+### Filtros, agrupamento e preservação incremental (PR #3)
+
+(A tag `v2.1.3` foi substituída antes de chegar ao npm; tudo abaixo saiu na 2.1.4.)
+
+- **Filtros de path com globs**: `--path-prefix "/users/**"`, `--include-paths`, `--exclude-paths`; `--operation-allowlist op1,op2` inline (arquivo continua suportado).
+- **Agregação com `--group-by tag | path-prefix`**: uma tool lógica por tag ou segmento de path, com roteamento interno por `action` (nome da operação + method).
+- **Dedup de nomes**: em colisão, sufixa com o method e depois com hash curto do path.
+- **Guardas incrementais**: regiões `<generated:handlers>` mais marcadores `@@mcp-gen` por tool, merge 3-way com `--incremental`, `--force` para sobrescrever.
+- **Middleware de auth separado** (`src/auth.ts`, `auth.py`, `auth.go`) gerado a partir de `securitySchemes`, e arquivos `handlers.custom.*` que nunca são sobrescritos sem `--force`.
+- **Fix**: middleware de auth gerado com default para specs sem `securitySchemes`.
+
+## [2.1.2] - 2026-09-17
 
 ### Packaging & Distribution
 
-- `@christopher_dondici/mcp-gen` 2.1.2 prepared for release; not yet published to npm
+- `@christopher_dondici/mcp-gen` 2.1.2 released on npm
 - Scoped npm name after rejection of `mcp-gen` for similarity to `mcpgen`; version, `mcp-gen` binary and repository unchanged
 - Public scoped publication configured; CI and release install and validate the scoped tarball before publication
 - Build, packaging, CI, and dependency fixes only; no new runtime features
