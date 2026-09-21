@@ -6,6 +6,7 @@ import path from "path";
 import { generate, validateSpec } from "../core/generator";
 import type { GeneratorOptions, Lang } from "../core/types";
 import { fetchSpecToCwd, listKnownSpecs, getSpecInfo } from "../core/registry";
+import { buildWatchGeneratorOptions } from "./watch-options";
 import type { SecurityReport } from "../core/security-lint";
 import fs from "fs";
 import inquirer from "inquirer";
@@ -73,6 +74,8 @@ program
   .option("--exclude-paths <globs>", "Comma-separated path globs to exclude")
   .option("--operation-allowlist <ops>", "Comma-separated operationIds/tool names/METHOD path list, or path to allowlist file (JSON array or line/comma separated)")
   .option("--group-by <mode>", "Group endpoints into one tool per group: tag | path-prefix")
+  .option("--dry-run", "List tools/models/groups/files that would be generated without writing anything", false)
+  .option("--json", "Output the generation summary as machine-readable JSON", false)
   .option("--plugin <path>", "Path to a plugin module or folder to load", (val, acc) => {
     if (!acc) return [val];
     acc.push(val);
@@ -103,7 +106,34 @@ program
       excludePaths: opts.excludePaths ? [opts.excludePaths] : undefined,
       operationAllowlistFile: opts.operationAllowlist,
       groupBy: opts.groupBy,
+      dryRun: Boolean(opts.dryRun),
     };
+
+    if (opts.json) {
+      try {
+        const result = await generate(options);
+        console.log(JSON.stringify({
+          success: result.success,
+          dryRun: Boolean(result.dryRun),
+          summary: result.summary ?? null,
+          files: result.filesCreated,
+          warnings: result.warnings,
+          errors: result.errors,
+        }, null, 2));
+        if (!result.success) process.exit(1);
+      } catch (err: unknown) {
+        console.log(JSON.stringify({
+          success: false,
+          dryRun: Boolean(options.dryRun),
+          summary: null,
+          files: [],
+          warnings: [],
+          errors: [err instanceof Error ? err.message : String(err)],
+        }, null, 2));
+        process.exit(1);
+      }
+      return;
+    }
 
     console.log(chalk.bold("\nmcp-gen") + ` v${VERSION} — OpenAPI to MCP Server\n`);
     console.log(`  Input:       ${chalk.cyan(options.input)}`);
@@ -134,10 +164,18 @@ program
         process.exit(1);
       }
 
-      spinner.succeed("Generation complete");
-      console.log(chalk.green(`\n  ✓ ${result.filesCreated.length} files created\n`));
+      spinner.succeed(options.dryRun ? "Dry run complete (no files written)" : "Generation complete");
+      if (options.dryRun && result.summary) {
+        console.log(chalk.green(`\n  ✓ ${result.summary.tools} tools, ${result.summary.models} models, ${result.summary.groups} groups — ${result.filesCreated.length} files would be created\n`));
+      } else {
+        console.log(chalk.green(`\n  ✓ ${result.filesCreated.length} files created\n`));
+      }
       for (const f of result.filesCreated) {
         console.log(`    ${chalk.dim(result.outputDir + "/")}${f}`);
+      }
+
+      if (options.dryRun) {
+        return;
       }
 
       if (result.filesPreserved && result.filesPreserved.length > 0) {
@@ -303,30 +341,37 @@ program
     acc.push(val);
     return acc;
   }, [] as string[])
+  .option("-f, --force", "Overwrite existing files on regeneration", false)
+  .option("--incremental", "Preserve custom handlers on regeneration", true)
+  .option("--no-incremental", "Disable handler preservation on regeneration")
+  .option("--http", "Generate handlers that call the real API over HTTP", false)
+  .option("--include-tags <tags>", "Comma-separated tags to include (only tools with one of these tags)")
+  .option("--exclude-tags <tags>", "Comma-separated tags to exclude")
+  .option("--path-prefix <glob>", "Only include operations whose path matches this prefix or glob (/users/**, /pets/*)")
+  .option("--include-paths <globs>", "Comma-separated path globs to include (/users/**,/orders/*)")
+  .option("--exclude-paths <globs>", "Comma-separated path globs to exclude")
+  .option("--operation-allowlist <ops>", "Comma-separated operationIds/tool names/METHOD path list, or path to allowlist file")
+  .option("--group-by <mode>", "Group endpoints into one tool per group: tag | path-prefix")
   .action(async (opts) => {
     const input = resolveInput(opts.input);
     validateInputExt(input);
     validateLang(opts.lang);
 
-    const commonOptions = {
-      lang: opts.lang as GeneratorOptions["lang"],
-      out: path.resolve(opts.out),
-      force: false,
-      incremental: true,
-      http: false,
-      plugins: opts.plugin as string[] | undefined,
-    } as Partial<GeneratorOptions>;
-
     const runGenerate = async () => {
-      const options: GeneratorOptions = {
-        input,
-        lang: commonOptions.lang!,
-        out: commonOptions.out!,
-        force: false,
-        incremental: true,
-        http: false,
-        plugins: commonOptions.plugins,
-      };
+      const options: GeneratorOptions = buildWatchGeneratorOptions(input, path.resolve(opts.out), {
+        lang: opts.lang,
+        force: opts.force,
+        incremental: opts.incremental,
+        http: opts.http,
+        plugins: opts.plugin as string[] | undefined,
+        includeTags: opts.includeTags,
+        excludeTags: opts.excludeTags,
+        pathPrefix: opts.pathPrefix,
+        includePaths: opts.includePaths,
+        excludePaths: opts.excludePaths,
+        operationAllowlist: opts.operationAllowlist,
+        groupBy: opts.groupBy,
+      });
       console.log(chalk.dim(`[watch] regenerating from ${opts.input} → ${options.out}`));
       try {
         const res = await generate(options);
@@ -390,6 +435,10 @@ program
 
     console.log(chalk.dim(`[watch] watching ${abs}`));
     await runGenerate();
+    if (opts.once) {
+      watcher.close();
+      process.exit(0);
+    }
   });
 
 async function interactive(): Promise<void> {
@@ -422,6 +471,10 @@ async function interactive(): Promise<void> {
         { type: "confirm", name: "http", message: "Generate real HTTP handlers?", default: false },
         { type: "input", name: "name", message: "Server name (optional):", default: "" },
         { type: "input", name: "serverVersion", message: "Server version (optional):", default: "" },
+        { type: "input", name: "includeTags", message: "Only include these tags (comma-separated, optional):", default: "" },
+        { type: "input", name: "excludeTags", message: "Exclude these tags (comma-separated, optional):", default: "" },
+        { type: "input", name: "pathPrefix", message: "Only include paths matching this prefix/glob (optional):", default: "" },
+        { type: "list", name: "groupBy", message: "Group endpoints?", choices: ["none", "tag", "path-prefix"], default: "none" },
       ]);
 
       const input = resolveInput(answers.input as string);
@@ -438,6 +491,10 @@ async function interactive(): Promise<void> {
         plugins: [],
         serverName: answers.name || undefined,
         serverVersion: answers.serverVersion || undefined,
+        includeTags: answers.includeTags ? [answers.includeTags as string] : undefined,
+        excludeTags: answers.excludeTags ? [answers.excludeTags as string] : undefined,
+        pathPrefix: (answers.pathPrefix as string) || undefined,
+        groupBy: answers.groupBy === "none" ? undefined : (answers.groupBy as GeneratorOptions["groupBy"]),
       };
 
       console.log(chalk.bold("\nmcp-gen") + " — OpenAPI to MCP Server\n");
@@ -472,6 +529,8 @@ async function interactive(): Promise<void> {
         const ast = await parseOpenAPI(resolved);
         spinner.succeed("Spec is valid");
         console.log(chalk.dim(`\n  Tools: ${ast.tools.length}  Models: ${ast.models.length}  Base URL: ${ast.baseUrl}\n`));
+        for (const w of ast.warnings ?? []) console.log(chalk.yellow(`  ⚠ Partial schema support: ${w}`));
+        if ((ast.warnings ?? []).length > 0) console.log();
       } catch (err: unknown) {
         spinner.fail("Validation failed");
         console.error(chalk.red(err instanceof Error ? err.message : String(err)));
@@ -563,31 +622,26 @@ async function interactive(): Promise<void> {
         { type: "input", name: "input", message: "Path or URL to the OpenAPI spec:" },
         { type: "list", name: "lang", message: "Target language:", choices: [...SUPPORTED_LANGS] },
         { type: "input", name: "out", message: "Output directory:", default: "./mcp-server" },
+        { type: "confirm", name: "http", message: "Generate real HTTP handlers?", default: false },
+        { type: "input", name: "includeTags", message: "Only include these tags (comma-separated, optional):", default: "" },
+        { type: "input", name: "excludeTags", message: "Exclude these tags (comma-separated, optional):", default: "" },
+        { type: "input", name: "pathPrefix", message: "Only include paths matching this prefix/glob (optional):", default: "" },
+        { type: "list", name: "groupBy", message: "Group endpoints?", choices: ["none", "tag", "path-prefix"], default: "none" },
       ]);
 
       const input = resolveInput(answers.input as string);
       validateInputExt(input);
       validateLang(answers.lang as string);
 
-      const commonOptions = {
-        lang: answers.lang as GeneratorOptions["lang"],
-        out: path.resolve(answers.out as string),
-        force: false,
-        incremental: false,
-        http: false,
-        plugins: [],
-      } as Partial<GeneratorOptions>;
-
       const runGenerate = async () => {
-        const options: GeneratorOptions = {
-          input: answers.input as string,
-          lang: commonOptions.lang!,
-          out: commonOptions.out!,
-          force: false,
-          incremental: false,
-          http: false,
-          plugins: commonOptions.plugins,
-        };
+        const options: GeneratorOptions = buildWatchGeneratorOptions(input, path.resolve(answers.out as string), {
+          lang: answers.lang as string,
+          http: Boolean(answers.http),
+          includeTags: (answers.includeTags as string) || undefined,
+          excludeTags: (answers.excludeTags as string) || undefined,
+          pathPrefix: (answers.pathPrefix as string) || undefined,
+          groupBy: answers.groupBy === "none" ? undefined : (answers.groupBy as string),
+        });
         console.log(chalk.dim(`[watch] regenerating from ${answers.input} → ${options.out}`));
         try {
           const res = await generate(options);

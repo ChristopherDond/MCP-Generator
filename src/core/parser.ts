@@ -336,10 +336,11 @@ function buildTools(
 
 function buildModels(
   components: OpenAPIV3.ComponentsObject | undefined
-): MCPModel[] {
-  if (!components?.schemas) return [];
+): { models: MCPModel[]; warnings: string[] } {
+  if (!components?.schemas) return { models: [], warnings: [] };
 
   const models: MCPModel[] = [];
+  const warnings: string[] = [];
 
   for (const [name, rawSchema] of Object.entries(components.schemas)) {
     if ("$ref" in rawSchema) continue;
@@ -367,7 +368,12 @@ function buildModels(
         required: [],
       };
       for (const sub of schema.allOf) {
-        if ("$ref" in sub) continue;
+        if ("$ref" in sub) {
+          warnings.push(
+            `Schema "${name}": allOf $ref "${(sub as OpenAPIV3.ReferenceObject).$ref}" ignored — referenced properties are not merged (partial allOf support)`
+          );
+          continue;
+        }
         Object.assign(merged.properties!, (sub as OpenAPIV3.SchemaObject).properties ?? {});
         merged.required = [
           ...(merged.required ?? []),
@@ -375,6 +381,29 @@ function buildModels(
         ];
       }
       resolvedSchema = merged;
+    }
+
+    // Handle oneOf / anyOf by recording referenced component names
+    // (inline variants have no $ref name to reference — flag them instead of dropping silently)
+    if (schema.oneOf) {
+      const inlineOneOf = schema.oneOf.filter(
+        (s) => !("$ref" in s)
+      ).length;
+      if (inlineOneOf > 0) {
+        warnings.push(
+          `Schema "${name}": oneOf has ${inlineOneOf} inline variant(s) ignored — only $ref variants become union members`
+        );
+      }
+    }
+    if (schema.anyOf) {
+      const inlineAnyOf = schema.anyOf.filter(
+        (s) => !("$ref" in s)
+      ).length;
+      if (inlineAnyOf > 0) {
+        warnings.push(
+          `Schema "${name}": anyOf has ${inlineAnyOf} inline variant(s) ignored — only $ref variants become union members`
+        );
+      }
     }
 
     // Handle oneOf / anyOf by recording referenced component names
@@ -408,7 +437,7 @@ function buildModels(
     });
   }
 
-  return models;
+  return { models, warnings };
 }
 
 export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
@@ -446,7 +475,7 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
   const tools = buildTools(api.paths ?? {}, api.components);
   // Build models from the raw (non-dereferenced) components so $ref targets
   // like oneOf/anyOf remain as ReferenceObjects and we can extract names.
-  const models = buildModels(raw.components);
+  const { models, warnings } = buildModels(raw.components);
 
   const serverName = (api.info.title ?? "mcp-server")
     .toLowerCase()
@@ -475,5 +504,6 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
     baseUrl,
     requiresAuth,
     securitySchemes: api.components?.securitySchemes,
+    warnings,
   };
 }

@@ -6,7 +6,7 @@ Thank you for considering contributing to `mcp-gen`! This document provides guid
 
 ## 🚀 We're Production Ready!
 
-We've just released **v2.0.0** and are actively welcoming community contributions:
+We've just released **v2.2.0** and are actively welcoming community contributions:
 
 - 🐛 **Found a bug?** Open an [Issue](https://github.com/ChristopherDond/MCP-Generator/issues)
 - 💡 **Have a suggestion?** Start a [Discussion](https://github.com/ChristopherDond/MCP-Generator/discussions)
@@ -128,7 +128,7 @@ examples/             # Example specs
 - 🎨 **Code quality** enhancements
 
 ### Lower Priority (for future versions)
-- 🌐 New languages (Go, Rust)
+- 🌐 New languages (Rust, others — TypeScript, Python and Go are already supported)
 - 🧩 Plugin system enhancements
 - 🚀 Performance optimizations
 - 🎯 Very specific use cases
@@ -261,7 +261,7 @@ Obrigado por considerar contribuir para `mcp-gen`! Este documento fornece diretr
 
 ## 🚀 Produção Pronta!
 
-Lançamos **v2.0.0** e estamos ativamente acolhendo contribuições da comunidade:
+Lançamos **v2.2.0** e estamos ativamente acolhendo contribuições da comunidade:
 
 - 🐛 **Encontrou um bug?** Abra uma [Issue](https://github.com/ChristopherDond/MCP-Generator/issues)
 - 💡 **Tem uma sugestão?** Comece uma [Discussion](https://github.com/ChristopherDond/MCP-Generator/discussions)
@@ -383,7 +383,7 @@ examples/             # Specs de exemplo
 - 🎨 **Melhorias de qualidade** de código
 
 ### Prioridade Menor (para versões futuras)
-- 🌐 Novas linguagens (Go, Rust)
+- 🌐 Novas linguagens (Rust, outras — TypeScript, Python e Go já são suportadas)
 - 🧩 Melhorias no sistema de plugins
 - 🚀 Otimizações de performance
 - 🎯 Casos de uso muito específicos

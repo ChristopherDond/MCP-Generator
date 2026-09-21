@@ -2,6 +2,16 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.2.0] - 2026-09-21
+
+### Fase 1 - base sólida, sem breaking (minor)
+
+- **`generate --dry-run` + `--json`**: lista tools/modelos/grupos/arquivos sem escrever nada; `--json` devolve resumo legível por máquina (`summary` em `GenerationResult`).
+- **`watch` com filtros**: repassa `--include-tags`, `--exclude-tags`, `--path-prefix`, `--include-paths`, `--exclude-paths`, `--operation-allowlist`, `--group-by` (mais `--http`, `--force`/`--incremental`); interativo pergunta filtros e agrupamento; `watch --once` encerra após a primeira geração também em arquivos.
+- **Avisos de schemas parciais**: `validate` e `generate` emitem warning por schema quando `$ref` de `allOf` é ignorado ou variante inline de `oneOf`/`anyOf` é descartada (`AST.warnings`).
+- **Higiene OSS**: CONTRIBUTING atualizado (v2.2.0, Go já suportado), `MCP_GEN_ALLOW_PLUGINS` documentado nos READMEs.
+- **Testes**: `tests/dry-run.test.ts`, `tests/watch-filters.test.ts` (inclui `watch --once` com filtro), `tests/schema-warnings.test.ts`. Suite: 14 suites, 203 testes passando.
+
 ## [2.1.5] - 2026-09-20
 
 ### Fase 0 - correções P0 (PR #4)

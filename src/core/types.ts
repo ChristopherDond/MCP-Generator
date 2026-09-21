@@ -28,6 +28,8 @@ export interface GeneratorOptions {
   operationAllowlist?: string[];
   operationAllowlistFile?: string;
   groupBy?: GroupByMode;
+  /** When true, list what would be generated without writing files. */
+  dryRun?: boolean;
 }
 
 export interface MCPToolParam {
@@ -116,6 +118,19 @@ export interface MCPServerAST {
   /** True when any route declares security requirements. */
   requiresAuth: boolean;
   securitySchemes?: Record<string, OpenAPIV3.SecuritySchemeObject | OpenAPIV3.ReferenceObject>;
+  /** Schemas with partially-supported constructs (allOf $ref, inline oneOf/anyOf). */
+  warnings?: string[];
+}
+
+export interface GenerationSummary {
+  tools: number;
+  models: number;
+  groups: number;
+  files: string[];
+  outputDir: string;
+  lang: Lang;
+  serverName: string;
+  serverVersion: string;
 }
 
 export interface GenerationResult {
@@ -125,6 +140,10 @@ export interface GenerationResult {
   filesPreserved: string[];
   errors: string[];
   warnings: string[];
+  /** True when the run was a dry-run (no files written). */
+  dryRun?: boolean;
+  /** Machine-readable summary (always present on success, including dry-runs). */
+  summary?: GenerationSummary;
 }
 
 export interface ValidateResult {

@@ -136,6 +136,8 @@ export async function validateSpec(input: string): Promise<ValidateResult> {
         `${noExample.length} tool(s) have no example response: ${noExample.map((t) => t.name).join(", ")}`
       );
     }
+
+    for (const w of ast.warnings ?? []) result.warnings.push(`Partial schema support: ${w}`);
   } catch (err: unknown) {
     result.errors.push(err instanceof Error ? err.message : String(err));
   }
@@ -206,6 +208,8 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
     );
   }
 
+  for (const w of ast.warnings ?? []) result.warnings.push(`Partial schema support: ${w}`);
+
   const isTs = options.lang === "typescript";
   const isPy = options.lang === "python";
   const isGo = options.lang === "go";
@@ -272,6 +276,24 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
   }
 
   const fileSpecs = isTs ? getTypeScriptFileSpecs() : isPy ? getPythonFileSpecs() : getGoFileSpecs();
+
+  if (options.dryRun) {
+    const files = fileSpecs.map((s) => s.outputFile);
+    result.dryRun = true;
+    result.filesCreated = files;
+    result.summary = {
+      tools: ast.tools.length,
+      models: ast.models.length,
+      groups: ast.groups?.length ?? 0,
+      files,
+      outputDir: result.outputDir,
+      lang: options.lang,
+      serverName: ast.serverName,
+      serverVersion: ast.serverVersion,
+    };
+    result.success = result.errors.length === 0;
+    return result;
+  }
 
   if (fs.existsSync(result.outputDir) && !options.force && !options.incremental) {
     const contents = fs.readdirSync(result.outputDir);
@@ -353,5 +375,17 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
   }
 
   result.success = result.errors.length === 0;
+  if (result.success) {
+    result.summary = {
+      tools: ast.tools.length,
+      models: ast.models.length,
+      groups: ast.groups?.length ?? 0,
+      files: [...result.filesCreated],
+      outputDir: result.outputDir,
+      lang: options.lang,
+      serverName: ast.serverName,
+      serverVersion: ast.serverVersion,
+    };
+  }
   return result;
 }
