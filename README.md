@@ -4,11 +4,19 @@
 
 Generate MCP servers from OpenAPI specs.
 
-> **Status**: `@christopher_dondici/mcp-gen` 2.2.0 is the latest release on npm and includes the Fase 1 base (dry-run/JSON output, watch filters, partial-schema warnings, OSS hygiene) on top of the Fase 0 P0 fixes and the filtering, grouping, and incremental-preservation features below. See [release notes](RELEASE_NOTES.md) (PT-BR).
+> **Status**: `@christopher_dondici/mcp-gen` 2.3.0 is the latest release on npm and includes the Fase 2 anchor (Swagger 2.0 conversion, re-enabled registry, scale benchmark) on top of the Fase 1 base and Fase 0 P0 fixes below. See [release notes](RELEASE_NOTES.md) (PT-BR).
 
-`mcp-gen` turns an OpenAPI v3 spec into an MCP server in **TypeScript**, **Python**, or **Go**. It maps each route to a tool, generates typed models (including enums, oneOf/anyOf), and keeps custom code when you regenerate.
+`mcp-gen` turns an OpenAPI v3 or Swagger 2.0 spec into an MCP server in **TypeScript**, **Python**, or **Go**. It maps each route to a tool, generates typed models (including enums, oneOf/anyOf), and keeps custom code when you regenerate.
 
-## What's new in 2.2.0
+## What's new in 2.3.0
+
+(Fase 2 — anchor: unlocks the registry, no breaking changes.)
+
+- Swagger 2.0 support: v2 specs are converted to v3 internally on ingest (`host`/`basePath`/`schemes` → `servers`, `definitions` → `components.schemas`, body/formData → `requestBody`, `securityDefinitions` → `securitySchemes`). `validate` + `generate` accept v2 files (see `examples/swagger-v2-petstore.json`).
+- Registry re-enabled: `slack`, `kubernetes`, `digitalocean` are back (v2, converted on the fly); only `azure` stays removed (it was a types fragment, not a full spec).
+- Scale benchmark: `examples/large-scale.json` (180 ops, 10 tags) proves `180 → 10 tools` with `--group-by tag` (also `10` with `path-prefix`). See [Benchmark](#benchmark).
+
+## What's new in 2.2.0 (previous)
 
 (Fase 1 — solid base, no breaking changes.)
 
@@ -79,7 +87,7 @@ sequenceDiagram
     participant Output
 
     User->>CLI: mcp-gen generate --input api.yaml --lang go
-    CLI->>Parser: validate and parse OpenAPI v3 (JSON or YAML)
+    CLI->>Parser: validate and parse OpenAPI v3 / Swagger 2.0 (JSON or YAML)
     Parser->>Generator: internal AST (tools, models, examples)
     Generator->>Output: render Handlebars templates
     Output-->>User: TypeScript, Python, or Go MCP server project
@@ -104,7 +112,7 @@ Each route becomes an MCP tool with:
 
 ## Local installation and command shorthand
 
-Install the latest release with `npm install -g @christopher_dondici/mcp-gen@2.2.0`. To work from source, use the build in [Quick start](#quick-start).
+Install the latest release with `npm install -g @christopher_dondici/mcp-gen@2.3.0`. To work from source, use the build in [Quick start](#quick-start).
 Throughout this README, `mcp-gen` is shorthand for `node dist/cli/index.js` from the repository root. For example, `mcp-gen validate -i examples/petstore.yaml` means `node dist/cli/index.js validate -i examples/petstore.yaml`.
 
 Optionally, run `npm link` from the repository root after building to make the `mcp-gen` command point to your local checkout. This changes npm's global links; it does not download a published `@christopher_dondici/mcp-gen` package. The npm package name changed because `mcp-gen` was rejected for similarity to `mcpgen`; the command remains `mcp-gen`.
@@ -112,7 +120,7 @@ Optionally, run `npm link` from the repository root after building to make the `
 To install a locally produced tarball without publishing:
 
 ```bash
-npm install ./christopher_dondici-mcp-gen-2.2.0.tgz
+npm install ./christopher_dondici-mcp-gen-2.3.0.tgz
 ./node_modules/.bin/mcp-gen --version
 ./node_modules/.bin/mcp-gen validate -i node_modules/@christopher_dondici/mcp-gen/examples/petstore.yaml
 ```
@@ -168,6 +176,18 @@ mcp-gen generate -i api.yaml -o ./out --include-tags pets --group-by tag
 ### Grouping
 
 `--group-by tag` emits one tool per tag (plus `untagged`), e.g. 200 operations across 8 tags become ~8 tools. `--group-by path-prefix` emits one tool per first path segment (`/users/**` becomes `users_group`). Each grouped tool takes a required `action` enum (member operation names) and routes internally by `METHOD` + `path`. Member params are unioned as optional.
+
+### Benchmark
+
+Measured on `examples/large-scale.json` (180 ops across 10 tags, 2 models):
+
+| Mode | Tools |
+|------|-------|
+| no grouping | 180 |
+| `--group-by tag` | 10 |
+| `--group-by path-prefix` | 10 |
+
+`180 → 10 tools` — grouping cuts the surface by 18x on this fixture. Covered by `tests/scale.test.ts`.
 
 ### Tool name dedup
 
@@ -247,8 +267,11 @@ Available registry keys:
 | `petstore` | Swagger Petstore example |
 | `twilio` | Twilio Communications API |
 | `shopify` | Shopify Admin API |
+| `slack` | Slack Web API (Swagger 2.0, converted) |
+| `kubernetes` | Kubernetes API (Swagger 2.0, converted) |
+| `digitalocean` | DigitalOcean API (Swagger 2.0, converted) |
 
-Only OpenAPI v3 specs are supported. Removed keys (`slack`, `kubernetes`, `digitalocean`, `azure`) were OpenAPI v2 or fragments — Swagger 2.0 support is on the v2.3.0 roadmap.
+OpenAPI v3 and Swagger 2.0 are supported (v2 is converted to v3 on ingest). Only `azure` stays removed — it pointed at a types fragment, not a full spec.
 
 ### Watch
 
@@ -517,15 +540,16 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.3 | Tagged only, superseded (never published to npm) | Feature branch content, replaced by 2.1.4 before publication |
 | v2.1.4 | Released on npm | Path glob filters, inline operation allowlist, group-by tag/path-prefix with action routing, method/hash dedup, `<generated:handlers>` guards with 3-way merge, separate auth middleware, never-overwritten `handlers.custom.*`, auth template fix for specs without `securitySchemes` |
 | v2.1.5 | Released on npm | Fase 0 P0 fixes (PR #4): TS query serialization, Python query/headers, Go HTTP wiring, v3-only registry with guidance |
-| v2.2.0 | Released on npm (latest) | Fase 1: `generate --dry-run` + `--json` summary, filter/group flags on `watch` (+ interactive prompts, `--once` file fix), per-schema partial-support warnings in `validate`/`generate`, CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` docs |
-| Distribution | Verified for 2.2.0 | Registry installation works via `npm install -g @christopher_dondici/mcp-gen`; pip publication is not established. Python is a generation target, not a pip installation path for this CLI |
-| Future | Planned | Streaming/resources/prompts, OpenAPI v2, more registries |
+| v2.2.0 | Released on npm | Fase 1: `generate --dry-run` + `--json` summary, filter/group flags on `watch` (+ interactive prompts, `--once` file fix), per-schema partial-support warnings in `validate`/`generate`, CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` docs |
+| v2.3.0 | Released on npm (latest) | Fase 2: Swagger 2.0 → v3 conversion on ingest, `slack`/`kubernetes`/`digitalocean` back in the registry, `examples/large-scale.json` benchmark (180 → 10 tools) |
+| Distribution | Verified for 2.3.0 | Registry installation works via `npm install -g @christopher_dondici/mcp-gen`; pip publication is not established. Python is a generation target, not a pip installation path for this CLI |
+| Future | Planned | Streaming/resources/prompts, more registries |
 
 ---
 
 ## Known limitations
 
-- OpenAPI v2 (Swagger) is not supported — v3.x only
+- Swagger 2.0 is converted to OpenAPI 3.0.3 on ingest (body/formData → `requestBody`, `definitions` → `components.schemas`); exotic v2 constructs may lose fidelity
 - `oneOf` / `anyOf` / `discriminator` schemas generate union types but no runtime validation
 - Security/lint scanning uses static text patterns and can produce false positives or miss issues. A passing report does not guarantee security or verify runtime authorization, revocation, spending, or audit logging
 - Generated authorization checks are scaffolding, not a complete security backend; review and test them before deployment

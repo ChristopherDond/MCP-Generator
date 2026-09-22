@@ -1,0 +1,4354 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Large Scale API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com"
+    }
+  ],
+  "paths": {
+    "/users/op0": {
+      "get": {
+        "summary": "GET /users/op0",
+        "operationId": "get_users_op0",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op1": {
+      "post": {
+        "summary": "POST /users/op1",
+        "operationId": "post_users_op1",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op2": {
+      "put": {
+        "summary": "PUT /users/op2",
+        "operationId": "put_users_op2",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op3": {
+      "delete": {
+        "summary": "DELETE /users/op3",
+        "operationId": "delete_users_op3",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op4": {
+      "get": {
+        "summary": "GET /users/op4",
+        "operationId": "get_users_op4",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op5": {
+      "post": {
+        "summary": "POST /users/op5",
+        "operationId": "post_users_op5",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op6": {
+      "put": {
+        "summary": "PUT /users/op6",
+        "operationId": "put_users_op6",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op7": {
+      "delete": {
+        "summary": "DELETE /users/op7",
+        "operationId": "delete_users_op7",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op8": {
+      "get": {
+        "summary": "GET /users/op8",
+        "operationId": "get_users_op8",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op9": {
+      "post": {
+        "summary": "POST /users/op9",
+        "operationId": "post_users_op9",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op10": {
+      "put": {
+        "summary": "PUT /users/op10",
+        "operationId": "put_users_op10",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op11": {
+      "delete": {
+        "summary": "DELETE /users/op11",
+        "operationId": "delete_users_op11",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op12": {
+      "get": {
+        "summary": "GET /users/op12",
+        "operationId": "get_users_op12",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op13": {
+      "post": {
+        "summary": "POST /users/op13",
+        "operationId": "post_users_op13",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op14": {
+      "put": {
+        "summary": "PUT /users/op14",
+        "operationId": "put_users_op14",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op15": {
+      "delete": {
+        "summary": "DELETE /users/op15",
+        "operationId": "delete_users_op15",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op16": {
+      "get": {
+        "summary": "GET /users/op16",
+        "operationId": "get_users_op16",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/op17": {
+      "post": {
+        "summary": "POST /users/op17",
+        "operationId": "post_users_op17",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op0": {
+      "get": {
+        "summary": "GET /orders/op0",
+        "operationId": "get_orders_op0",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op1": {
+      "post": {
+        "summary": "POST /orders/op1",
+        "operationId": "post_orders_op1",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op2": {
+      "put": {
+        "summary": "PUT /orders/op2",
+        "operationId": "put_orders_op2",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op3": {
+      "delete": {
+        "summary": "DELETE /orders/op3",
+        "operationId": "delete_orders_op3",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op4": {
+      "get": {
+        "summary": "GET /orders/op4",
+        "operationId": "get_orders_op4",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op5": {
+      "post": {
+        "summary": "POST /orders/op5",
+        "operationId": "post_orders_op5",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op6": {
+      "put": {
+        "summary": "PUT /orders/op6",
+        "operationId": "put_orders_op6",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op7": {
+      "delete": {
+        "summary": "DELETE /orders/op7",
+        "operationId": "delete_orders_op7",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op8": {
+      "get": {
+        "summary": "GET /orders/op8",
+        "operationId": "get_orders_op8",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op9": {
+      "post": {
+        "summary": "POST /orders/op9",
+        "operationId": "post_orders_op9",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op10": {
+      "put": {
+        "summary": "PUT /orders/op10",
+        "operationId": "put_orders_op10",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op11": {
+      "delete": {
+        "summary": "DELETE /orders/op11",
+        "operationId": "delete_orders_op11",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op12": {
+      "get": {
+        "summary": "GET /orders/op12",
+        "operationId": "get_orders_op12",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op13": {
+      "post": {
+        "summary": "POST /orders/op13",
+        "operationId": "post_orders_op13",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op14": {
+      "put": {
+        "summary": "PUT /orders/op14",
+        "operationId": "put_orders_op14",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op15": {
+      "delete": {
+        "summary": "DELETE /orders/op15",
+        "operationId": "delete_orders_op15",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op16": {
+      "get": {
+        "summary": "GET /orders/op16",
+        "operationId": "get_orders_op16",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/op17": {
+      "post": {
+        "summary": "POST /orders/op17",
+        "operationId": "post_orders_op17",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op0": {
+      "get": {
+        "summary": "GET /products/op0",
+        "operationId": "get_products_op0",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op1": {
+      "post": {
+        "summary": "POST /products/op1",
+        "operationId": "post_products_op1",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op2": {
+      "put": {
+        "summary": "PUT /products/op2",
+        "operationId": "put_products_op2",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op3": {
+      "delete": {
+        "summary": "DELETE /products/op3",
+        "operationId": "delete_products_op3",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op4": {
+      "get": {
+        "summary": "GET /products/op4",
+        "operationId": "get_products_op4",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op5": {
+      "post": {
+        "summary": "POST /products/op5",
+        "operationId": "post_products_op5",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op6": {
+      "put": {
+        "summary": "PUT /products/op6",
+        "operationId": "put_products_op6",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op7": {
+      "delete": {
+        "summary": "DELETE /products/op7",
+        "operationId": "delete_products_op7",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op8": {
+      "get": {
+        "summary": "GET /products/op8",
+        "operationId": "get_products_op8",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op9": {
+      "post": {
+        "summary": "POST /products/op9",
+        "operationId": "post_products_op9",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op10": {
+      "put": {
+        "summary": "PUT /products/op10",
+        "operationId": "put_products_op10",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op11": {
+      "delete": {
+        "summary": "DELETE /products/op11",
+        "operationId": "delete_products_op11",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op12": {
+      "get": {
+        "summary": "GET /products/op12",
+        "operationId": "get_products_op12",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op13": {
+      "post": {
+        "summary": "POST /products/op13",
+        "operationId": "post_products_op13",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op14": {
+      "put": {
+        "summary": "PUT /products/op14",
+        "operationId": "put_products_op14",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op15": {
+      "delete": {
+        "summary": "DELETE /products/op15",
+        "operationId": "delete_products_op15",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op16": {
+      "get": {
+        "summary": "GET /products/op16",
+        "operationId": "get_products_op16",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/op17": {
+      "post": {
+        "summary": "POST /products/op17",
+        "operationId": "post_products_op17",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op0": {
+      "get": {
+        "summary": "GET /payments/op0",
+        "operationId": "get_payments_op0",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op1": {
+      "post": {
+        "summary": "POST /payments/op1",
+        "operationId": "post_payments_op1",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op2": {
+      "put": {
+        "summary": "PUT /payments/op2",
+        "operationId": "put_payments_op2",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op3": {
+      "delete": {
+        "summary": "DELETE /payments/op3",
+        "operationId": "delete_payments_op3",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op4": {
+      "get": {
+        "summary": "GET /payments/op4",
+        "operationId": "get_payments_op4",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op5": {
+      "post": {
+        "summary": "POST /payments/op5",
+        "operationId": "post_payments_op5",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op6": {
+      "put": {
+        "summary": "PUT /payments/op6",
+        "operationId": "put_payments_op6",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op7": {
+      "delete": {
+        "summary": "DELETE /payments/op7",
+        "operationId": "delete_payments_op7",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op8": {
+      "get": {
+        "summary": "GET /payments/op8",
+        "operationId": "get_payments_op8",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op9": {
+      "post": {
+        "summary": "POST /payments/op9",
+        "operationId": "post_payments_op9",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op10": {
+      "put": {
+        "summary": "PUT /payments/op10",
+        "operationId": "put_payments_op10",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op11": {
+      "delete": {
+        "summary": "DELETE /payments/op11",
+        "operationId": "delete_payments_op11",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op12": {
+      "get": {
+        "summary": "GET /payments/op12",
+        "operationId": "get_payments_op12",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op13": {
+      "post": {
+        "summary": "POST /payments/op13",
+        "operationId": "post_payments_op13",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op14": {
+      "put": {
+        "summary": "PUT /payments/op14",
+        "operationId": "put_payments_op14",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op15": {
+      "delete": {
+        "summary": "DELETE /payments/op15",
+        "operationId": "delete_payments_op15",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op16": {
+      "get": {
+        "summary": "GET /payments/op16",
+        "operationId": "get_payments_op16",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/op17": {
+      "post": {
+        "summary": "POST /payments/op17",
+        "operationId": "post_payments_op17",
+        "tags": [
+          "payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op0": {
+      "get": {
+        "summary": "GET /inventory/op0",
+        "operationId": "get_inventory_op0",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op1": {
+      "post": {
+        "summary": "POST /inventory/op1",
+        "operationId": "post_inventory_op1",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op2": {
+      "put": {
+        "summary": "PUT /inventory/op2",
+        "operationId": "put_inventory_op2",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op3": {
+      "delete": {
+        "summary": "DELETE /inventory/op3",
+        "operationId": "delete_inventory_op3",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op4": {
+      "get": {
+        "summary": "GET /inventory/op4",
+        "operationId": "get_inventory_op4",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op5": {
+      "post": {
+        "summary": "POST /inventory/op5",
+        "operationId": "post_inventory_op5",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op6": {
+      "put": {
+        "summary": "PUT /inventory/op6",
+        "operationId": "put_inventory_op6",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op7": {
+      "delete": {
+        "summary": "DELETE /inventory/op7",
+        "operationId": "delete_inventory_op7",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op8": {
+      "get": {
+        "summary": "GET /inventory/op8",
+        "operationId": "get_inventory_op8",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op9": {
+      "post": {
+        "summary": "POST /inventory/op9",
+        "operationId": "post_inventory_op9",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op10": {
+      "put": {
+        "summary": "PUT /inventory/op10",
+        "operationId": "put_inventory_op10",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op11": {
+      "delete": {
+        "summary": "DELETE /inventory/op11",
+        "operationId": "delete_inventory_op11",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op12": {
+      "get": {
+        "summary": "GET /inventory/op12",
+        "operationId": "get_inventory_op12",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op13": {
+      "post": {
+        "summary": "POST /inventory/op13",
+        "operationId": "post_inventory_op13",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op14": {
+      "put": {
+        "summary": "PUT /inventory/op14",
+        "operationId": "put_inventory_op14",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op15": {
+      "delete": {
+        "summary": "DELETE /inventory/op15",
+        "operationId": "delete_inventory_op15",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op16": {
+      "get": {
+        "summary": "GET /inventory/op16",
+        "operationId": "get_inventory_op16",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/op17": {
+      "post": {
+        "summary": "POST /inventory/op17",
+        "operationId": "post_inventory_op17",
+        "tags": [
+          "inventory"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op0": {
+      "get": {
+        "summary": "GET /customers/op0",
+        "operationId": "get_customers_op0",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op1": {
+      "post": {
+        "summary": "POST /customers/op1",
+        "operationId": "post_customers_op1",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op2": {
+      "put": {
+        "summary": "PUT /customers/op2",
+        "operationId": "put_customers_op2",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op3": {
+      "delete": {
+        "summary": "DELETE /customers/op3",
+        "operationId": "delete_customers_op3",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op4": {
+      "get": {
+        "summary": "GET /customers/op4",
+        "operationId": "get_customers_op4",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op5": {
+      "post": {
+        "summary": "POST /customers/op5",
+        "operationId": "post_customers_op5",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op6": {
+      "put": {
+        "summary": "PUT /customers/op6",
+        "operationId": "put_customers_op6",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op7": {
+      "delete": {
+        "summary": "DELETE /customers/op7",
+        "operationId": "delete_customers_op7",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op8": {
+      "get": {
+        "summary": "GET /customers/op8",
+        "operationId": "get_customers_op8",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op9": {
+      "post": {
+        "summary": "POST /customers/op9",
+        "operationId": "post_customers_op9",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op10": {
+      "put": {
+        "summary": "PUT /customers/op10",
+        "operationId": "put_customers_op10",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op11": {
+      "delete": {
+        "summary": "DELETE /customers/op11",
+        "operationId": "delete_customers_op11",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op12": {
+      "get": {
+        "summary": "GET /customers/op12",
+        "operationId": "get_customers_op12",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op13": {
+      "post": {
+        "summary": "POST /customers/op13",
+        "operationId": "post_customers_op13",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op14": {
+      "put": {
+        "summary": "PUT /customers/op14",
+        "operationId": "put_customers_op14",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op15": {
+      "delete": {
+        "summary": "DELETE /customers/op15",
+        "operationId": "delete_customers_op15",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op16": {
+      "get": {
+        "summary": "GET /customers/op16",
+        "operationId": "get_customers_op16",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/op17": {
+      "post": {
+        "summary": "POST /customers/op17",
+        "operationId": "post_customers_op17",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op0": {
+      "get": {
+        "summary": "GET /invoices/op0",
+        "operationId": "get_invoices_op0",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op1": {
+      "post": {
+        "summary": "POST /invoices/op1",
+        "operationId": "post_invoices_op1",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op2": {
+      "put": {
+        "summary": "PUT /invoices/op2",
+        "operationId": "put_invoices_op2",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op3": {
+      "delete": {
+        "summary": "DELETE /invoices/op3",
+        "operationId": "delete_invoices_op3",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op4": {
+      "get": {
+        "summary": "GET /invoices/op4",
+        "operationId": "get_invoices_op4",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op5": {
+      "post": {
+        "summary": "POST /invoices/op5",
+        "operationId": "post_invoices_op5",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op6": {
+      "put": {
+        "summary": "PUT /invoices/op6",
+        "operationId": "put_invoices_op6",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op7": {
+      "delete": {
+        "summary": "DELETE /invoices/op7",
+        "operationId": "delete_invoices_op7",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op8": {
+      "get": {
+        "summary": "GET /invoices/op8",
+        "operationId": "get_invoices_op8",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op9": {
+      "post": {
+        "summary": "POST /invoices/op9",
+        "operationId": "post_invoices_op9",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op10": {
+      "put": {
+        "summary": "PUT /invoices/op10",
+        "operationId": "put_invoices_op10",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op11": {
+      "delete": {
+        "summary": "DELETE /invoices/op11",
+        "operationId": "delete_invoices_op11",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op12": {
+      "get": {
+        "summary": "GET /invoices/op12",
+        "operationId": "get_invoices_op12",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op13": {
+      "post": {
+        "summary": "POST /invoices/op13",
+        "operationId": "post_invoices_op13",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op14": {
+      "put": {
+        "summary": "PUT /invoices/op14",
+        "operationId": "put_invoices_op14",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op15": {
+      "delete": {
+        "summary": "DELETE /invoices/op15",
+        "operationId": "delete_invoices_op15",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op16": {
+      "get": {
+        "summary": "GET /invoices/op16",
+        "operationId": "get_invoices_op16",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/op17": {
+      "post": {
+        "summary": "POST /invoices/op17",
+        "operationId": "post_invoices_op17",
+        "tags": [
+          "invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op0": {
+      "get": {
+        "summary": "GET /shipments/op0",
+        "operationId": "get_shipments_op0",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op1": {
+      "post": {
+        "summary": "POST /shipments/op1",
+        "operationId": "post_shipments_op1",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op2": {
+      "put": {
+        "summary": "PUT /shipments/op2",
+        "operationId": "put_shipments_op2",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op3": {
+      "delete": {
+        "summary": "DELETE /shipments/op3",
+        "operationId": "delete_shipments_op3",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op4": {
+      "get": {
+        "summary": "GET /shipments/op4",
+        "operationId": "get_shipments_op4",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op5": {
+      "post": {
+        "summary": "POST /shipments/op5",
+        "operationId": "post_shipments_op5",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op6": {
+      "put": {
+        "summary": "PUT /shipments/op6",
+        "operationId": "put_shipments_op6",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op7": {
+      "delete": {
+        "summary": "DELETE /shipments/op7",
+        "operationId": "delete_shipments_op7",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op8": {
+      "get": {
+        "summary": "GET /shipments/op8",
+        "operationId": "get_shipments_op8",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op9": {
+      "post": {
+        "summary": "POST /shipments/op9",
+        "operationId": "post_shipments_op9",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op10": {
+      "put": {
+        "summary": "PUT /shipments/op10",
+        "operationId": "put_shipments_op10",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op11": {
+      "delete": {
+        "summary": "DELETE /shipments/op11",
+        "operationId": "delete_shipments_op11",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op12": {
+      "get": {
+        "summary": "GET /shipments/op12",
+        "operationId": "get_shipments_op12",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op13": {
+      "post": {
+        "summary": "POST /shipments/op13",
+        "operationId": "post_shipments_op13",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op14": {
+      "put": {
+        "summary": "PUT /shipments/op14",
+        "operationId": "put_shipments_op14",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op15": {
+      "delete": {
+        "summary": "DELETE /shipments/op15",
+        "operationId": "delete_shipments_op15",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op16": {
+      "get": {
+        "summary": "GET /shipments/op16",
+        "operationId": "get_shipments_op16",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/op17": {
+      "post": {
+        "summary": "POST /shipments/op17",
+        "operationId": "post_shipments_op17",
+        "tags": [
+          "shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op0": {
+      "get": {
+        "summary": "GET /notifications/op0",
+        "operationId": "get_notifications_op0",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op1": {
+      "post": {
+        "summary": "POST /notifications/op1",
+        "operationId": "post_notifications_op1",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op2": {
+      "put": {
+        "summary": "PUT /notifications/op2",
+        "operationId": "put_notifications_op2",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op3": {
+      "delete": {
+        "summary": "DELETE /notifications/op3",
+        "operationId": "delete_notifications_op3",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op4": {
+      "get": {
+        "summary": "GET /notifications/op4",
+        "operationId": "get_notifications_op4",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op5": {
+      "post": {
+        "summary": "POST /notifications/op5",
+        "operationId": "post_notifications_op5",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op6": {
+      "put": {
+        "summary": "PUT /notifications/op6",
+        "operationId": "put_notifications_op6",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op7": {
+      "delete": {
+        "summary": "DELETE /notifications/op7",
+        "operationId": "delete_notifications_op7",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op8": {
+      "get": {
+        "summary": "GET /notifications/op8",
+        "operationId": "get_notifications_op8",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op9": {
+      "post": {
+        "summary": "POST /notifications/op9",
+        "operationId": "post_notifications_op9",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op10": {
+      "put": {
+        "summary": "PUT /notifications/op10",
+        "operationId": "put_notifications_op10",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op11": {
+      "delete": {
+        "summary": "DELETE /notifications/op11",
+        "operationId": "delete_notifications_op11",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op12": {
+      "get": {
+        "summary": "GET /notifications/op12",
+        "operationId": "get_notifications_op12",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op13": {
+      "post": {
+        "summary": "POST /notifications/op13",
+        "operationId": "post_notifications_op13",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op14": {
+      "put": {
+        "summary": "PUT /notifications/op14",
+        "operationId": "put_notifications_op14",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op15": {
+      "delete": {
+        "summary": "DELETE /notifications/op15",
+        "operationId": "delete_notifications_op15",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op16": {
+      "get": {
+        "summary": "GET /notifications/op16",
+        "operationId": "get_notifications_op16",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/op17": {
+      "post": {
+        "summary": "POST /notifications/op17",
+        "operationId": "post_notifications_op17",
+        "tags": [
+          "notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op0": {
+      "get": {
+        "summary": "GET /reports/op0",
+        "operationId": "get_reports_op0",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op1": {
+      "post": {
+        "summary": "POST /reports/op1",
+        "operationId": "post_reports_op1",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op2": {
+      "put": {
+        "summary": "PUT /reports/op2",
+        "operationId": "put_reports_op2",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op3": {
+      "delete": {
+        "summary": "DELETE /reports/op3",
+        "operationId": "delete_reports_op3",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op4": {
+      "get": {
+        "summary": "GET /reports/op4",
+        "operationId": "get_reports_op4",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op5": {
+      "post": {
+        "summary": "POST /reports/op5",
+        "operationId": "post_reports_op5",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op6": {
+      "put": {
+        "summary": "PUT /reports/op6",
+        "operationId": "put_reports_op6",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op7": {
+      "delete": {
+        "summary": "DELETE /reports/op7",
+        "operationId": "delete_reports_op7",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op8": {
+      "get": {
+        "summary": "GET /reports/op8",
+        "operationId": "get_reports_op8",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op9": {
+      "post": {
+        "summary": "POST /reports/op9",
+        "operationId": "post_reports_op9",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op10": {
+      "put": {
+        "summary": "PUT /reports/op10",
+        "operationId": "put_reports_op10",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op11": {
+      "delete": {
+        "summary": "DELETE /reports/op11",
+        "operationId": "delete_reports_op11",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op12": {
+      "get": {
+        "summary": "GET /reports/op12",
+        "operationId": "get_reports_op12",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op13": {
+      "post": {
+        "summary": "POST /reports/op13",
+        "operationId": "post_reports_op13",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op14": {
+      "put": {
+        "summary": "PUT /reports/op14",
+        "operationId": "put_reports_op14",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op15": {
+      "delete": {
+        "summary": "DELETE /reports/op15",
+        "operationId": "delete_reports_op15",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op16": {
+      "get": {
+        "summary": "GET /reports/op16",
+        "operationId": "get_reports_op16",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/op17": {
+      "post": {
+        "summary": "POST /reports/op17",
+        "operationId": "post_reports_op17",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Item": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -440,19 +440,236 @@ function buildModels(
   return { models, warnings };
 }
 
+function rewriteV2Ref(ref: string): string {
+  return ref
+    .replace(/^#\/definitions\//, "#/components/schemas/")
+    .replace(/^#\/parameters\//, "#/components/parameters/")
+    .replace(/^#\/responses\//, "#/components/responses/");
+}
+
+function deepRewriteV2Refs(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(deepRewriteV2Refs);
+  if (node && typeof node === "object") {
+    const rec = node as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(rec)) {
+      if (k === "$ref" && typeof v === "string") out[k] = rewriteV2Ref(v);
+      else out[k] = deepRewriteV2Refs(v);
+    }
+    return out;
+  }
+  return node;
+}
+
+function v2ParamToV3Schema(p: Record<string, unknown>): Record<string, unknown> {
+  const schema: Record<string, unknown> = {};
+  for (const k of ["type", "format", "items", "enum", "default", "maximum", "minimum", "maxLength", "minLength", "pattern", "maxItems", "minItems", "uniqueItems", "multipleOf", "exclusiveMaximum", "exclusiveMinimum"]) {
+    if (p[k] !== undefined) schema[k] = deepRewriteV2Refs(p[k]);
+  }
+  if (Object.keys(schema).length === 0) schema["type"] = "string";
+  return schema;
+}
+
+/** Minimal Swagger 2.0 → OpenAPI 3.0.3 conversion (mantém o resto do pipeline intacto). */
+export function convertSwagger2ToOpenApi3(swagger: Record<string, any>): OpenAPIV3.Document {
+  const consumesGlobal: string[] = Array.isArray(swagger.consumes) ? swagger.consumes : [];
+  const producesGlobal: string[] = Array.isArray(swagger.produces) ? swagger.produces : [];
+  const defaultConsume = consumesGlobal[0] ?? "application/json";
+  const defaultProduce = producesGlobal[0] ?? "application/json";
+
+  const servers: OpenAPIV3.ServerObject[] = [];
+  if (typeof swagger.host === "string" && swagger.host) {
+    const scheme = Array.isArray(swagger.schemes) && swagger.schemes.length > 0 ? swagger.schemes[0] : "https";
+    const basePath = typeof swagger.basePath === "string" ? swagger.basePath : "/";
+    servers.push({ url: `${scheme}://${swagger.host}${basePath}` });
+  } else if (Array.isArray(swagger.servers) && swagger.schemes) {
+    for (const s of swagger.servers) servers.push(s);
+  }
+
+  const components: Record<string, any> = {};
+  if (swagger.definitions) {
+    components["schemas"] = deepRewriteV2Refs(swagger.definitions);
+  }
+  if (swagger.securityDefinitions) {
+    const schemes: Record<string, any> = {};
+    for (const [name, def] of Object.entries(swagger.securityDefinitions as Record<string, any>)) {
+      if (def.type === "basic") schemes[name] = { type: "http", scheme: "basic" };
+      else if (def.type === "apiKey") schemes[name] = { type: "apiKey", in: def.in, name: def.name };
+      else if (def.type === "oauth2") {
+        const flow = def.flow;
+        const scopes = def.scopes ?? {};
+        const flows: Record<string, any> = {};
+        if (flow === "implicit") flows["implicit"] = { authorizationUrl: def.authorizationUrl ?? "", scopes };
+        else if (flow === "password") flows["password"] = { tokenUrl: def.tokenUrl ?? "", scopes };
+        else if (flow === "application") flows["clientCredentials"] = { tokenUrl: def.tokenUrl ?? "", scopes };
+        else flows["authorizationCode"] = { authorizationUrl: def.authorizationUrl ?? "", tokenUrl: def.tokenUrl ?? "", scopes };
+        schemes[name] = { type: "oauth2", flows };
+      } else schemes[name] = deepRewriteV2Refs(def);
+    }
+    components["securitySchemes"] = schemes;
+  }
+  if (swagger.parameters) {
+    const params: Record<string, any> = {};
+    for (const [name, p] of Object.entries(swagger.parameters as Record<string, any>)) {
+      const pp = p as Record<string, any>;
+      if (pp.in === "body") {
+        // Guarda como requestBody para referência futura; alias em parameters não é válido em v3,
+        // mas o rewrite aponta #/parameters/ → #/components/parameters/, então mantemos um alias simples.
+        params[name] = {
+          name: pp.name ?? name,
+          in: "query",
+          required: Boolean(pp.required),
+          schema: { type: "object" },
+          description: pp.description ?? "",
+        };
+      } else {
+        params[name] = {
+          name: pp.name ?? name,
+          in: pp.in ?? "query",
+          description: pp.description ?? "",
+          required: Boolean(pp.required),
+          schema: v2ParamToV3Schema(pp),
+        };
+      }
+    }
+    components["parameters"] = params;
+  }
+  if (swagger.responses) {
+    const resps: Record<string, any> = {};
+    for (const [name, r] of Object.entries(swagger.responses as Record<string, any>)) {
+      const rr = r as Record<string, any>;
+      if (rr.schema) {
+        resps[name] = {
+          description: rr.description ?? "",
+          content: { [defaultProduce]: { schema: deepRewriteV2Refs(rr.schema) } },
+        };
+      } else resps[name] = deepRewriteV2Refs(rr);
+    }
+    components["responses"] = resps;
+  }
+
+  const paths: Record<string, any> = {};
+  for (const [p, pathItem] of Object.entries(swagger.paths ?? {})) {
+    const outItem: Record<string, any> = {};
+    for (const [method, rawOp] of Object.entries((pathItem as Record<string, any>) ?? {})) {
+      if (!["get", "post", "put", "delete", "options", "head", "patch"].includes(method)) {
+        outItem[method] = deepRewriteV2Refs(rawOp);
+        continue;
+      }
+      const op = rawOp as Record<string, any>;
+      const opConsumes: string[] = Array.isArray(op.consumes) ? op.consumes : consumesGlobal;
+      const opProduces: string[] = Array.isArray(op.produces) ? op.produces : producesGlobal;
+      const mimeConsume = opConsumes[0] ?? defaultConsume;
+      const mimeProduce = opProduces[0] ?? defaultProduce;
+
+      const outOp: Record<string, any> = { ...deepRewriteV2Refs(op) as Record<string, any> };
+      const v2Params: any[] = Array.isArray(op.parameters) ? op.parameters : [];
+      const newParams: any[] = [];
+      let requestBody: Record<string, any> | undefined;
+      const formParams: any[] = [];
+
+      for (const rawP of v2Params) {
+        const pp = rawP as Record<string, any>;
+        if (pp.$ref) {
+          newParams.push({ ...pp, $ref: rewriteV2Ref(pp.$ref as string) });
+          continue;
+        }
+        if (pp.in === "body") {
+          requestBody = {
+            description: pp.description ?? "",
+            required: Boolean(pp.required),
+            content: { [mimeConsume]: { schema: deepRewriteV2Refs(pp.schema ?? {}) } },
+          };
+        } else if (pp.in === "formData") {
+          formParams.push(pp);
+        } else {
+          newParams.push({
+            name: pp.name,
+            in: pp.in,
+            description: pp.description ?? "",
+            required: pp.in === "path" ? true : Boolean(pp.required),
+            schema: v2ParamToV3Schema(pp),
+          });
+        }
+      }
+      if (formParams.length > 0) {
+        const hasFile = formParams.some((f) => f.type === "file");
+        const mime = hasFile ? "multipart/form-data" : "application/x-www-form-urlencoded";
+        const props: Record<string, any> = {};
+        const required: string[] = [];
+        for (const f of formParams) {
+          props[f.name] = f.type === "file" ? { type: "string", format: "binary" } : v2ParamToV3Schema(f);
+          if (f.required) required.push(f.name);
+        }
+        requestBody = {
+          content: { [mime]: { schema: { type: "object", properties: props, ...(required.length ? { required } : {}) } } },
+        };
+      }
+      if (requestBody) outOp["requestBody"] = requestBody;
+      outOp["parameters"] = newParams;
+
+      const v2Responses: Record<string, any> = (op.responses ?? {}) as Record<string, any>;
+      const newResponses: Record<string, any> = {};
+      for (const [code, r] of Object.entries(v2Responses)) {
+        const rr = (deepRewriteV2Refs(r) ?? {}) as Record<string, any>;
+        if (rr.schema) {
+          newResponses[code] = {
+            description: rr.description ?? "",
+            ...(rr.headers ? { headers: rr.headers } : {}),
+            content: { [mimeProduce]: { schema: rr.schema } },
+          };
+        } else {
+          newResponses[code] = { description: rr.description ?? "", ...rr };
+          delete (newResponses[code] as Record<string, any>)["schema"];
+        }
+      }
+      outOp["responses"] = newResponses;
+      delete outOp["consumes"];
+      delete outOp["produces"];
+      outItem[method] = outOp;
+    }
+    paths[p] = outItem;
+  }
+
+  return {
+    openapi: "3.0.3",
+    info: swagger.info ?? { title: "mcp-server", version: "1.0.0" },
+    servers: servers.length > 0 ? servers : [{ url: "https://api.example.com" }],
+    paths,
+    components: Object.keys(components).length > 0 ? (components as OpenAPIV3.ComponentsObject) : undefined,
+    security: swagger.security,
+    tags: swagger.tags,
+    externalDocs: swagger.externalDocs,
+  } as unknown as OpenAPIV3.Document;
+}
+
+export function isSwagger2Document(doc: unknown): boolean {
+  const rec = doc as Record<string, unknown>;
+  return !!rec && typeof rec["swagger"] === "string" && String(rec["swagger"]).startsWith("2");
+}
+
 export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
   let api: OpenAPIV3.Document;
   let raw: OpenAPIV3.Document;
 
   try {
     // parse returns the original document with $ref intact
-    raw = (await SwaggerParser.parse(inputPath)) as OpenAPIV3.Document;
+    const parsed = (await SwaggerParser.parse(inputPath)) as unknown as Record<string, unknown>;
 
-    // dereference resolves $refs inline; circular:"ignore" prevents infinite loops
-    // on self-referential schemas (e.g. TreeNode { children: TreeNode[] })
-    api = (await SwaggerParser.dereference(inputPath, {
-      dereference: { circular: "ignore" },
-    })) as OpenAPIV3.Document;
+    if (isSwagger2Document(parsed)) {
+      const converted = convertSwagger2ToOpenApi3(parsed as Record<string, any>);
+      raw = converted;
+      // dereference resolves $refs inline; circular:"ignore" prevents infinite loops
+      // on self-referential schemas (e.g. TreeNode { children: TreeNode[] })
+      api = (await SwaggerParser.dereference(JSON.parse(JSON.stringify(converted)) as any, {
+        dereference: { circular: "ignore" },
+      }) as unknown) as OpenAPIV3.Document;
+    } else {
+      raw = parsed as unknown as OpenAPIV3.Document;
+      api = (await SwaggerParser.dereference(inputPath, {
+        dereference: { circular: "ignore" },
+      })) as OpenAPIV3.Document;
+    }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     throw new Error(`OpenAPI validation failed: ${message}`);
@@ -467,8 +684,7 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
           ? String(rec["openapi"] ?? "unknown")
           : "unknown";
     throw new Error(
-      `Only OpenAPI v3.x is supported. Got: ${got}. ` +
-        `Swagger 2.0 specs need conversion to OpenAPI v3 first (v2 support is on the v2.3.0 roadmap).`
+      `Only OpenAPI v3.x and Swagger 2.0 are supported. Got: ${got}.`
     );
   }
 

@@ -119,25 +119,22 @@ describe("0.2 go http mode", () => {
 });
 
 describe("0.3 registry", () => {
-  it("keeps only v3 specs", () => {
+  it("keeps v3 specs plus converted v2 specs (Fase 2: v2 reativado)", () => {
     expect(listKnownSpecs()).toEqual(expect.arrayContaining(["stripe", "github", "openai", "petstore", "twilio", "shopify"]));
-    expect(KNOWN_SPECS["slack"]).toBeUndefined();
-    expect(KNOWN_SPECS["kubernetes"]).toBeUndefined();
-    expect(KNOWN_SPECS["digitalocean"]).toBeUndefined();
+    // Fase 2 (2.1): slack/kubernetes/digitalocean voltam como v2 convertido.
+    expect(listKnownSpecs()).toEqual(expect.arrayContaining(["slack", "kubernetes", "digitalocean"]));
     expect(KNOWN_SPECS["azure"]).toBeUndefined();
   });
 
   it("removed keys fail with guidance", async () => {
-    for (const key of ["slack", "kubernetes", "digitalocean", "azure"]) {
-      await expect(fetchSpecToCwd(key)).rejects.toThrow(/was removed|OpenAPI v3/i);
-    }
+    await expect(fetchSpecToCwd("azure")).rejects.toThrow(/was removed/i);
   });
 
   it("unknown keys list known keys", async () => {
     await expect(fetchSpecToCwd("nope")).rejects.toThrow(/Known keys/);
   });
 
-  it("v2 specs fail with actionable message", async () => {
+  it("v2 specs are converted (Fase 2: não falham mais)", async () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-fase0-v2-"));
     try {
       const spec = path.join(tmp, "swagger.json");
@@ -146,7 +143,8 @@ describe("0.3 registry", () => {
         info: { title: "t", version: "1.0.0" },
         paths: {},
       }));
-      await expect(parseOpenAPI(spec)).rejects.toThrow(/Only OpenAPI v3/i);
+      const ast = await parseOpenAPI(spec);
+      expect(ast.tools).toEqual([]);
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }

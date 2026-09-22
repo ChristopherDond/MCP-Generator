@@ -33,13 +33,25 @@ export const KNOWN_SPECS: Record<string, { url: string; filename?: string; descr
     filename: "openapi.shopify.json",
     description: "Shopify Admin API — e-commerce platform management"
   },
+  slack: {
+    url: "https://raw.githubusercontent.com/slackapi/slack-api-specs/master/web-api/slack_web_openapi_v2.json",
+    filename: "openapi.slack.json",
+    description: "Slack Web API — messaging and workspace automation (Swagger 2.0, converted to v3)"
+  },
+  kubernetes: {
+    url: "https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json",
+    filename: "openapi.kubernetes.json",
+    description: "Kubernetes API — container orchestration platform (Swagger 2.0, converted to v3)"
+  },
+  digitalocean: {
+    url: "https://raw.githubusercontent.com/digitalocean/openapi/main/specification/DigitalOcean-public.v2.json",
+    filename: "openapi.digitalocean.json",
+    description: "DigitalOcean API — cloud infrastructure management (Swagger 2.0, converted to v3)"
+  },
 };
 
 export const REMOVED_SPECS: Record<string, string> = {
-  slack: "Slack only publishes OpenAPI v2 (slack_web_openapi_v2.json). mcp-gen supports OpenAPI v3 only for now. Track Swagger 2.0 support in the v2.3.0 roadmap.",
-  kubernetes: "Kubernetes publishes OpenAPI v2 at api/openapi-spec/swagger.json. mcp-gen supports OpenAPI v3 only for now. Track Swagger 2.0 support in the v2.3.0 roadmap.",
-  digitalocean: "DigitalOcean-public.v2.json is OpenAPI v2. mcp-gen supports OpenAPI v3 only for now. Track Swagger 2.0 support in the v2.3.0 roadmap.",
-  azure: "The previous azure entry pointed at a common-types fragment (types.json), not a full OpenAPI document. mcp-gen supports OpenAPI v3 only for now.",
+  azure: "The previous azure entry pointed at a common-types fragment (types.json), not a full OpenAPI document.",
 };
 
 export async function fetchSpecToCwd(key: string, targetPath?: string): Promise<string> {

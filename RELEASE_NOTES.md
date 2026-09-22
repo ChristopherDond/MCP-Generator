@@ -1,5 +1,16 @@
 # Notas de release
 
+## 2.3.0 - Fase 2 (2026-09-22)
+
+Âncora da Fase 2 (minor, sem breaking): destrava o registry.
+
+- Swagger 2.0 convertido para v3 na ingestão (sem dependência nova). `validate` + `generate` passam com `examples/swagger-v2-petstore.json` (4 tools, 2 modelos, base `https://petstore.example.com/v1`).
+- Registry: `slack`, `kubernetes`, `digitalocean` de volta (v2 convertido); `init --from <chave>` funciona; só `azure` continua removido.
+- Benchmark: `examples/large-scale.json` (180 ops) → `10 tools` com `--group-by tag` (18x). Linha citável nos READMEs + `tests/scale.test.ts`.
+- Validação: `npm run build` ok, `npm test` 16 suites / 213 testes, incluindo `tests/swagger-v2.test.ts` (7) e `tests/scale.test.ts` (3).
+
+Instalação: `npm install -g @christopher_dondici/mcp-gen@2.3.0` (tag `v2.3.0` no workflow de release).
+
 ## 2.1.5 - Fase 0 (2026-09-20)
 
 Merge do PR #4 (`christopherdondici/fix/fase-0-p0-fixes`) sobre a 2.1.4.

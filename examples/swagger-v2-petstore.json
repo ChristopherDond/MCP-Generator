@@ -1,0 +1,120 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Pet Store (Swagger 2.0)",
+    "description": "Fixture v2 para a Fase 2.1 — mesmo domínio do petstore v3",
+    "version": "1.0.0"
+  },
+  "host": "petstore.example.com",
+  "basePath": "/v1",
+  "schemes": ["https"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "paths": {
+    "/pets": {
+      "get": {
+        "summary": "List all pets",
+        "operationId": "listPets",
+        "tags": ["pets"],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of pets to return",
+            "required": false,
+            "type": "integer",
+            "maximum": 100
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of pets",
+            "schema": { "type": "array", "items": { "$ref": "#/definitions/Pet" } }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a pet",
+        "operationId": "createPet",
+        "tags": ["pets"],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Payload",
+            "required": true,
+            "schema": { "$ref": "#/definitions/NewPet" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Pet created",
+            "schema": { "$ref": "#/definitions/Pet" }
+          }
+        }
+      }
+    },
+    "/pets/{petId}": {
+      "get": {
+        "summary": "Get a pet by ID",
+        "operationId": "getPetById",
+        "tags": ["pets"],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the pet to retrieve",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The pet",
+            "schema": { "$ref": "#/definitions/Pet" }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a pet",
+        "operationId": "deletePet",
+        "tags": ["pets"],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the pet to delete",
+            "type": "integer"
+          }
+        ],
+        "responses": { "204": { "description": "Pet deleted" } }
+      }
+    }
+  },
+  "definitions": {
+    "Pet": {
+      "type": "object",
+      "description": "A pet in the store",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "integer", "description": "Unique identifier" },
+        "name": { "type": "string", "description": "Name of the pet" },
+        "tag": { "type": "string", "description": "Type/species of the pet" }
+      }
+    },
+    "NewPet": {
+      "type": "object",
+      "description": "Payload for creating a new pet",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "description": "Name of the pet" },
+        "tag": { "type": "string", "description": "Type/species of the pet" }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "ApiKeyAuth": { "type": "apiKey", "in": "header", "name": "x-api-key" }
+  },
+  "security": [{ "ApiKeyAuth": [] }]
+}

@@ -2,6 +2,15 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.3.0] - 2026-09-22
+
+### Fase 2 - âncora: destrava o registry (minor)
+
+- **Swagger 2.0**: conversão v2→v3 interna na ingestão (`src/core/parser.ts`: `convertSwagger2ToOpenApi3`, `host`/`basePath`/`schemes` → `servers`, `definitions` → `components.schemas`, body/formData → `requestBody`, `securityDefinitions` → `securitySchemes`). `validate` + `generate` aceitam v2; fixture `examples/swagger-v2-petstore.json`.
+- **Registry**: `slack`, `kubernetes`, `digitalocean` de volta (v2 convertido); só `azure` continua removido (fragmento, não spec). `REMOVED_SPECS` só com `azure`.
+- **Escala**: fixture `examples/large-scale.json` (180 ops, 10 tags, 2 modelos) + `tests/scale.test.ts` provando `180 → 10 tools` com `--group-by tag` e `path-prefix`; número citável nos READMEs (Benchmark).
+- **Testes**: `tests/swagger-v2.test.ts` (7 testes), `tests/scale.test.ts` (3 testes), `tests/fase0.test.ts` atualizado para v2. Suite: 16 suites, 213 testes passando.
+
 ## [2.2.0] - 2026-09-21
 
 ### Fase 1 - base sólida, sem breaking (minor)

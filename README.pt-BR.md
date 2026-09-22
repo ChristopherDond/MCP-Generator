@@ -4,11 +4,19 @@
 
 Gere servidores MCP a partir de specs OpenAPI.
 
-> **Status**: `@christopher_dondici/mcp-gen` 2.2.0 é a última versão publicada no npm e inclui a base da Fase 1 (dry-run/JSON, filtros no watch, avisos de schemas parciais, higiene OSS) além das correções P0 da Fase 0 e dos recursos de filtro, agrupamento e preservação incremental abaixo. Veja as [notas de release](RELEASE_NOTES.md).
+> **Status**: `@christopher_dondici/mcp-gen` 2.3.0 é a última versão publicada no npm e inclui a âncora da Fase 2 (conversão Swagger 2.0, registry destravado, benchmark de escala) além da base da Fase 1 e das correções P0 da Fase 0 abaixo. Veja as [notas de release](RELEASE_NOTES.md).
 
-`mcp-gen` transforma uma spec OpenAPI v3 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript, Python ou Go. Cada rota vira uma tool, e a geração incremental preserva o código customizado entre os marcadores indicados.
+`mcp-gen` transforma uma spec OpenAPI v3 ou Swagger 2.0 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript, Python ou Go. Cada rota vira uma tool, e a geração incremental preserva o código customizado entre os marcadores indicados.
 
-## Novidades da 2.2.0
+## Novidades da 2.3.0
+
+(Fase 2 — âncora: destrava o registry, sem breaking changes.)
+
+- Suporte a Swagger 2.0: specs v2 são convertidas para v3 na ingestão (`host`/`basePath`/`schemes` → `servers`, `definitions` → `components.schemas`, body/formData → `requestBody`, `securityDefinitions` → `securitySchemes`). `validate` + `generate` aceitam v2 (veja `examples/swagger-v2-petstore.json`).
+- Registry reativado: `slack`, `kubernetes`, `digitalocean` voltam (v2, convertidos na hora); só `azure` continua removido (era fragmento de types, não spec completa).
+- Benchmark de escala: `examples/large-scale.json` (180 ops, 10 tags) prova `180 → 10 tools` com `--group-by tag` (também `10` com `path-prefix`). Veja [Benchmark](#benchmark).
+
+## Novidades da 2.2.0 (anterior)
 
 (Fase 1 — base sólida, sem breaking changes.)
 
@@ -79,7 +87,7 @@ sequenceDiagram
     participant Output
 
     User->>CLI: mcp-gen generate --input api.yaml --lang python
-    CLI->>Parser: valida e faz parse de OpenAPI v3 (JSON ou YAML)
+    CLI->>Parser: valida e faz parse de OpenAPI v3 / Swagger 2.0 (JSON ou YAML)
     Parser->>Generator: AST interna (tools, models, examples)
     Generator->>Output: renderiza templates Handlebars
     Output-->>User: projeto MCP em TypeScript, Python ou Go
@@ -104,7 +112,7 @@ Cada rota vira uma tool MCP com:
 
 ## Instalação local e comandos abreviados
 
-Instale a última versão com `npm install -g @christopher_dondici/mcp-gen@2.2.0`. Para trabalhar pelo código-fonte, use o build em [Início rápido](#início-rápido).
+Instale a última versão com `npm install -g @christopher_dondici/mcp-gen@2.3.0`. Para trabalhar pelo código-fonte, use o build em [Início rápido](#início-rápido).
 Neste README, `mcp-gen` é uma abreviação de `node dist/cli/index.js`, executado na raiz do repositório. Por exemplo, `mcp-gen validate -i examples/petstore.yaml` equivale a `node dist/cli/index.js validate -i examples/petstore.yaml`.
 
 Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o comando `mcp-gen` apontando para seu checkout local. Isso altera os links globais do npm; não baixa um pacote `@christopher_dondici/mcp-gen` publicado. O nome npm mudou porque `mcp-gen` foi recusado por similaridade com `mcpgen`; o comando continua sendo `mcp-gen`.
@@ -112,7 +120,7 @@ Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o co
 Para instalar um tarball produzido localmente sem publicar:
 
 ```bash
-npm install ./christopher_dondici-mcp-gen-2.2.0.tgz
+npm install ./christopher_dondici-mcp-gen-2.3.0.tgz
 ./node_modules/.bin/mcp-gen --version
 ./node_modules/.bin/mcp-gen validate -i node_modules/@christopher_dondici/mcp-gen/examples/petstore.yaml
 ```
@@ -168,6 +176,18 @@ mcp-gen generate -i api.yaml -o ./out --include-tags pets --group-by tag
 ### Agrupamento
 
 `--group-by tag` emite uma tool por tag (mais `untagged`): 200 operações em 8 tags viram ~8 tools. `--group-by path-prefix` emite uma tool por primeiro segmento (`/users/**` vira `users_group`). Cada grupo recebe um `action` obrigatório (enum com os nomes das operações) e roteia por `METHOD` + `path`. Parâmetros dos membros são unidos como opcionais.
+
+### Benchmark
+
+Medido em `examples/large-scale.json` (180 ops em 10 tags, 2 modelos):
+
+| Modo | Tools |
+|------|-------|
+| sem agrupar | 180 |
+| `--group-by tag` | 10 |
+| `--group-by path-prefix` | 10 |
+
+`180 → 10 tools` — o agrupamento reduz a superfície em 18x nessa fixture. Coberto por `tests/scale.test.ts`.
 
 ### Dedup de nomes
 
@@ -238,8 +258,11 @@ Chaves disponíveis no registry:
 | `petstore` | Exemplo Swagger Petstore |
 | `twilio` | Twilio Communications API |
 | `shopify` | Shopify Admin API |
+| `slack` | Slack Web API (Swagger 2.0, convertido) |
+| `kubernetes` | Kubernetes API (Swagger 2.0, convertido) |
+| `digitalocean` | DigitalOcean API (Swagger 2.0, convertido) |
 
-Somente specs OpenAPI v3 são suportadas. As chaves removidas (`slack`, `kubernetes`, `digitalocean`, `azure`) eram OpenAPI v2 ou fragmentos — suporte a Swagger 2.0 está no roadmap da v2.3.0.
+OpenAPI v3 e Swagger 2.0 são suportados (v2 é convertido para v3 na ingestão). Só `azure` continua removido — apontava para um fragmento de types, não uma spec completa.
 
 ### Watch
 
@@ -444,15 +467,16 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.3 | Só tagueada, substituída (nunca publicada no npm) | Conteúdo da branch de features, substituído pela 2.1.4 antes da publicação |
 | v2.1.4 | Publicada no npm | Filtros de path com glob, allowlist inline, group-by tag/path-prefix com roteamento por action, dedup com method/hash, guardas `<generated:handlers>` com merge 3-way, middleware de auth separado, `handlers.custom.*` nunca sobrescrito, correção do template de auth para specs sem `securitySchemes` |
 | v2.1.5 | Publicada no npm | Fase 0 P0 (PR #4): serialização de query no TS, query/headers no Python, HTTP real no Go, registry só v3 com orientação |
-| v2.2.0 | Publicada no npm (atual) | Fase 1: `generate --dry-run` + resumo `--json`, filtros/grupos no `watch` (+ prompts interativos, correção do `--once` em arquivos), avisos por schema parcial em `validate`/`generate`, docs do CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` |
-| Distribuição | Verificada para a 2.2.0 | Instalação pelo registry funciona com `npm install -g @christopher_dondici/mcp-gen`; publicação via pip não comprovada. Python é um target de geração, não uma forma de instalar esta CLI via pip |
-| Futuro | Planejado | Streaming/resources/prompts, OpenAPI v2, mais registries |
+| v2.2.0 | Publicada no npm | Fase 1: `generate --dry-run` + resumo `--json`, filtros/grupos no `watch` (+ prompts interativos, correção do `--once` em arquivos), avisos por schema parcial em `validate`/`generate`, docs do CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` |
+| v2.3.0 | Publicada no npm (atual) | Fase 2: conversão Swagger 2.0 → v3 na ingestão, `slack`/`kubernetes`/`digitalocean` de volta no registry, benchmark `examples/large-scale.json` (180 → 10 tools) |
+| Distribuição | Verificada para a 2.3.0 | Instalação pelo registry funciona com `npm install -g @christopher_dondici/mcp-gen`; publicação via pip não comprovada. Python é um target de geração, não uma forma de instalar esta CLI via pip |
+| Futuro | Planejado | Streaming/resources/prompts, mais registries |
 
 ---
 
 ## Limitações conhecidas
 
-- OpenAPI v2 (Swagger) não é suportado — apenas v3.x
+- Swagger 2.0 é convertido para OpenAPI 3.0.3 na ingestão (body/formData → `requestBody`, `definitions` → `components.schemas`); construções v2 exóticas podem perder fidelidade
 - `oneOf` / `anyOf` / `discriminator` são parcialmente tratados
 - A análise de segurança/lint usa padrões estáticos de texto e pode gerar falsos positivos ou deixar problemas passar. Um relatório aprovado não garante segurança nem verifica autorização, revogação, gastos ou auditoria em execução
 - As verificações de autorização geradas são scaffolding, não um backend completo de segurança; revise e teste antes do deploy
