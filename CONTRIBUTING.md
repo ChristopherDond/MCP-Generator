@@ -6,7 +6,7 @@ Thank you for considering contributing to `mcp-gen`! This document provides guid
 
 ## 🚀 We're Production Ready!
 
-We've just released **v2.2.0** and are actively welcoming community contributions:
+We've just released **v2.3.0** and are actively welcoming community contributions:
 
 - 🐛 **Found a bug?** Open an [Issue](https://github.com/ChristopherDond/MCP-Generator/issues)
 - 💡 **Have a suggestion?** Start a [Discussion](https://github.com/ChristopherDond/MCP-Generator/discussions)
@@ -261,7 +261,7 @@ Obrigado por considerar contribuir para `mcp-gen`! Este documento fornece diretr
 
 ## 🚀 Produção Pronta!
 
-Lançamos **v2.2.0** e estamos ativamente acolhendo contribuições da comunidade:
+Lançamos **v2.3.0** e estamos ativamente acolhendo contribuições da comunidade:
 
 - 🐛 **Encontrou um bug?** Abra uma [Issue](https://github.com/ChristopherDond/MCP-Generator/issues)
 - 💡 **Tem uma sugestão?** Comece uma [Discussion](https://github.com/ChristopherDond/MCP-Generator/discussions)
