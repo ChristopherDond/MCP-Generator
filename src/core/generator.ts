@@ -6,7 +6,7 @@ import { renderTemplate, registerPartials } from "./templating";
 import { extractHandlers, injectHandlers, isCustomFile, TS_DEFAULT_STUB_PATTERN, PY_DEFAULT_STUB_PATTERN } from "./incremental";
 import { validateOutputPath, validatePluginPath, validatePluginModule } from "./security";
 import { parseTagList, parsePathList, parseGroupBy, loadOperationAllowlistFile, resolveAllowlistValue, filterTools, groupTools, toGroupMetadata } from "./filter-group";
-import type { GeneratorOptions, GenerationResult, ValidateResult, MCPServerAST, Lang, GroupByMode } from "./types";
+import type { GeneratorOptions, GenerationResult, ValidateResult, MCPServerAST, GroupByMode } from "./types";
 
 const TEMPLATES_ROOT = path.resolve(__dirname, "../templates");
 
@@ -232,7 +232,7 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
         const candidate = path.resolve(options.pluginsDir, entry);
         if (fs.existsSync(candidate) && fs.lstatSync(candidate).isDirectory()) pluginPaths.push(candidate);
       }
-    } catch (e) {
+    } catch {
     }
   }
 

@@ -7,7 +7,6 @@ import { generate, validateSpec } from "../core/generator";
 import type { GeneratorOptions, Lang } from "../core/types";
 import { fetchSpecToCwd, listKnownSpecs, getSpecInfo } from "../core/registry";
 import { buildWatchGeneratorOptions } from "./watch-options";
-import type { SecurityReport } from "../core/security-lint";
 import fs from "fs";
 import inquirer from "inquirer";
 
@@ -690,7 +689,7 @@ async function interactive(): Promise<void> {
           console.error(chalk.red(`File not found: ${abs}`));
         } else {
           let timeout: NodeJS.Timeout | null = null;
-          const watcher = fs.watch(abs, async () => {
+          fs.watch(abs, async () => {
             if (timeout) clearTimeout(timeout);
             timeout = setTimeout(async () => {
               await runGenerate();
