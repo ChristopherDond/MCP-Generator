@@ -2,6 +2,17 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.3.1] - Não publicada
+
+### Correções e DX sem breaking
+
+- **Scaffold TypeScript reproduzível**: projetos gerados passam a incluir `package-lock.json`; CI e Docker já usavam `npm ci`, mas não recebiam o lockfile necessário. O smoke agora executa o mesmo `npm ci` dos templates.
+- **Precedência de `--force`**: quando `--force` e `--incremental` são usados juntos, o force descarta handlers customizados e arquivos preservados, como a documentação já prometia.
+- **Status de `watch --once`**: falhas de parsing, fetch e geração encerram com código 1; sucessos encerram com código 0. A CLI usa o fluxo assíncrono do Commander.
+- **Lint reproduzível**: ESLint 10 + typescript-eslint são dependências locais, com flat config mínima e gates na CI e no release. `require()` permanece permitido para não antecipar uma migração ESM.
+- **Testes e gates**: 16 suites / 214 testes Jest, 2 testes de exit code da CLI, smoke TypeScript com `npm ci`, smoke Python e `npm pack --dry-run` passaram localmente em 24/09/2026.
+- **Publicação**: `2.3.1` continua não publicada; o npm `latest` permanece `2.3.0` até push da tag e conclusão do workflow OIDC.
+
 ## [2.3.0] - 2026-09-22
 
 ### Fase 2 - âncora: destrava o registry (minor)

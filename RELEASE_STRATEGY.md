@@ -1,130 +1,94 @@
-# Release Strategy - MCP-Generator
+# Estratégia de release — MCP-Generator
 
-A versão `@christopher_dondici/mcp-gen@2.1.5` reúne a Fase 0 (PR #4) sobre a 2.1.4 já publicada. O binário continua `mcp-gen`. Os exemplos de RC abaixo são históricos e não devem ser executados para preparar a 2.1.5; publicar, aumentar versão e enviar commits/tags exigem autorização separada.
+> **Estado em 24/09/2026:** `2.3.0` é a release publicada. A `2.3.1` está preparada em branch local; push, tag, publicação npm e GitHub Release permanecem pendentes de autorização explícita.
 
-## Versioning
+## Versionamento
 
-Usamos [Semantic Versioning](https://semver.org/):
-- **v0.x.y**: Versões de desenvolvimento
-- **v1.0.0-rc.1 → rc.N**: Release candidates
-- **v1.0.0**: Release stable
+Seguimos [Semantic Versioning](https://semver.org/):
 
-## Release Checklist
+- **Patch (`2.3.x`)**: correções, testes, documentação, DX e automação sem mudança incompatível.
+- **Minor (`2.x.0`)**: recursos compatíveis dentro da API existente.
+- **Major (`3.0.0`)**: somente para uma mudança real e deliberada, nunca por marketing.
 
-### 1. Preparação Local
+Operações que publicam ou alteram estado remoto — `git push`, `npm publish`, criação/publicação de GitHub Release e merge de PR — exigem confirmação do maintainer.
+
+## Gate local obrigatório
+
+Executar a partir da branch candidata limpa:
+
 ```bash
-# Sincronizar com main
-git checkout main
-git pull origin main
-
-# Atualizar versão no package.json (manualmente ou via script)
-npm version prerelease --preid=rc
-
-# Build e testes
+npm ci
+npm run lint
+npx tsc --noEmit
+npm test -- --runInBand
 npm run build
-npm run test
+npm run test:cli
+npm run test:generated
+npm run test:generated:py
+npm pack --dry-run --json
 ```
 
-### 2. Criar Release no GitHub
+Critérios de aceite:
+
+- suíte Jest e smokes verdes;
+- `package.json` e `package-lock.json` na mesma versão;
+- `npm pack --dry-run` contendo `dist/`, templates, exemplos e documentação necessários;
+- changelog e notas coerentes com o estado real;
+- nenhuma alteração 3.0 incluída.
+
+## Fluxo oficial de publicação
+
+O projeto usa um único caminho: tag estável → GitHub Actions → npm OIDC → GitHub Release.
+
+1. Revisar todos os commits e o diff completo.
+2. Atualizar versão, changelog, READMEs e notas se ainda necessário.
+3. Após autorização, enviar a branch e a tag correspondente.
+4. O workflow valida metadados, lint, typecheck, testes, build, pack e smoke do tarball.
+5. O mesmo tarball é publicado no npm com Trusted Publisher OIDC e anexado à GitHub Release.
+
 ```bash
-git push origin main --tags
+npm view @christopher_dondici/mcp-gen version
+gh release view v<versão>
+gh run list --workflow release.yml --limit 5
 ```
 
-Ou manualmente via GitHub CLI:
-```bash
-gh release create v1.0.0-rc.1 \
-  --title "MCP-Generator v1.0.0-rc.1" \
-  --notes "First release candidate"
-```
+Não executar `npm publish` manual em paralelo e não reintroduzir `NPM_TOKEN` no caminho oficial.
 
-### 3. Publicar no npm
-```bash
-npm publish --tag rc
-```
+## Workflow OIDC
 
-Verificar:
-```bash
-npm info @christopher_dondici/mcp-gen versions
-npm view @christopher_dondici/mcp-gen@2.1.5
-```
+`.github/workflows/release.yml`:
 
-### 4. Anunciar (Product Hunt, Twitter, etc.)
-Veja [PRODUCT_HUNT.md](./PRODUCT_HUNT.md)
+- dispara em tags estáveis `v[0-9]+.[0-9]+.[0-9]+`;
+- exige `contents: write`, `packages: write` e `id-token: write`;
+- confere nome do pacote, acesso público e igualdade entre tag e `package.json`;
+- executa lint, typecheck, testes, build, pack e smoke do tarball;
+- publica com `npm publish --access public --provenance` via Trusted Publisher;
+- cria a GitHub Release com o tarball validado.
 
-## Automated Release Workflow
+A criação de tag é o gatilho. Uma tag local, um commit local ou um plano de release não provam publicação no npm.
 
-O GitHub Actions workflow (`release.yml`) automatiza:
-- Verificação do nome scoped, acesso público e versão correspondente à tag
-- Typecheck, testes e build em checkout limpo
-- Pack e instalação isolada do tarball, com `--version` e validação Petstore
-- Publicação pública do tarball validado somente quando `NPM_TOKEN` está disponível
-- Criação de release no GitHub com o tarball anexado
+## Recuperação
 
-**Trigger**: Push de tags estáveis seguindo o padrão `v[0-9]+.[0-9]+.[0-9]+`. Não publica RC nem valida changelog. A criação de release GitHub não comprova publicação npm.
+- Se o npm publicar e a criação da GitHub Release falhar, não rode o workflow novamente. Confirme a versão no registry, reconstrua o tarball do mesmo commit e crie somente a GitHub Release com autorização explícita.
+- Se o workflow falhar por causa transitória antes de publicar, use `gh run rerun` para repetir o mesmo commit e tag.
+- Se for necessária uma correção de código ou configuração depois da tag, prepare um novo patch, por exemplo `2.3.2`; não mova uma tag já enviada.
+- Versões npm são imutáveis. Se a versão já existir no registry, não force nem incremente silenciosamente; pare e confirme a intenção.
 
-## CI/CD Pipeline
+## Backlog técnico pós-2.3.1
 
-```
-Push tag estável (somente com autorização)
-    ↓
-GitHub Actions (release.yml)
-    ├→ npm ci e verificação dos metadados
-    ├→ npx tsc --noEmit
-    ├→ npm test
-    ├→ npm run build
-    ├→ npm pack e smoke test isolado
-    ├→ npm publish <tarball> --access public (se houver NPM_TOKEN)
-    └→ Create Release on GitHub com tarball
-    ↓
-Verificar disponibilidade de @christopher_dondici/mcp-gen no npm
-```
+- Avaliar e fechar o PR externo #2, considerado obsoleto.
+- Adicionar smoke de compilação para o scaffold Go.
+- Resolver a auditoria dev-only de `js-yaml` sem upgrade amplo do Jest.
+- Revisar placeholders e documentação de scaffolds gerados.
+- Manter feedback do Codex for OSS em patches pequenos e verificáveis.
 
-## Comunicação
+## Regra para 3.0
 
-- **npm**: Publicado com tag `rc`
-- **GitHub**: Release com notas
-- **Social**: Twitter, Dev.to, Product Hunt, Hacker News
-- **Docs**: Atualizar README com status RC
+Não iniciar 3.0 sem confirmação explícita. Gatilhos legítimos possíveis:
 
-## Timeline de Lançamento
+- usar `operationId` como naming default;
+- mover autenticação exclusivamente para middleware;
+- exigir Node 22+ ou migrar para ESM;
+- remover flags ou APIs depreciadas.
 
-### Pre-Launch (T-3 a T-1)
-```
-T-3 days: Preparar screenshots, vídeo de demo, blog post
-T-2 days: Review documentação, testar builds
-T-1 days: Agendar social media, preparar submissão PH
-```
-
-### Release Day (T-0)
-```
-T-0 00:00 GMT: npm version prerelease --preid=rc
-T-0 00:01 GMT: git push origin main --tags
-T-0 00:02 GMT: Monitorar GitHub Actions
-T-0 00:10 GMT: Verificar publicação npm
-T-0 12:01 AM PT: LAUNCH on Product Hunt 🚀
-```
-
-### Launch Day (T+0 a T+24h)
-```
-T+0 (12:01 AM PT):  Submeter no Product Hunt
-T+1h:               Compartilhar no Twitter
-T+2h:               Responder primeiros comentários
-T+6h:               Verificar métricas (objetivo: top 5)
-T+12h:              Continuar monitorando
-T+24h:              Dia 1 wrap-up, preparar Dia 2
-```
-
-### Week 1 (T+1 a T+7)
-```
-T+1:  Incorporar feedback, começar trabalho em rc.2
-T+7:  Análise completa, preparar próxima iteração
-```
-
-## Próximas fases
-
-- **rc.2, rc.3**: Incorporar feedback, correções críticas
-- **v1.0.0 (final)**: Quando pronto para produção
-
----
-
-**Nota**: Para detalhes específicos de publicação no Product Hunt, veja [PRODUCT_HUNT_GUIDE.md](./PRODUCT_HUNT_GUIDE.md)
+Sem um desses gatilhos, continuar em patches 2.3.x.
