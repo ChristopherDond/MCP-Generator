@@ -55,16 +55,17 @@ describe("generate (typescript)", () => {
   beforeEach(() => { tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-ts-")); });
   afterEach(() => { fs.rmSync(tmpDir, { recursive: true, force: true }); });
 
-  it("generates 10 files", async () => {
+  it("generates 11 files including a reproducible npm lockfile", async () => {
     const result = await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: true, incremental: false, http: false });
     expect(result.success).toBe(true);
-    expect(result.filesCreated).toHaveLength(10);
+    expect(result.filesCreated).toHaveLength(11);
+    expect(result.filesCreated).toContain("package-lock.json");
   });
 
   it("generates from YAML spec", async () => {
     const result = await generate({ input: PETSTORE_YAML, lang: "typescript", out: tmpDir, force: true, incremental: false, http: false });
     expect(result.success).toBe(true);
-    expect(result.filesCreated).toHaveLength(10);
+    expect(result.filesCreated).toHaveLength(11);
   });
 
   it("server.ts contains tool names", async () => {

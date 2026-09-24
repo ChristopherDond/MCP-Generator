@@ -35,6 +35,7 @@ function getTypeScriptFileSpecs(): FileSpec[] {
     { templateFile: "handlers.custom.hbs", outputFile: "src/handlers.custom.ts" },
     { templateFile: "models.hbs",          outputFile: "src/models.ts" },
     { templateFile: "package.json.hbs",    outputFile: "package.json" },
+    { templateFile: "package-lock.json.hbs", outputFile: "package-lock.json" },
     { templateFile: "tsconfig.json.hbs",   outputFile: "tsconfig.json" },
     { templateFile: "README.md.hbs",       outputFile: "README.md" },
     { templateFile: "client.hbs",          outputFile: "src/client.ts" },
