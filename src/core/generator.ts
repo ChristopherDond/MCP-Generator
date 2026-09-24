@@ -295,7 +295,9 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
     return result;
   }
 
-  if (fs.existsSync(result.outputDir) && !options.force && !options.incremental) {
+  const incremental = Boolean(options.incremental) && !options.force;
+
+  if (fs.existsSync(result.outputDir) && !options.force && !incremental) {
     const contents = fs.readdirSync(result.outputDir);
     if (contents.length > 0) {
       result.errors.push(
@@ -311,7 +313,7 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
       ? path.join(result.outputDir, "server.py")
       : path.join(result.outputDir, "main.go");
 
-  const extracted = options.incremental
+  const extracted = incremental
     ? extractHandlers(serverFile)
     : { handlers: new Map() };
 
@@ -322,7 +324,7 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
     generatedAt: new Date().toISOString(),
     lang: options.lang,
     langDir,
-    incremental: options.incremental,
+    incremental,
     http: options.http,
     env,
   };
@@ -349,7 +351,7 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
         spec.outputFile === "server.py" ||
         spec.outputFile === "main.go";
 
-      if (options.incremental && isServerFile && extracted.handlers.size > 0) {
+      if (incremental && isServerFile && extracted.handlers.size > 0) {
         const stubPattern = isTs ? TS_DEFAULT_STUB_PATTERN : PY_DEFAULT_STUB_PATTERN;
         const { result: injected, preserved } = injectHandlers(rendered, extracted, stubPattern);
         rendered = injected;
@@ -362,8 +364,8 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
         continue;
       }
       const existing = fs.existsSync(outputPath) ? fs.readFileSync(outputPath, "utf-8") : null;
-      writeFile(outputPath, rendered, options.force || options.incremental, result.outputDir);
-      if (existing !== null && isServerFile && existing !== rendered && !options.force && options.incremental) {
+      writeFile(outputPath, rendered, options.force || incremental, result.outputDir);
+      if (existing !== null && isServerFile && existing !== rendered && !options.force && incremental) {
         result.warnings.push(`Merged ${spec.outputFile}: custom handlers preserved (3-way: base stub vs custom vs new template). Use --force to ignore.`);
       }
       result.filesCreated.push(spec.outputFile);

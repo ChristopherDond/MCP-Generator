@@ -180,6 +180,36 @@ describe("incremental", () => {
     }
   });
 
+  it("lets force discard custom handlers when incremental is also enabled", async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-force-"));
+    const clock = jest.spyOn(Date.prototype, "toISOString").mockReturnValue("2026-01-01T00:00:00.000Z");
+    try {
+      const options = { input: PETSTORE_JSON, lang: "typescript" as const, out: tmpDir, force: true, incremental: false, http: false };
+      const initial = await generate(options);
+      expect(initial.success).toBe(true);
+
+      const serverFile = path.join(tmpDir, "src/server.ts");
+      const original = fs.readFileSync(serverFile, "utf-8");
+      const block = /^([\t ]*\/\/ @@mcp-gen:start:get_pets\r?\n)[\s\S]*?^([\t ]*\/\/ @@mcp-gen:end:get_pets\r?$)/m;
+      const match = original.match(block);
+      expect(match).not.toBeNull();
+      const eol = match![1].endsWith("\r\n") ? "\r\n" : "\n";
+      const edited = original.replace(
+        block,
+        (_, start, end) => `${start}      throw new Error("custom_force_marker");${eol}${end}`
+      );
+      fs.writeFileSync(serverFile, edited);
+
+      const regenerated = await generate({ ...options, incremental: true });
+      expect(regenerated.success).toBe(true);
+      expect(regenerated.filesPreserved).not.toContain("get_pets");
+      expect(fs.readFileSync(serverFile, "utf-8")).not.toContain("custom_force_marker");
+    } finally {
+      clock.mockRestore();
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
   it("extracts handlers from marked file", () => {
     const content = `
 // @@mcp-gen:start:get_pets
