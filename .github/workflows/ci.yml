@@ -32,6 +32,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Test CLI exit codes
+        run: npm run test:cli
+
       - name: Build and smoke test generated TypeScript
         timeout-minutes: 6
         run: npm run test:generated
