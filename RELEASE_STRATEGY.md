@@ -76,6 +76,7 @@ A criação de tag é o gatilho. Uma tag local, um commit local ou um plano de r
 
 ## Backlog técnico pós-2.3.1
 
+- Regenerar `src/templates/typescript/package-lock.json.hbs` via npm sempre que os ranges de dependência do scaffold TypeScript mudarem; o lock é um snapshot fixado, não um arquivo gerado em runtime.
 - Avaliar e fechar o PR externo #2, considerado obsoleto.
 - Adicionar smoke de compilação para o scaffold Go.
 - Resolver a auditoria dev-only de `js-yaml` sem upgrade amplo do Jest.
