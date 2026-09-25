@@ -1,6 +1,6 @@
 # Estratégia de release — MCP-Generator
 
-> **Estado em 25/09/2026:** `2.3.1` é a release publicada (npm `latest` + GitHub Release `v2.3.1`, via OIDC).
+> **Estado em 25/09/2026:** `2.3.2` é a release publicada (npm `latest` + GitHub Release `v2.3.2`, via OIDC).
 
 ## Versionamento
 
@@ -25,6 +25,7 @@ npm run build
 npm run test:cli
 npm run test:generated
 npm run test:generated:py
+npm run test:generated:go
 npm pack --dry-run --json
 ```
 
@@ -71,14 +72,12 @@ A criação de tag é o gatilho. Uma tag local, um commit local ou um plano de r
 
 - Se o npm publicar e a criação da GitHub Release falhar, não rode o workflow novamente. Confirme a versão no registry, reconstrua o tarball do mesmo commit e crie somente a GitHub Release com autorização explícita.
 - Se o workflow falhar por causa transitória antes de publicar, use `gh run rerun` para repetir o mesmo commit e tag.
-- Se for necessária uma correção de código ou configuração depois da tag, prepare um novo patch, por exemplo `2.3.2`; não mova uma tag já enviada.
+- Se for necessária uma correção de código ou configuração depois da tag, prepare um novo patch, por exemplo `2.3.3`; não mova uma tag já enviada.
 - Versões npm são imutáveis. Se a versão já existir no registry, não force nem incremente silenciosamente; pare e confirme a intenção.
 
-## Backlog técnico pós-2.3.1
+## Backlog técnico pós-2.3.2
 
 - Regenerar `src/templates/typescript/package-lock.json.hbs` via npm sempre que os ranges de dependência do scaffold TypeScript mudarem; o lock é um snapshot fixado, não um arquivo gerado em runtime.
-- Avaliar e fechar o PR externo #2, considerado obsoleto.
-- Adicionar smoke de compilação para o scaffold Go.
 - Resolver a auditoria dev-only de `js-yaml` sem upgrade amplo do Jest.
 - Revisar placeholders e documentação de scaffolds gerados.
 - Manter feedback do Codex for OSS em patches pequenos e verificáveis.

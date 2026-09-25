@@ -1,6 +1,29 @@
 # Notas de release
 
-> **Status em 25/09/2026:** `2.3.1` é a versão publicada no npm (`latest`) e a GitHub Release atual.
+> **Status em 25/09/2026:** `2.3.2` é a versão publicada no npm (`latest`) e a GitHub Release atual.
+
+## 2.3.2 — Publicada em 25/09/2026
+
+Patch sem breaking changes com o backlog P1 da linha 2.3.x.
+
+### Correções
+
+- `js-yaml` e `openapi-types` viraram dependências diretas; a leitura de YAML no `security-lint` usa import tipado.
+- O teste no-op do registry foi substituído por cobertura real (não-HTTPS, chave desconhecida e chave removida, sem `fetch`).
+- Globs com `/**` no final passam a casar o path base.
+- Marcadores incrementais com padrão de stub para Go e round-trip validado para guards e marcadores legados.
+- Novo smoke de compilação Go na CI e local (`npm run test:generated:go`).
+
+### Validação
+
+- Workflow de release verde: metadados, typecheck, lint, testes, build, pack e smoke do tarball.
+- Verificação local: `npm run lint`, `npx tsc --noEmit`, `npm test -- --runInBand` (17 suites, 232 testes), `npm run build`, `npm run test:cli` (3/3), `npm run test:generated:go`, `npm pack --dry-run` (89 arquivos), `npm audit --omit=dev` zero.
+
+### Publicação
+
+Publicada pelo caminho oficial: push da `main` + tag `v2.3.2` → `.github/workflows/release.yml` validou, publicou via Trusted Publisher OIDC (com provenance assinada) e criou a GitHub Release.
+
+Confirmado com `npm view @christopher_dondici/mcp-gen version` (`2.3.2`, dist-tag `latest`) e `gh release view v2.3.2`.
 
 ## 2.3.1 — Publicada em 25/09/2026
 

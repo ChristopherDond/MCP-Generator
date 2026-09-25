@@ -2,6 +2,18 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.3.2] - 2026-09-25
+
+### Correções e DX sem breaking
+
+- **Dependências diretas**: `js-yaml` e `openapi-types` declarados no `package.json`; o `security-lint` usa import tipado em vez de `require()`.
+- **Registry**: teste no-op trocado por cobertura real — URL não-HTTPS, chave desconhecida e chave removida falham sem chamar `fetch`.
+- **Globs**: `/**` no final também casa o path base (`/pets/**` inclui `/pets`).
+- **Incremental**: padrão de stub default para Go (`GO_DEFAULT_STUB_PATTERN`) e round-trip dos guards `<generated:handlers:name>` junto dos marcadores legados `@@mcp-gen`.
+- **Smoke Go**: `scripts/generated-go.test.cjs` + `npm run test:generated:go` (Petstore: `go mod tidy` + `go build`) e gate na CI com `setup-go`.
+- **Testes e gates**: 17 suites / 232 testes Jest, smoke de exit codes da CLI 3/3, smokes dos scaffolds TypeScript e Go, `npm audit --omit=dev` zero.
+- **Publicação**: `2.3.2` publicada no npm como `latest` via Trusted Publisher OIDC, com provenance assinada e GitHub Release `v2.3.2`.
+
 ## [2.3.1] - 2026-09-25
 
 ### Correções e DX sem breaking

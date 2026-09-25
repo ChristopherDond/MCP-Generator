@@ -4,9 +4,20 @@
 
 Gere servidores MCP a partir de specs OpenAPI.
 
-> **Status**: `@christopher_dondici/mcp-gen` 2.3.1 é a última versão publicada no npm. Veja as [notas de release](RELEASE_NOTES.md).
+> **Status**: `@christopher_dondici/mcp-gen` 2.3.2 é a última versão publicada no npm. Veja as [notas de release](RELEASE_NOTES.md).
 
 `mcp-gen` transforma uma spec OpenAPI v3 ou Swagger 2.0 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript, Python ou Go. Cada rota vira uma tool, e a geração incremental preserva o código customizado entre os marcadores indicados.
+
+## Novidades da 2.3.2
+
+(Patch sem breaking changes.)
+
+- `js-yaml` e `openapi-types` agora são dependências diretas; a leitura de YAML no security-lint usa import tipado.
+- Validação de URL do registry com testes reais: URLs não-HTTPS e chaves desconhecidas/removidas falham sem chamar `fetch`.
+- Globs com `/**` no final também casam o path base (`/pets/**` inclui `/pets`).
+- Marcadores incrementais: padrão de stub default para Go e round-trip dos guards `<generated:handlers:name>` junto dos marcadores legados `@@mcp-gen`.
+- Novo smoke de compilação Go (`npm run test:generated:go`): o scaffold Go do Petstore roda `go mod tidy` + `go build`, também na CI com Go 1.22.
+- Verificação local: 17 suites / 232 testes Jest, smoke de exit codes 3/3, smokes TypeScript e Go, `npm audit --omit=dev` limpo.
 
 ## Novidades da 2.3.1
 
@@ -122,7 +133,7 @@ Cada rota vira uma tool MCP com:
 
 ## Instalação local e comandos abreviados
 
-Instale a última versão com `npm install -g @christopher_dondici/mcp-gen@2.3.1`. Para trabalhar pelo código-fonte, use o build em [Início rápido](#início-rápido).
+Instale a última versão com `npm install -g @christopher_dondici/mcp-gen@2.3.2`. Para trabalhar pelo código-fonte, use o build em [Início rápido](#início-rápido).
 Neste README, `mcp-gen` é uma abreviação de `node dist/cli/index.js`, executado na raiz do repositório. Por exemplo, `mcp-gen validate -i examples/petstore.yaml` equivale a `node dist/cli/index.js validate -i examples/petstore.yaml`.
 
 Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o comando `mcp-gen` apontando para seu checkout local. Isso altera os links globais do npm; não baixa um pacote `@christopher_dondici/mcp-gen` publicado. O nome npm mudou porque `mcp-gen` foi recusado por similaridade com `mcpgen`; o comando continua sendo `mcp-gen`.
@@ -130,7 +141,7 @@ Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o co
 Para instalar um tarball produzido localmente sem publicar:
 
 ```bash
-npm install ./christopher_dondici-mcp-gen-2.3.1.tgz
+npm install ./christopher_dondici-mcp-gen-2.3.2.tgz
 ./node_modules/.bin/mcp-gen --version
 ./node_modules/.bin/mcp-gen validate -i node_modules/@christopher_dondici/mcp-gen/examples/petstore.yaml
 ```
@@ -483,9 +494,10 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.4 | Publicada no npm | Filtros de path com glob, allowlist inline, group-by tag/path-prefix com roteamento por action, dedup com method/hash, guardas `<generated:handlers>` com merge 3-way, middleware de auth separado, `handlers.custom.*` nunca sobrescrito, correção do template de auth para specs sem `securitySchemes` |
 | v2.1.5 | Publicada no npm | Fase 0 P0 (PR #4): serialização de query no TS, query/headers no Python, HTTP real no Go, registry só v3 com orientação |
 | v2.2.0 | Publicada no npm | Fase 1: `generate --dry-run` + resumo `--json`, filtros/grupos no `watch` (+ prompts interativos, correção do `--once` em arquivos), avisos por schema parcial em `validate`/`generate`, docs do CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` |
-| v2.3.1 | Publicada no npm (atual) | Lockfile no scaffold TypeScript, precedência de force sobre incremental, exit codes confiáveis no `watch --once`, lint reproduzível |
+| v2.3.2 | Publicada no npm (atual) | Deps diretas js-yaml/openapi-types, testes reais do registry, `/**` final casa a base, stub Go + round-trip dos guards, smoke Go na CI |
+| v2.3.1 | Publicada no npm | Lockfile no scaffold TypeScript, precedência de force sobre incremental, exit codes confiáveis no `watch --once`, lint reproduzível |
 | v2.3.0 | Publicada no npm | Fase 2: conversão Swagger 2.0 → v3 na ingestão, `slack`/`kubernetes`/`digitalocean` de volta no registry, benchmark `examples/large-scale.json` (180 → 10 tools) |
-| Distribuição | Verificada para a 2.3.1 | Instalação pelo registry funciona com `npm install -g @christopher_dondici/mcp-gen`; publicação via pip não comprovada. Python é um target de geração, não uma forma de instalar esta CLI via pip |
+| Distribuição | Verificada para a 2.3.2 | Instalação pelo registry funciona com `npm install -g @christopher_dondici/mcp-gen`; publicação via pip não comprovada. Python é um target de geração, não uma forma de instalar esta CLI via pip |
 | Futuro | Planejado | Streaming/resources/prompts, mais registries |
 
 ---
