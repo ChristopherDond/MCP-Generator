@@ -1,8 +1,8 @@
 # Notas de release
 
-> **Status em 24/09/2026:** `2.3.0` é a versão publicada no npm. A `2.3.1` está preparada e verificada localmente, mas ainda não recebeu push, tag, publicação npm nem GitHub Release.
+> **Status em 25/09/2026:** `2.3.1` é a versão publicada no npm (`latest`) e a GitHub Release atual.
 
-## 2.3.1 — Preparada, não publicada
+## 2.3.1 — Publicada em 25/09/2026
 
 Patch sem breaking changes, focada em DX, OSS hygiene e confiabilidade de automação.
 
@@ -31,16 +31,13 @@ Patch sem breaking changes, focada em DX, OSS hygiene e confiabilidade de automa
 - `npm pack --dry-run --json`: pacote `2.3.1` gerado com 89 arquivos.
 - `npm audit --omit=dev`: zero vulnerabilidades. A auditoria completa aponta uma vulnerabilidade high apenas em `js-yaml` 3.x, transitiva do Jest e restrita a ferramentas de desenvolvimento; nenhum upgrade amplo foi aplicado.
 
-### Publicação pendente
+### Publicação
 
-Push, tag e publicação exigem autorização explícita. O caminho oficial continua sendo:
+Publicada pelo caminho oficial: push da `main` + tag `v2.3.1` → `.github/workflows/release.yml` validou, publicou via Trusted Publisher OIDC (com provenance assinada) e criou a GitHub Release.
 
-1. Enviar os commits da branch para `main`.
-2. Criar e enviar a tag `v2.3.1`.
-3. Aguardar `.github/workflows/release.yml` validar, publicar via Trusted Publisher OIDC e criar a GitHub Release.
-4. Confirmar com `npm view @christopher_dondici/mcp-gen version` e `gh release view v2.3.1`.
+Confirmado com `npm view @christopher_dondici/mcp-gen version` (`2.3.1`, dist-tag `latest`) e `gh release view v2.3.1`.
 
-Não usar publicação manual paralela nem `NPM_TOKEN`; o workflow atual usa OIDC.
+Incidentes superados no caminho: `npm@latest` incompatível com o runner Node 20 (fix: `npm@11`) e Trusted Publisher sem permissão de `npm publish` no npmjs.com (caixa "Allow npm publish" marcada). Não usar publicação manual paralela nem `NPM_TOKEN`; o workflow usa OIDC.
 
 ## 2.3.0 — Publicada em 22/09/2026
 

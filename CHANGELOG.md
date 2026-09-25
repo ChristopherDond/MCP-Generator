@@ -2,7 +2,7 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
-## [2.3.1] - Não publicada
+## [2.3.1] - 2026-09-25
 
 ### Correções e DX sem breaking
 
@@ -11,7 +11,7 @@ Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 - **Status de `watch --once`**: falhas de parsing, fetch e geração encerram com código 1; sucessos encerram com código 0. A CLI usa o fluxo assíncrono do Commander.
 - **Lint reproduzível**: ESLint 10 + typescript-eslint são dependências locais, com flat config mínima e gates na CI e no release. `require()` permanece permitido para não antecipar uma migração ESM.
 - **Testes e gates**: 16 suites / 214 testes Jest, 2 testes de exit code da CLI, smoke TypeScript com `npm ci`, smoke Python e `npm pack --dry-run` passaram localmente em 24/09/2026.
-- **Publicação**: `2.3.1` continua não publicada; o npm `latest` permanece `2.3.0` até push da tag e conclusão do workflow OIDC.
+- **Publicação**: `2.3.1` publicada no npm como `latest` via Trusted Publisher OIDC, com provenance assinada e GitHub Release `v2.3.1`.
 
 ## [2.3.0] - 2026-09-22
 
