@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
-import { OpenAPIV3 } from "openapi-types";
+import type { OpenAPIV3 } from "openapi-types";
+import yaml from "js-yaml";
 
 /**
  * MCP Security & Lint Layer
@@ -483,7 +484,7 @@ export async function scanProject(projectPath: string): Promise<SecurityReport> 
       const specContent = fs.readFileSync(specFile, "utf-8");
       const spec = specFile.endsWith(".json") 
         ? JSON.parse(specContent) 
-        : require("js-yaml").load(specContent);
+        : yaml.load(specContent);
       allRules.push(...lintSchemas(spec, path.relative(projectPath, specFile)));
     } catch {
       // Ignore parse errors
