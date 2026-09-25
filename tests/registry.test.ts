@@ -2,6 +2,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { fetchSpecToCwd } from "../src/core/registry";
+import { validateRemoteUrl } from "../src/core/security";
 
 describe("fetchSpecToCwd", () => {
   afterEach(() => {
@@ -30,8 +31,8 @@ describe("fetchSpecToCwd", () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("should reject non-HTTPS URLs", async () => {
-    jest.spyOn(global, "fetch").mockResolvedValue({
+  it("rejects non-HTTPS URLs without calling fetch", async () => {
+    const fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
       headers: new Headers({
         "content-type": "application/json",
@@ -40,9 +41,24 @@ describe("fetchSpecToCwd", () => {
       text: async () => '{"ok":true}',
     } as any);
 
-    // This should not actually make the fetch call due to URL validation
-    // We're testing that the validation happens before fetch
-    // Petstore URL is HTTPS so we can't easily test HTTP without modifying KNOWN_SPECS
-    expect.assertions(0); // Just ensure no errors for now
+    expect(() => validateRemoteUrl("http://example.com/spec.json")).toThrow(
+      /Only HTTPS/
+    );
+    expect(() => validateRemoteUrl("http://127.0.0.1:9/spec.json")).toThrow();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects unknown registry keys without calling fetch", async () => {
+    const fetchSpy = jest.spyOn(global, "fetch");
+    await expect(fetchSpecToCwd("nope-unknown")).rejects.toThrow(
+      /Unknown registry key/
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects removed registry keys without calling fetch", async () => {
+    const fetchSpy = jest.spyOn(global, "fetch");
+    await expect(fetchSpecToCwd("azure")).rejects.toThrow(/was removed/);
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
