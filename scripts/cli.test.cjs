@@ -41,6 +41,24 @@ test("watch --once exits with failure when generation fails", { timeout: 40000 }
   }
 });
 
+test("watch --once exits with failure when URL fetch fails", { timeout: 40000 }, () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "mcp-cli-watch-url-"));
+  const out = path.join(dir, "output");
+  const input = "http://127.0.0.1:9/spec.json";
+
+  try {
+    const result = runWatch(input, out);
+    assert.equal(result.error, undefined);
+    assert.equal(
+      result.status,
+      1,
+      `expected status 1\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+  }
+});
+
 test("watch --once exits successfully after generating a valid spec", { timeout: 40000 }, () => {
   const out = mkdtempSync(path.join(tmpdir(), "mcp-cli-watch-out-"));
 
