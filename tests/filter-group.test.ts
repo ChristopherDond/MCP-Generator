@@ -4,11 +4,15 @@ import path from "path";
 import type { MCPTool } from "../src/core/types";
 import {
   parseTagList,
+  parsePathList,
   parseGroupBy,
   loadOperationAllowlistFile,
   filterTools,
   groupTools,
   toGroupMetadata,
+  globToRegExp,
+  matchPathPattern,
+  matchesAnyPattern,
 } from "../src/core/filter-group";
 
 function tool(over: Partial<MCPTool> & { name: string }): MCPTool {
@@ -339,5 +343,95 @@ describe("toGroupMetadata", () => {
   it("preserves path-prefix mode", () => {
     const grouped = groupTools([tool({ name: "a", path: "/a" })], "path-prefix");
     expect(toGroupMetadata(grouped)[0].mode).toBe("path-prefix");
+  });
+});
+
+describe("parsePathList", () => {
+  it("splits comma separated globs", () => {
+    expect(parsePathList("/pets/**,/orders/*")).toEqual(["/pets/**", "/orders/*"]);
+  });
+
+  it("trims and drops blanks", () => {
+    expect(parsePathList(["  /pets/**  ", "", "  "])).toEqual(["/pets/**"]);
+  });
+});
+
+describe("matchPathPattern", () => {
+  it("prefix-matches exact paths without globs", () => {
+    expect(matchPathPattern("/pets", "/pets")).toBe(true);
+    expect(matchPathPattern("/pets/123", "/pets")).toBe(true);
+    expect(matchPathPattern("/orders", "/pets")).toBe(false);
+  });
+
+  it("single star stays within one segment", () => {
+    expect(matchPathPattern("/pets/123", "/pets/*")).toBe(true);
+    expect(matchPathPattern("/pets/123/orders", "/pets/*")).toBe(false);
+    expect(matchPathPattern("/pets", "/pets/*")).toBe(false);
+  });
+
+  it("double star spans segments and matches base path", () => {
+    expect(matchPathPattern("/pets/123", "/pets/**")).toBe(true);
+    expect(matchPathPattern("/pets/123/orders", "/pets/**")).toBe(true);
+    expect(matchPathPattern("/pets/", "/pets/**")).toBe(true);
+    expect(matchPathPattern("/pets", "/pets/**")).toBe(true);
+  });
+
+  it("question mark matches single char within segment", () => {
+    expect(matchPathPattern("/pets/123", "/pets/???")).toBe(true);
+    expect(matchPathPattern("/pets/12", "/pets/???")).toBe(false);
+    expect(matchPathPattern("/pets/1234", "/pets/???")).toBe(false);
+  });
+
+  it("rejects blank patterns", () => {
+    expect(matchPathPattern("/pets", "   ")).toBe(false);
+  });
+});
+
+describe("matchesAnyPattern", () => {
+  it("matches when any pattern matches", () => {
+    expect(matchesAnyPattern("/pets/123", ["/orders", "/pets/*"])).toBe(true);
+    expect(matchesAnyPattern("/orders", ["/pets/*", "/admin"])).toBe(false);
+  });
+});
+
+describe("globToRegExp", () => {
+  it("escapes regex specials", () => {
+    const re = globToRegExp("/pets.v1/*");
+    expect(re.test("/pets.v1/123")).toBe(true);
+    expect(re.test("/petsXv1/123")).toBe(false);
+  });
+});
+
+describe("filterTools includePaths/excludePaths", () => {
+  const tools = [
+    tool({ name: "get_pets", method: "GET", path: "/pets", tags: ["pets"] }),
+    tool({ name: "get_pet", method: "GET", path: "/pets/123", tags: ["pets"] }),
+    tool({ name: "get_nested", method: "GET", path: "/pets/123/orders", tags: ["pets"] }),
+    tool({ name: "get_orders", method: "GET", path: "/orders", tags: ["orders"] }),
+    tool({ name: "get_admin", method: "GET", path: "/internal/users", tags: [] }),
+  ];
+
+  it("includes by glob", () => {
+    expect(
+      filterTools(tools, { includePaths: ["/pets/**"] }).map((t) => t.name).sort()
+    ).toEqual(["get_nested", "get_pet", "get_pets"]);
+  });
+
+  it("excludes by glob", () => {
+    expect(
+      filterTools(tools, { excludePaths: ["/internal/*"] }).map((t) => t.name)
+    ).not.toContain("get_admin");
+  });
+
+  it("include then exclude narrows", () => {
+    expect(
+      filterTools(tools, { includePaths: ["/pets/**"], excludePaths: ["/pets/*/orders"] }).map((t) => t.name).sort()
+    ).toEqual(["get_pet", "get_pets"]);
+  });
+
+  it("single star does not cross segments", () => {
+    expect(
+      filterTools(tools, { includePaths: ["/pets/*"] }).map((t) => t.name)
+    ).toEqual(["get_pet"]);
   });
 });

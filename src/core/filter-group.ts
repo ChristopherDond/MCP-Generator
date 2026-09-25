@@ -20,6 +20,13 @@ export function parsePathList(value?: string | string[]): string[] {
 }
 
 export function globToRegExp(glob: string): RegExp {
+  // Trailing /** also matches the base path: /pets/** => ^/pets(?:/.*)?$
+  if (glob.endsWith("/**")) {
+    const base = glob.slice(0, -3);
+    if (base === "" || base === "/") return new RegExp("^(?:/.*)?$");
+    const baseSource = globToRegExp(base).source.slice(1, -1);
+    return new RegExp(`^${baseSource}(?:/.*)?$`);
+  }
   let out = "^";
   let i = 0;
   while (i < glob.length) {

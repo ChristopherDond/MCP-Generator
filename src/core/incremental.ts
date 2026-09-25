@@ -126,3 +126,6 @@ export const TS_DEFAULT_STUB_PATTERN =
 
 export const PY_DEFAULT_STUB_PATTERN =
   /raise NotImplementedError/;
+
+export const GO_DEFAULT_STUB_PATTERN =
+  /handler not implemented/;

@@ -42,6 +42,15 @@ jobs:
         timeout-minutes: 6
         run: npm run test:generated
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build and smoke test generated Go
+        timeout-minutes: 6
+        run: npm run test:generated:go
+
       - name: Pack
         run: npm pack --pack-destination "$RUNNER_TEMP"
 
