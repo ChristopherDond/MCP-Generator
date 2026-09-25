@@ -53,7 +53,7 @@ export function validateRemoteUrl(urlString: string): void {
     }
 
     // Blacklist localhost and private IPs to prevent SSRF attacks
-    let hostname = url.hostname;
+    const hostname = url.hostname;
     
     // Handle IPv6 format - URL.hostname returns it without brackets and normalized
     const privatePatterns = [

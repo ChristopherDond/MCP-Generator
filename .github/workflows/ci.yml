@@ -26,11 +26,17 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
+      - name: Lint
+        run: npm run lint
+
       - name: Run tests
         run: npm test
 
       - name: Build
         run: npm run build
+
+      - name: Test CLI exit codes
+        run: npm run test:cli
 
       - name: Build and smoke test generated TypeScript
         timeout-minutes: 6

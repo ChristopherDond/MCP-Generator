@@ -32,6 +32,7 @@
     "test": "jest",
     "test:generated": "npm run build && node --test scripts/generated-typescript.test.cjs",
     "test:generated:py": "npm run build && node --test scripts/generated-python.test.cjs",
+    "test:cli": "npm run build && node --test scripts/cli.test.cjs",
     "lint": "eslint src/**/*.ts",
     "release": "npm run build && npm run test",
     "release:patch": "npm run build && npm run test && npm version patch && git push origin main --tags",
@@ -50,17 +51,19 @@
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "handlebars": "^4.7.8",
-    "ora": "^8.0.1",
-    "inquirer": "^9.2.0"
+    "inquirer": "^9.2.0",
+    "ora": "^8.0.1"
   },
   "devDependencies": {
     "@types/handlebars": "^4.1.0",
     "@types/inquirer": "^9.0.8",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
+    "eslint": "^10.11.0",
     "jest": "^29.5.0",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.70.1"
   }
 }

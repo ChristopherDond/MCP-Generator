@@ -1,132 +1,73 @@
 # Notas de release
 
-## 2.3.0 - Fase 2 (2026-09-22)
+> **Status em 24/09/2026:** `2.3.0` é a versão publicada no npm. A `2.3.1` está preparada e verificada localmente, mas ainda não recebeu push, tag, publicação npm nem GitHub Release.
 
-Âncora da Fase 2 (minor, sem breaking): destrava o registry.
+## 2.3.1 — Preparada, não publicada
 
-- Swagger 2.0 convertido para v3 na ingestão (sem dependência nova). `validate` + `generate` passam com `examples/swagger-v2-petstore.json` (4 tools, 2 modelos, base `https://petstore.example.com/v1`).
-- Registry: `slack`, `kubernetes`, `digitalocean` de volta (v2 convertido); `init --from <chave>` funciona; só `azure` continua removido.
-- Benchmark: `examples/large-scale.json` (180 ops) → `10 tools` com `--group-by tag` (18x). Linha citável nos READMEs + `tests/scale.test.ts`.
-- Validação: `npm run build` ok, `npm test` 16 suites / 213 testes, incluindo `tests/swagger-v2.test.ts` (7) e `tests/scale.test.ts` (3).
+Patch sem breaking changes, focada em DX, OSS hygiene e confiabilidade de automação.
 
-Instalação: `npm install -g @christopher_dondici/mcp-gen@2.3.0` (tag `v2.3.0` no workflow de release).
+### Correções
 
-## 2.1.5 - Fase 0 (2026-09-20)
+- Projetos TypeScript gerados agora incluem `package-lock.json`. A CI e o Docker gerados já usavam `npm ci`; o scaffold agora fornece o lockfile necessário para um checkout limpo.
+- `--force` passa a prevalecer sobre `--incremental` quando as duas flags são fornecidas. Handlers customizados e arquivos preservados são descartados como a documentação promete.
+- `watch --once` propaga falhas de fetch, parse e geração: código 1 em erro e código 0 em sucesso. O comando também usa o fluxo assíncrono do Commander.
+- O lint deixou de depender de um binário ambiente. ESLint 10 e typescript-eslint são dependências locais, com flat config mínima e sem regras amplas de formatação.
 
-Merge do PR #4 (`christopherdondici/fix/fase-0-p0-fixes`) sobre a 2.1.4.
+### DX e OSS hygiene
 
-- TypeScript com query string real (`get_pets({ limit: 5 })` → `/pets?limit=5`).
-- Python com `_build_query` / `_build_headers` no modo `--http`.
-- Go com modo `--http` ligado no `APIClient` (sem stub).
-- Registry só v3, com guia para chaves removidas (`slack`, `kubernetes`, `digitalocean`, `azure`) e erro acionável para spec v2.
-- Validação: `npm run build` ok, `npm test` 11 suites / 196 testes, incluindo `tests/fase0.test.ts` (8 testes).
+- O smoke TypeScript executa o mesmo `npm ci` usado pelos templates gerados.
+- CI e release agora executam lint, typecheck, testes, build e smokes relevantes.
+- `require()` continua permitido para preservar o runtime CommonJS em Node 20; migração ESM fica reservada para uma breaking future.
 
-Instalação: `npm install -g @christopher_dondici/mcp-gen@2.1.5` (tag `v2.1.5` no workflow de release).
+### Validação local
 
-## 2.1.4 - Filtros, agrupamento e incremental (2026-09-19)
+- `npm ci`: ok.
+- `npm run lint`: ok.
+- `npx tsc --noEmit`: ok.
+- `npm test -- --runInBand`: 16 suites, 214 testes, todos passando.
+- `npm run test:cli`: 2 testes de exit code, todos passando.
+- `npm run test:generated`: scaffold TypeScript instala com `npm ci`, compila e atende `initialize`/`tools/list`.
+- `npm run test:generated:py`: scaffold Python compila e atende `initialize`/`tools/list`.
+- `npm pack --dry-run --json`: pacote `2.3.1` gerado com 89 arquivos.
+- `npm audit --omit=dev`: zero vulnerabilidades. A auditoria completa aponta uma vulnerabilidade high apenas em `js-yaml` 3.x, transitiva do Jest e restrita a ferramentas de desenvolvimento; nenhum upgrade amplo foi aplicado.
 
-Merge do PR #3 sobre a 2.1.2 (a tag `v2.1.3` foi substituída antes de chegar ao npm).
+### Publicação pendente
 
-- Filtros de path com globs: `--path-prefix "/users/**"`, `--include-paths`, `--exclude-paths`; `--operation-allowlist op1,op2` inline (arquivo continua suportado).
-- Agregação com `--group-by tag | path-prefix`: uma tool lógica por tag ou segmento de path, com roteamento interno por `action`.
-- Dedup de nomes: em colisão, sufixa com o method e depois com hash curto do path.
-- Guardas incrementais: regiões `<generated:handlers>` mais marcadores `@@mcp-gen` por tool, merge 3-way com `--incremental`, `--force` para sobrescrever.
-- Middleware de auth separado (`src/auth.ts`, `auth.py`, `auth.go`) e arquivos `handlers.custom.*` nunca sobrescritos sem `--force`.
-- Fix: middleware de auth gerado com default para specs sem `securitySchemes`.
+Push, tag e publicação exigem autorização explícita. O caminho oficial continua sendo:
 
-## Estado e fontes
+1. Enviar os commits da branch para `main`.
+2. Criar e enviar a tag `v2.3.1`.
+3. Aguardar `.github/workflows/release.yml` validar, publicar via Trusted Publisher OIDC e criar a GitHub Release.
+4. Confirmar com `npm view @christopher_dondici/mcp-gen version` e `gh release view v2.3.1`.
 
-A versão `2.1.5` do pacote `@christopher_dondici/mcp-gen` é a release atual, com `package.json` e `package-lock.json` alinhados. O npm recusou `mcp-gen` por similaridade com `mcpgen`; a renomeação mantém a versão, o binário `mcp-gen` e o repositório. As versões 2.1.2 e 2.1.4 já foram publicadas; a 2.1.5 reúne a Fase 0 (PR #4) sobre a 2.1.4. Uma tag Git ou um workflow de publicação não comprova disponibilidade no registry — confirme com `npm view`.
+Não usar publicação manual paralela nem `NPM_TOKEN`; o workflow atual usa OIDC.
 
-A 2.1.2 reúne correções de build, empacotamento, CI e dependências, sem novas funcionalidades de runtime. Estas notas preservam o histórico da 2.1.1, confrontando o [CHANGELOG](CHANGELOG.md) com os diffs `v2.1.0..v2.1.1` e `v2.1.1..1629696`, e descrevem separadamente a preparação da 2.1.2. As seções históricas do changelog não foram alteradas; suas afirmações sobre publicação e segurança não confirmam o estado atual.
+## 2.3.0 — Publicada em 22/09/2026
 
-## Funcionalidade histórica da v2.1.1
+- Suporte a Swagger 2.0 com conversão interna para OpenAPI 3.
+- Registry com `slack`, `kubernetes` e `digitalocean` reativados; `azure` continua removido.
+- Benchmark `examples/large-scale.json`: 180 operações → 10 tools com agrupamento.
+- Validação histórica: 16 suites e 213 testes.
 
-Comparação: `v2.1.0..v2.1.1`.
+Instalação publicada: `npm install -g @christopher_dondici/mcp-gen@2.3.0`.
 
-- Inclusão de `src/core/security-lint.ts`, com análise estática de padrões semelhantes a credenciais, referências a `authContext`, identificadores de políticas, nomes, descrições, TODO/FIXME e marcadores incrementais. Também há verificações de descrições e exemplos de uma spec encontrada no projeto; isso não equivale a validar integralmente seus schemas.
-- Novo comando `security` (alias `sec`) e opção no menu interativo. A sintaxe real exige `-p` ou `--project`, não o caminho posicional mostrado no changelog.
-- `--json` imprime o relatório em JSON; a CLI ainda imprime um cabeçalho antes dele, portanto stdout não é JSON puro. Erros encerram com código 1; `--fail-on-warn` também encerra com código 1 quando há avisos.
-- Exports de biblioteca: `scanProject`, `formatReport` e os tipos `SecurityRule` e `SecurityReport`.
-- Inclusão de 11 testes em `tests/security-lint.test.ts` e configuração explícita de transformação via `ts-jest`.
-- Ajustes nos textos e prompts da CLI, com remoção de textos bilíngues em diversos pontos.
-- O workflow de release passou a tentar condicionar `npm publish` à presença de `NPM_TOKEN`; a correção atual dessa condição é descrita separadamente abaixo.
+## 2.2.0 — Publicada em 21/09/2026
 
-Exemplo após compilar o checkout local:
+- `generate --dry-run` e resumo `--json`.
+- Filtros e agrupamento no `watch` e no modo interativo.
+- Avisos para schemas parcialmente suportados.
+- Melhorias de CONTRIBUTING e documentação do gate de plugins.
 
-```bash
-node dist/cli/index.js security -p ./my-server
-node dist/cli/index.js security -p ./my-server --fail-on-warn
-```
+## 2.1.5 — Publicada em 20/09/2026
 
-### Templates: correção em relação ao changelog
+- Query string e headers reais nos clientes gerados TypeScript/Python.
+- Modo HTTP do Go ligado ao cliente real.
+- Registry com mensagens de erro acionáveis durante a Fase 0 v3-only.
 
-**Os templates TypeScript e Python não mudaram entre `v2.1.0` e `v2.1.1`.** As melhorias atribuídas a eles na seção 2.1.1 do changelog não aparecem nesse diff e não são novidades dessa tag.
+## Limitações conhecidas
 
-O template alterado foi `src/templates/go/server.go.hbs`: recebeu `RAW_CREDENTIAL_KEYS`, `TOOL_POLICIES`, `hasRawCredentialKey`, `requireSecurity` e a chamada de verificação nos handlers. Esses elementos são scaffolding e não comprovam uma implementação completa de autorização, auditoria ou revogação.
-
-Go, modo HTTP, enums, parâmetros header/cookie, API de biblioteca e validação detalhada já pertenciam à v2.1.0; não são novidades da v2.1.1.
-
-## Alterações após a tag até 1629696
-
-Comparação: `v2.1.1..1629696`.
-
-- `690de37`: remoção de comentários em `src/cli/index.ts`, `src/core/generator.ts` e `src/core/incremental.ts`, sem mudança de lógica executável nesse diff.
-- `1629696`: alteração da sintaxe do `if` referente a `NPM_TOKEN` no workflow de release. Ainda era uma referência direta a `secrets` na condição; a correção incluída na 2.1.2 abaixo substitui essa abordagem.
-- Nenhum template mudou nesse intervalo. Esses commits posteriores à tag não constituem uma nova versão publicada.
-
-## Correções incluídas na 2.1.2
-
-As alterações abaixo fazem parte da preparação da 2.1.2 e abrangem build, empacotamento, automação e dependências. Não adicionam funcionalidades aos servidores gerados e não fazem parte do conteúdo histórico da tag `v2.1.1`.
-
-### Build e pacote
-
-- `publishConfig.access` é `public` para o pacote scoped. O tarball da 2.1.2 se chama `christopher_dondici-mcp-gen-2.1.2.tgz` e a instalação local usa `node_modules/@christopher_dondici/mcp-gen`.
-- Para o pacote final, use um clone ou worktree limpo fora do checkout de desenvolvimento; `prepack` não remove arquivos antigos nem caches já existentes em `dist/`.
-- `copy-templates` usa uma chamada inline de Node.js a `fs.cpSync`, com cópia recursiva de `src/templates` para `dist/templates`. Não depende mais de `xcopy` nem de comandos de cópia específicos do shell.
-- A allowlist `files` inclui `dist/`, `examples/`, `README.md`, `README.pt-BR.md`, `CHANGELOG.md`, `RELEASE_NOTES.md`, `SECURITY.md`, `SECURITY.pt-BR.md` e `LICENSE`. O npm também inclui seu manifesto automaticamente.
-- `prepack` executa `npm run build`, preparando o código compilado e os templates antes do empacotamento.
-- `package-lock.json` deixa de ser ignorado e passa a ser versionado com metadados alinhados a `2.1.2`, permitindo o fluxo `npm ci` com dependências fixadas pelo lockfile.
-- `repository.url` usa o formato normalizado `git+https://github.com/ChristopherDond/MCP-Generator.git`.
-- `npm run release` agora executa somente build e testes, removendo a chamada ao inexistente `scripts/release.js`. Esse comando não aumenta versão nem faz push.
-- **Os comandos explícitos `release:patch` e `release:rc` continuam presentes e podem aumentar a versão e fazer push de commits/tags.** `scripts/release.sh` e `scripts/release.bat` também permanecem, com operações de atualização de versão, push e criação de release no GitHub. Não são comandos de verificação local e não foram executados nesta tarefa.
-
-### CI e release
-
-- A nova CI é acionada por pushes em qualquer branch e por pull requests, em `ubuntu-latest` com Node.js 20.
-- Executa `npm ci`, `npx tsc --noEmit`, testes, build e `npm pack` real. Instala o tarball em um diretório temporário e verifica `--version` e `validate` usando o exemplo Petstore incluído no pacote.
-- O smoke test verifica instalação e execução básica do tarball; não compila nem executa servidores gerados em todas as linguagens. A CI não publica no npm e não testa Windows/macOS.
-- O workflow separado de release mantém o mesmo gatilho de tags estáveis (`v[0-9]+.[0-9]+.[0-9]+`). Verifica nome scoped, acesso público e correspondência entre tag e versão; executa typecheck, testes, build, pack e smoke test antes da publicação.
-- A publicação usa `--access public` sobre o mesmo tarball validado, também anexado à release GitHub. A lógica de RC inalcançável foi removida. Uma release GitHub sem publicação npm continua possível quando o segredo não está disponível; não comprova publicação no registry.
-- A variável de ambiente booleana `HAS_NPM_TOKEN` representa apenas a presença do segredo. O passo de publicação usa `if: env.HAS_NPM_TOKEN == 'true'`, em vez de consultar `secrets` diretamente no `if`. Isso não confirma que o pacote já foi publicado.
-
-### Dependências
-
-- Atualizações fixadas no lockfile da 2.1.2: `fast-uri` 3.1.8, `hono` 4.13.8, `js-yaml` 4.3.2 e `qs` 6.16.0. Resultados de auditoria dependem da data da consulta; essas versões não são uma garantia de ausência de vulnerabilidades.
-
-## Uso local
-
-Com Git, Node.js 20+ e npm 9+ instalados:
-
-```bash
-git clone https://github.com/ChristopherDond/MCP-Generator.git
-cd MCP-Generator
-npm ci
-npm run build
-node dist/cli/index.js --version
-node dist/cli/index.js generate -i examples/petstore.yaml -l typescript -o ./my-server
-node dist/cli/index.js validate -i examples/petstore.yaml
-```
-
-O fluxo acima usa a branch `main`, com as correções de build e empacotamento incluídas desde a 2.1.2 e os recursos da 2.1.4 mais as correções P0 da 2.1.5, não um checkout isolado da tag histórica `v2.1.1`. A geração cria arquivos; não instala dependências nem inicia o servidor gerado.
-
-A instalação pelo registry usa `npm install -g @christopher_dondici/mcp-gen@2.1.5`. Para versões anteriores, troque o número (ex.: `@2.1.4`).
-
-Nos READMEs, `mcp-gen` é uma abreviação de `node dist/cli/index.js` na raiz do repositório. Opcionalmente, `npm link` após o build cria o comando apontando para o checkout local, alterando os links globais do npm sem depender de uma publicação de `@christopher_dondici/mcp-gen` no registry. Não há fluxo de instalação desta CLI via pip confirmado.
-
-## Limitações
-
-- A análise de segurança é estática, baseada em padrões de texto: pode gerar falsos positivos e deixar problemas passar. Um relatório aprovado não garante segurança nem prontidão para produção.
-- Encontrar nomes de políticas ou funções no texto não comprova sua execução nem valida autorização, TTL, limites financeiros, revogação ou persistência de auditoria. Esses controles precisam de revisão e integração com um backend confiável.
-- Os servidores gerados são scaffolds e exigem testes e revisão antes do deploy; não há garantia de segurança ou de equivalência entre os targets.
-- OpenAPI v2 não é suportado. Unions geradas de `oneOf`/`anyOf`/`discriminator` não fornecem validação completa em runtime. Streaming/resources/prompts ainda não estão implementados.
+- A conversão de Swagger 2.0 pode perder construções exóticas.
+- Unions `oneOf`/`anyOf`/`discriminator` não validam schemas completos em runtime.
+- A análise de segurança é estática e não substitui revisão, testes ou backend de autorização.
+- Streaming, resources e prompts ainda não estão implementados.
+- O histórico detalhado de versões permanece em [CHANGELOG.md](CHANGELOG.md).

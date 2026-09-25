@@ -28,6 +28,7 @@ tmp/
 test-py/
 test-ts/
 coverage/
+.worktrees/
 
 # Environment
 .env

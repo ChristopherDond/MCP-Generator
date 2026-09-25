@@ -47,7 +47,7 @@ test("generated Petstore installs, compiles and serves initialize/tools/list ove
       plugins: [],
     });
     assert.equal(result.success, true, result.errors.join("\n"));
-    runNpm(["install", "--ignore-scripts", "--no-audit", "--no-fund", "--include=dev"], out, 180000);
+    runNpm(["ci", "--ignore-scripts", "--no-audit", "--no-fund", "--include=dev"], out, 180000);
     runNpm(["ls", "@modelcontextprotocol/sdk", "typescript"], out, 15000);
     const generatedRequire = createRequire(path.join(out, "package.json"));
     const generatedPackage = JSON.parse(readFileSync(path.join(out, "package.json"), "utf8"));

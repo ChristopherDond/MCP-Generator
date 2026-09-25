@@ -4,9 +4,19 @@
 
 Gere servidores MCP a partir de specs OpenAPI.
 
-> **Status**: `@christopher_dondici/mcp-gen` 2.3.0 é a última versão publicada no npm e inclui a âncora da Fase 2 (conversão Swagger 2.0, registry destravado, benchmark de escala) além da base da Fase 1 e das correções P0 da Fase 0 abaixo. Veja as [notas de release](RELEASE_NOTES.md).
+> **Status**: `@christopher_dondici/mcp-gen` 2.3.0 é a última versão publicada no npm. A versão 2.3.1 está preparada localmente, mas ainda não foi publicada. Veja as [notas de release](RELEASE_NOTES.md).
 
 `mcp-gen` transforma uma spec OpenAPI v3 ou Swagger 2.0 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript, Python ou Go. Cada rota vira uma tool, e a geração incremental preserva o código customizado entre os marcadores indicados.
+
+## Novidades da 2.3.1 (não publicada)
+
+(Patch sem breaking changes.)
+
+- Projetos TypeScript gerados passam a incluir `package-lock.json`, então os comandos `npm ci` da CI e do Docker funcionam em um checkout novo.
+- `--force` passa a prevalecer quando combinado com `--incremental`, descartando handlers preservados como a documentação já prometia.
+- `watch --once` retorna código 1 em falhas de fetch, parse ou geração e usa o fluxo assíncrono do Commander.
+- ESLint passa a ser local, com flat config TypeScript mínima e execução na CI e no release.
+- Verificação local: 16 suites Jest / 214 testes, smoke de exit code da CLI, smokes dos servidores TypeScript/Python e `npm pack --dry-run`.
 
 ## Novidades da 2.3.0
 
@@ -120,7 +130,7 @@ Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o co
 Para instalar um tarball produzido localmente sem publicar:
 
 ```bash
-npm install ./christopher_dondici-mcp-gen-2.3.0.tgz
+npm install ./christopher_dondici-mcp-gen-2.3.1.tgz
 ./node_modules/.bin/mcp-gen --version
 ./node_modules/.bin/mcp-gen validate -i node_modules/@christopher_dondici/mcp-gen/examples/petstore.yaml
 ```
@@ -144,7 +154,7 @@ mcp-gen generate -i ./api/openapi.yaml -l go -o ./my-server
 
 Flags úteis:
 
-- `--force`, `-f` sobrescreve arquivos, ignorando handlers preservados e arquivos custom (pula o merge 3-way).
+- `--force`, `-f` sobrescreve arquivos, ignorando handlers preservados e arquivos custom (pula o merge 3-way). Ele prevalece quando combinado com `--incremental`.
 - `--incremental` mantém o código entre `@@mcp-gen:start` e `@@mcp-gen:end` (também `<generated:handlers:name>`). Usa merge 3-way: stub novo vs seu código vs template novo.
 - `--http` gera handlers que chamam a API real via HTTP em vez de retornar stubs de exemplo.
 - `--env-file <path>` embute TOKEN/BASE_URL de um arquivo estilo .env no client gerado.
@@ -219,7 +229,7 @@ Regras:
 
 1. Edite só entre `@@mcp-gen:start:<tool>` e `@@mcp-gen:end:<tool>` (ou `<generated:handlers:<tool>>`). Esse corpo é preservado no regen.
 2. Coloque lógica reutilizável em `src/handlers.custom.ts` (TS), `handlers_custom.py` (Python) ou `handlers_custom.go` (Go). Esse arquivo é criado uma vez e nunca sobrescrito sem `--force`.
-3. Regenere com `generate --incremental`. O gerador faz merge 3-way (stub novo vs seu código vs template novo) e lista handlers `preserved` e avisos `Merged ... custom handlers preserved`. Use `--force` para ignorar e sobrescrever tudo.
+3. Regenere com `generate --incremental`. O gerador faz merge 3-way (stub novo vs seu código vs template novo) e lista handlers `preserved` e avisos `Merged ... custom handlers preserved`. Use `--force` para ignorar e sobrescrever tudo; o force também prevalece se as duas flags forem informadas.
 
 ### Validar
 
@@ -271,7 +281,7 @@ mcp-gen watch -i ./api/openapi.yaml -o ./my-server
 mcp-gen watch -i https://example.com/spec.json --interval 60000
 ```
 
-Para entradas via URL, `--interval <ms>` controla o polling. `--once` gera uma vez e encerra após a primeira mudança.
+Para entradas via URL, `--interval <ms>` controla o polling. `--once` executa uma geração imediatamente e encerra. Falhas de fetch, parse ou geração retornam código 1 em vez de sucesso falso.
 
 O `watch` aceita os mesmos filtros do `generate` (`--include-tags`, `--exclude-tags`, `--path-prefix`, `--include-paths`, `--exclude-paths`, `--operation-allowlist`, `--group-by`), além de `--http`, `--force`/`--incremental`:
 
@@ -316,6 +326,7 @@ my-server/
 │       └── ci.yml
 ├── Dockerfile
 ├── package.json
+├── package-lock.json
 ├── tsconfig.json
 └── README.md
 ```
@@ -435,8 +446,12 @@ Código entre os marcadores `@@mcp-gen:start` e `@@mcp-gen:end` é preservado qu
 ## Desenvolvimento
 
 ```bash
-npm test
+npm run lint
 npx tsc --noEmit
+npm test
+npm run test:cli
+npm run test:generated
+npm run test:generated:py
 
 # Exemplo TypeScript
 node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-test --force
@@ -468,7 +483,8 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.4 | Publicada no npm | Filtros de path com glob, allowlist inline, group-by tag/path-prefix com roteamento por action, dedup com method/hash, guardas `<generated:handlers>` com merge 3-way, middleware de auth separado, `handlers.custom.*` nunca sobrescrito, correção do template de auth para specs sem `securitySchemes` |
 | v2.1.5 | Publicada no npm | Fase 0 P0 (PR #4): serialização de query no TS, query/headers no Python, HTTP real no Go, registry só v3 com orientação |
 | v2.2.0 | Publicada no npm | Fase 1: `generate --dry-run` + resumo `--json`, filtros/grupos no `watch` (+ prompts interativos, correção do `--once` em arquivos), avisos por schema parcial em `validate`/`generate`, docs do CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` |
-| v2.3.0 | Publicada no npm (atual) | Fase 2: conversão Swagger 2.0 → v3 na ingestão, `slack`/`kubernetes`/`digitalocean` de volta no registry, benchmark `examples/large-scale.json` (180 → 10 tools) |
+| v2.3.1 | Preparada localmente, não publicada | Lockfile no scaffold TypeScript, precedência de force sobre incremental, exit codes confiáveis no `watch --once`, lint reproduzível |
+| v2.3.0 | Publicada no npm (atual publicada) | Fase 2: conversão Swagger 2.0 → v3 na ingestão, `slack`/`kubernetes`/`digitalocean` de volta no registry, benchmark `examples/large-scale.json` (180 → 10 tools) |
 | Distribuição | Verificada para a 2.3.0 | Instalação pelo registry funciona com `npm install -g @christopher_dondici/mcp-gen`; publicação via pip não comprovada. Python é um target de geração, não uma forma de instalar esta CLI via pip |
 | Futuro | Planejado | Streaming/resources/prompts, mais registries |
 

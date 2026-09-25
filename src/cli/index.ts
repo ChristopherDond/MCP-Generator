@@ -7,7 +7,6 @@ import { generate, validateSpec } from "../core/generator";
 import type { GeneratorOptions, Lang } from "../core/types";
 import { fetchSpecToCwd, listKnownSpecs, getSpecInfo } from "../core/registry";
 import { buildWatchGeneratorOptions } from "./watch-options";
-import type { SecurityReport } from "../core/security-lint";
 import fs from "fs";
 import inquirer from "inquirer";
 
@@ -357,7 +356,7 @@ program
     validateInputExt(input);
     validateLang(opts.lang);
 
-    const runGenerate = async () => {
+    const runGenerate = async (): Promise<boolean> => {
       const options: GeneratorOptions = buildWatchGeneratorOptions(input, path.resolve(opts.out), {
         lang: opts.lang,
         force: opts.force,
@@ -378,11 +377,13 @@ program
         if (!res.success) {
           console.error(chalk.red("Generation failed:"));
           for (const e of res.errors) console.error(chalk.red(`  ${e}`));
-        } else {
-          console.log(chalk.green(`[watch] generated ${res.filesCreated.length} files`));
+          return false;
         }
+        console.log(chalk.green(`[watch] generated ${res.filesCreated.length} files`));
+        return true;
       } catch (e: unknown) {
         console.error(chalk.red(String(e)));
+        return false;
       }
     };
 
@@ -390,27 +391,30 @@ program
       let last = "";
       const interval = Number(opts.interval) || 30000;
       console.log(chalk.dim(`[watch] polling ${opts.input} every ${interval}ms`));
-      const check = async () => {
+      const check = async (): Promise<boolean> => {
         try {
           const r = await fetch(opts.input);
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           const body = await r.text();
           if (!last) {
             last = body;
-            await runGenerate();
-            if (opts.once) process.exit(0);
-            return;
+            return runGenerate();
           }
           if (body !== last) {
             last = body;
-            await runGenerate();
-            if (opts.once) process.exit(0);
+            return runGenerate();
           }
+          return true;
         } catch (e) {
           console.error(chalk.red(String(e)));
+          return false;
         }
       };
-      await check();
+      const initialSuccess = await check();
+      if (opts.once) {
+        process.exitCode = initialSuccess ? 0 : 1;
+        return;
+      }
       setInterval(check, interval);
       return;
     }
@@ -425,19 +429,19 @@ program
     const watcher = fs.watch(abs, async () => {
       if (timeout) clearTimeout(timeout);
       timeout = setTimeout(async () => {
-        await runGenerate();
+        const success = await runGenerate();
         if (opts.once) {
           watcher.close();
-          process.exit(0);
+          process.exitCode = success ? 0 : 1;
         }
       }, 200);
     });
 
     console.log(chalk.dim(`[watch] watching ${abs}`));
-    await runGenerate();
+    const initialSuccess = await runGenerate();
     if (opts.once) {
       watcher.close();
-      process.exit(0);
+      process.exitCode = initialSuccess ? 0 : 1;
     }
   });
 
@@ -685,7 +689,7 @@ async function interactive(): Promise<void> {
           console.error(chalk.red(`File not found: ${abs}`));
         } else {
           let timeout: NodeJS.Timeout | null = null;
-          const watcher = fs.watch(abs, async () => {
+          fs.watch(abs, async () => {
             if (timeout) clearTimeout(timeout);
             timeout = setTimeout(async () => {
               await runGenerate();
@@ -730,5 +734,5 @@ async function interactive(): Promise<void> {
     await interactive();
     process.exit(0);
   }
-  program.parse();
+  await program.parseAsync();
 })();

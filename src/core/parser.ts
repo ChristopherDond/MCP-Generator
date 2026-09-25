@@ -207,12 +207,6 @@ export function resolveToolName(
   return candidate;
 }
 
-/** Build a unique, valid identifier for a tool from method + path.
- *  Handles reserved words and name collisions by appending an index. */
-function pathToToolName(method: string, path: string, used: Set<string>): string {
-  return resolveToolName(undefined, method, path, used);
-}
-
 function collectParameters(
   pathItem: OpenAPIV3.PathItemObject,
   operation: OpenAPIV3.OperationObject
