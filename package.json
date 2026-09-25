@@ -32,6 +32,7 @@
     "test": "jest",
     "test:generated": "npm run build && node --test scripts/generated-typescript.test.cjs",
     "test:generated:py": "npm run build && node --test scripts/generated-python.test.cjs",
+    "test:generated:go": "npm run build && node --test scripts/generated-go.test.cjs",
     "test:cli": "npm run build && node --test scripts/cli.test.cjs",
     "lint": "eslint src/**/*.ts",
     "release": "npm run build && npm run test",
