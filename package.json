@@ -25,7 +25,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc && npm run copy-templates",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc && npm run copy-templates",
     "copy-templates": "node -e \"require('node:fs').cpSync('src/templates', 'dist/templates', { recursive: true })\"",
     "prepack": "npm run build",
     "dev": "ts-node --prefer-ts-exts src/cli/index.ts",
