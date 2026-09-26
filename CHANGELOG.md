@@ -2,6 +2,18 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.3.3] - 2026-09-26
+
+### Correções e DX sem breaking
+
+- **`--env-file`**: caminho inexistente agora falha com erro explícito em vez de ser ignorado em silêncio (`tests/env-file.test.ts`).
+- **CLI**: o `init` interativo mostra os next steps de Go (`go mod tidy && go run .`) em vez de sugerir `pip install`.
+- **Templates e SECURITY**: links placeholders (`your-org/...`, `security@example.com`) trocados pelos oficiais do repositório.
+- **Build**: `dist` limpa antes de compilar (`npm run clean`), impedindo artefatos stale no build/pack.
+- **Docs**: `PRODUCT_HUNT.md` sem linguagem de RC, alinhado à linha 2.3.x estável.
+- **Testes e gates**: 18 suites / 234 testes Jest, smoke de exit codes da CLI 3/3, smokes dos scaffolds TypeScript, Python e Go, `npm audit --omit=dev` zero.
+- **Publicação**: `2.3.3` publicada no npm como `latest` via Trusted Publisher OIDC, com provenance assinada e GitHub Release `v2.3.3`.
+
 ## [2.3.2] - 2026-09-25
 
 ### Correções e DX sem breaking

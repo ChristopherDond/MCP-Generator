@@ -1,6 +1,6 @@
 # Estratégia de release — MCP-Generator
 
-> **Estado em 25/09/2026:** `2.3.2` é a release publicada (npm `latest` + GitHub Release `v2.3.2`, via OIDC).
+> **Estado em 26/09/2026:** `2.3.3` é a release publicada (npm `latest` + GitHub Release `v2.3.3`, via OIDC).
 
 ## Versionamento
 
@@ -75,11 +75,10 @@ A criação de tag é o gatilho. Uma tag local, um commit local ou um plano de r
 - Se for necessária uma correção de código ou configuração depois da tag, prepare um novo patch, por exemplo `2.3.3`; não mova uma tag já enviada.
 - Versões npm são imutáveis. Se a versão já existir no registry, não force nem incremente silenciosamente; pare e confirme a intenção.
 
-## Backlog técnico pós-2.3.2
+## Backlog técnico pós-2.3.3
 
 - Regenerar `src/templates/typescript/package-lock.json.hbs` via npm sempre que os ranges de dependência do scaffold TypeScript mudarem; o lock é um snapshot fixado, não um arquivo gerado em runtime.
 - Resolver a auditoria dev-only de `js-yaml` sem upgrade amplo do Jest.
-- Revisar placeholders e documentação de scaffolds gerados.
 - Manter feedback do Codex for OSS em patches pequenos e verificáveis.
 
 ## Regra para 3.0

@@ -1,6 +1,29 @@
 # Notas de release
 
-> **Status em 25/09/2026:** `2.3.2` é a versão publicada no npm (`latest`) e a GitHub Release atual.
+> **Status em 26/09/2026:** `2.3.3` é a versão publicada no npm (`latest`) e a GitHub Release atual.
+
+## 2.3.3 — Publicada em 26/09/2026
+
+Patch sem breaking changes com o restante do backlog P1 da linha 2.3.x.
+
+### Correções
+
+- `--env-file` inexistente agora falha com erro explícito em vez de ser ignorado em silêncio.
+- O `init` interativo mostra os next steps de Go (`go mod tidy && go run .`) em vez de sugerir `pip install`.
+- Links placeholders nos READMEs gerados e na SECURITY trocados pelos oficiais do repositório.
+- `dist` limpa antes de cada build (`npm run clean`), sem artefatos stale.
+- `PRODUCT_HUNT.md` sem linguagem de RC, alinhado à linha 2.3.x estável.
+
+### Validação
+
+- Workflow de release verde: metadados, typecheck, lint, testes, build, pack e smoke do tarball.
+- Verificação local: `npm run lint`, `npx tsc --noEmit`, `npm test -- --runInBand` (18 suites, 234 testes), `npm run build`, `npm run test:cli` (3/3), `npm run test:generated`, `npm run test:generated:py`, `npm run test:generated:go`, `npm pack --dry-run` (89 arquivos), `npm audit --omit=dev` zero.
+
+### Publicação
+
+Publicada pelo caminho oficial: push da `main` + tag `v2.3.3` → `.github/workflows/release.yml` validou, publicou via Trusted Publisher OIDC (com provenance assinada) e criou a GitHub Release.
+
+Confirmado com `npm view @christopher_dondici/mcp-gen version` (`2.3.3`, dist-tag `latest`) e `gh release view v2.3.3`.
 
 ## 2.3.2 — Publicada em 25/09/2026
 
