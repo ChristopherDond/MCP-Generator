@@ -66,7 +66,7 @@ Este documento descreve as medidas e práticas de segurança implementadas no pr
 
 ## Reportando Problemas de Segurança
 
-Se você descobrir uma vulnerabilidade de segurança, por favor envie um email para security@example.com em vez de usar o rastreador de problemas.
+Se você descobrir uma vulnerabilidade de segurança, por favor abra um relato confidencial via [GitHub Security Advisories](https://github.com/ChristopherDond/MCP-Generator/security/advisories/new) ou [abra uma issue](https://github.com/ChristopherDond/MCP-Generator/issues) sem detalhes de exploit em vez de comentar em local público.
 
 ## Referências
 

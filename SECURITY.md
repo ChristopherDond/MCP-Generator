@@ -66,7 +66,7 @@ This document outlines the security measures and practices implemented in the MC
 
 ## Reporting Security Issues
 
-If you discover a security vulnerability, please email security@example.com instead of using the issue tracker.
+If you discover a security vulnerability, please open a confidential report via [GitHub Security Advisories](https://github.com/ChristopherDond/MCP-Generator/security/advisories/new) or [open an issue](https://github.com/ChristopherDond/MCP-Generator/issues) without exploit details instead of using a public tracker comment.
 
 ## References
 
