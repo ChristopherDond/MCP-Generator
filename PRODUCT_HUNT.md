@@ -1,4 +1,4 @@
-# Product Hunt Launch Strategy - MCP-Generator v2.0.0
+# Product Hunt Launch Strategy - MCP-Generator 2.3.x (stable)
 
 ## 🎯 Objetivo
 
@@ -15,17 +15,17 @@ Converta APIs OpenAPI em servidores Model Context Protocol para integração aut
 ### Description (250 palavras)
 ```
 mcp-gen transforma especificações OpenAPI em servidores MCP prontos para produção 
-em TypeScript ou Python. Cada rota da API vira uma ferramenta acessível via 
+em TypeScript, Python ou Go. Cada rota da API vira uma ferramenta acessível via 
 Model Context Protocol.
 
 ✨ Destaques:
 - ⚡ Geração rápida: minutos para um servidor funcional
 - 🔄 Regeneração segura: código customizado preservado
-- 🛡️ Type-safe: tipos TypeScript/Pydantic gerados automaticamente
+- 🛡️ Type-safe: tipos TypeScript/Pydantic/Go gerados automaticamente
 - 📊 Registry integrado: +10 APIs públicas pré-configuradas (Stripe, GitHub, Slack, OpenAI)
-- 🎯 Suporte completo OpenAPI v3: oneOf, anyOf, discriminators
+- 🎯 Suporte OpenAPI v3 + Swagger 2.0 (conversão interna): oneOf, anyOf, discriminators
 - 🚀 Deployment pronto: Dockerfile, CI/CD, GitHub Actions
-- 👁️ 2 linguagens: TypeScript e Python
+- 👁️ 3 linguagens: TypeScript, Python e Go
 
 Use cases:
 1. Conectar qualquer API pública ao Claude instantaneamente
@@ -58,7 +58,7 @@ Gerar/capturar:
 
 ### Twitter Thread (Launch Day)
 ```
-🚀 Launching mcp-gen v1.0.0-rc.1 on @ProductHunt today!
+🚀 Launching mcp-gen 2.3.2 (stable) on @ProductHunt today!
 
 Transform OpenAPI specs into MCP servers. Give Claude access to ANY API.
 
@@ -68,7 +68,7 @@ takes hours. There's gotta be a better way.
 
 2/5: The solution
 Generate MCP servers from OpenAPI specs in seconds.
-TypeScript or Python.
+TypeScript, Python or Go.
 Regenerate safely with incremental updates.
 Deploy with Docker.
 
@@ -138,8 +138,8 @@ Key points:
 
 ## 🎁 Incentivos para Early Adopters
 
-- **Feedback Loop**: Incorporar sugestões comunitárias em rc.2
-- **Extension Points**: Plugins customizados (em dev)
+- **Feedback Loop**: Incorporar sugestões comunitárias nos próximos patches 2.3.x
+- **Extension Points**: Plugins customizados via templates (`MCP_GEN_ALLOW_PLUGINS`)
 - **Bounty**: Primeiros 10 a relatarem bugs críticos ganham featured credit
 
 ## ✅ Pre-Launch Checklist
@@ -148,8 +148,8 @@ Key points:
 - [ ] Demo video publicado no YouTube/Vimeo
 - [ ] Twitter thread agendada
 - [ ] Dev.to post rascunhado
-- [ ] README atualizado com status RC
-- [ ] npm publicado com tag `rc`
+- [ ] README atualizado com status estável (2.3.2 publicada no npm como `latest`)
+- [ ] npm publicado com tag `latest` (2.3.2)
 - [ ] GitHub Release criada
 - [ ] Resposta rápida para comentários planejada (24h)
 - [ ] FAQ preparado
@@ -161,4 +161,4 @@ Key points:
 - **100+ GitHub stars** (semana 1)
 - **1k+ npm installs** (mês 1)
 - **Comunidade engajada** com feedback construtivo
-- **Validação de product-market fit** antes da v1.0 final
+- **Validação de product-market fit** na linha 2.3.x estável
