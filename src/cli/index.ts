@@ -609,7 +609,9 @@ async function interactive(): Promise<void> {
               console.log(chalk.green(`\n  ✓ ${result.filesCreated.length} files created\n`));
               console.log(chalk.bold("Next steps:\n"));
               console.log(`  cd ${out as string}`);
-              console.log(lang === "typescript" ? "  npm install && npm run build\n" : "  pip install -r requirements.txt\n");
+              if (lang === "typescript") console.log("  npm install && npm run build\n");
+              else if (lang === "python") console.log("  pip install -r requirements.txt\n");
+              else console.log("  go mod tidy && go run .\n");
             }
           } catch (err: unknown) {
             genSpinner.fail("Generation error");
