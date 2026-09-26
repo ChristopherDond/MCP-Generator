@@ -156,6 +156,10 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
   };
 
   let ast: MCPServerAST;
+  if (options.envFile && !fs.existsSync(path.resolve(options.envFile))) {
+    result.errors.push(`Env file not found: ${options.envFile}. Check --env-file path.`);
+    return result;
+  }
   try {
     ast = await parseOpenAPI(options.input);
   } catch (err: unknown) {
