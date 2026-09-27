@@ -40,6 +40,18 @@ Este documento descreve as medidas e práticas de segurança implementadas no pr
 - ✅ Ataques SSRF - **CORRIGIDO**: Validação de URL e filtragem de IP
 - ✅ Vulnerabilidades de dependência - **CORRIGIDO**: Todos os pacotes auditados e atualizados
 
+### Achado dev-only conhecido (sem impacto em runtime)
+
+- `js-yaml@3.15.1` (GHSA-2883-xcg3-v3hh, high) aparece só na árvore dev, via
+  `ts-jest → babel-plugin-istanbul → @istanbuljs/load-nyc-config` (`^3.13.1`).
+  O runtime usa `js-yaml@4.3.2` direto e está limpo.
+- A cópia vulnerável só é carregada quando o `load-nyc-config` lê um arquivo
+  `.nycrc.yml`/`.nycrc.yaml`. O projeto não tem esse arquivo e nunca roda Jest com
+  `--coverage`, então o caminho é inalcançável na CI e nos artefatos publicados.
+- `npm audit --omit=dev` retorna zero vulnerabilidades. Sem pin de `overrides` e sem
+  upgrade amplo do Jest na linha 2.3.x por esse achado dev-only; só será revisto se
+  coverage for adotado ou o Jest for atualizado por outro motivo.
+
 ## Melhores Práticas
 
 ### Para Usuários

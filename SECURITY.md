@@ -40,6 +40,18 @@ This document outlines the security measures and practices implemented in the MC
 - ✅ SSRF attacks - **FIXED**: URL validation and IP filtering
 - ✅ Dependency vulnerabilities - **FIXED**: All packages audited and updated
 
+### Known dev-only finding (no runtime impact)
+
+- `js-yaml@3.15.1` (GHSA-2883-xcg3-v3hh, high) appears only in the dev tree, pulled by
+  `ts-jest → babel-plugin-istanbul → @istanbuljs/load-nyc-config` (`^3.13.1`).
+  Runtime uses `js-yaml@4.3.2` directly and is clean.
+- The vulnerable copy is loaded only when `load-nyc-config` parses a `.nycrc.yml`/`.nycrc.yaml`
+  file. This project has no such file and never runs Jest with `--coverage`, so the code path
+  is unreachable in CI and in published artifacts.
+- `npm audit --omit=dev` reports zero vulnerabilities. No `overrides` pin and no broad Jest
+  upgrade are applied on the 2.3.x line for this dev-only finding; it is revisited only if
+  coverage reporting is adopted or Jest is upgraded for another reason.
+
 ## Best Practices
 
 ### For Users
