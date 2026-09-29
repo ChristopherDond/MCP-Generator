@@ -2,6 +2,16 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.3.4] - 2026-09-29
+
+### Correções e DX sem breaking
+
+- **Deps**: `ip-address` 10.4.0 → 10.7.2 pela cadeia transitiva do SDK (`express-rate-limit` `^10.2.0`), zerando o `npm audit --omit=dev`.
+- **Scaffold**: guard `tests/scaffold-lockfile.test.ts` — ranges do `package.json.hbs` contra o snapshot `package-lock.json.hbs` e piso de `ip-address` acima de 10.5.0 no lock do projeto e do scaffold.
+- **`js-yaml` dev-only**: mantido só documentado em `SECURITY.md`, sem upgrade amplo do Jest na linha 2.3.x.
+- **Testes e gates**: 19 suites / 238 testes Jest, smoke de exit codes da CLI 3/3, smokes dos scaffolds TypeScript, Python e Go, `npm audit --omit=dev` zero.
+- **Publicação**: preparada pelo caminho oficial (push da `main` + tag `v2.3.4` → OIDC); status de publicada só após confirmação no registry.
+
 ## [2.3.3] - 2026-09-26
 
 ### Correções e DX sem breaking

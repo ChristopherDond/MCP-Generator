@@ -1,6 +1,12 @@
 # Notas de release
 
-> **Status em 26/09/2026:** `2.3.3` é a versão publicada no npm (`latest`) e a GitHub Release atual.
+> **Status em 29/09/2026:** `2.3.4` preparada localmente (publicação pendente de confirmação no registry); `2.3.3` é a última versão publicada no npm (`latest`) e a GitHub Release atual.
+
+## 2.3.4 — Preparada em 29/09/2026
+
+Patch sem breaking changes: `ip-address` 10.4.0 → 10.7.2 (audit `--omit=dev` zero) e guard de sync do snapshot `package-lock.json.hbs` do scaffold TypeScript.
+
+Publicação pelo caminho oficial: push da `main` + tag `v2.3.4` → `.github/workflows/release.yml` valida, publica via Trusted Publisher OIDC e cria a GitHub Release. Confirmar com `npm view @christopher_dondici/mcp-gen version` e `gh release view v2.3.4`.
 
 ## 2.3.3 — Publicada em 26/09/2026
 

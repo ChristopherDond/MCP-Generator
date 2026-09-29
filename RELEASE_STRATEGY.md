@@ -1,6 +1,6 @@
 # Estratégia de release — MCP-Generator
 
-> **Estado em 26/09/2026:** `2.3.3` é a release publicada (npm `latest` + GitHub Release `v2.3.3`, via OIDC).
+> **Estado em 29/09/2026:** `2.3.4` preparada localmente (publicação pendente de confirmação no registry); `2.3.3` segue a release publicada (npm `latest` + GitHub Release `v2.3.3`, via OIDC).
 
 ## Versionamento
 
@@ -72,13 +72,13 @@ A criação de tag é o gatilho. Uma tag local, um commit local ou um plano de r
 
 - Se o npm publicar e a criação da GitHub Release falhar, não rode o workflow novamente. Confirme a versão no registry, reconstrua o tarball do mesmo commit e crie somente a GitHub Release com autorização explícita.
 - Se o workflow falhar por causa transitória antes de publicar, use `gh run rerun` para repetir o mesmo commit e tag.
-- Se for necessária uma correção de código ou configuração depois da tag, prepare um novo patch, por exemplo `2.3.3`; não mova uma tag já enviada.
+- Se for necessária uma correção de código ou configuração depois da tag, prepare um novo patch, por exemplo `2.3.4`; não mova uma tag já enviada.
 - Versões npm são imutáveis. Se a versão já existir no registry, não force nem incremente silenciosamente; pare e confirme a intenção.
 
-## Backlog técnico pós-2.3.3
+## Backlog técnico pós-2.3.4
 
-- Regenerar `src/templates/typescript/package-lock.json.hbs` via npm sempre que os ranges de dependência do scaffold TypeScript mudarem; o lock é um snapshot fixado, não um arquivo gerado em runtime.
-- Resolver a auditoria dev-only de `js-yaml` sem upgrade amplo do Jest.
+- `tests/scaffold-lockfile.test.ts` agora trava o sync: ranges do `package.json.hbs` contra o snapshot `package-lock.json.hbs` e piso de `ip-address` acima de 10.5.0; ao mudar ranges do scaffold, regenerar o snapshot via npm.
+- Resolver a auditoria dev-only de `js-yaml` sem upgrade amplo do Jest (segue só documentada em `SECURITY.md` na linha 2.3.x).
 - Manter feedback do Codex for OSS em patches pequenos e verificáveis.
 
 ## Regra para 3.0
