@@ -3,7 +3,7 @@ import path from "path";
 import Handlebars from "handlebars";
 import { parseOpenAPI } from "./parser";
 import { renderTemplate, registerPartials } from "./templating";
-import { extractHandlers, injectHandlers, isCustomFile, TS_DEFAULT_STUB_PATTERN, PY_DEFAULT_STUB_PATTERN } from "./incremental";
+import { extractHandlers, injectHandlers, isCustomFile, TS_DEFAULT_STUB_PATTERN, PY_DEFAULT_STUB_PATTERN, GO_DEFAULT_STUB_PATTERN } from "./incremental";
 import { validateOutputPath, validatePluginPath, validatePluginModule } from "./security";
 import { parseTagList, parsePathList, parseGroupBy, loadOperationAllowlistFile, resolveAllowlistValue, filterTools, groupTools, toGroupMetadata } from "./filter-group";
 import type { GeneratorOptions, GenerationResult, ValidateResult, MCPServerAST, GroupByMode } from "./types";
@@ -357,7 +357,7 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
         spec.outputFile === "main.go";
 
       if (incremental && isServerFile && extracted.handlers.size > 0) {
-        const stubPattern = isTs ? TS_DEFAULT_STUB_PATTERN : PY_DEFAULT_STUB_PATTERN;
+        const stubPattern = isGo ? GO_DEFAULT_STUB_PATTERN : isTs ? TS_DEFAULT_STUB_PATTERN : PY_DEFAULT_STUB_PATTERN;
         const { result: injected, preserved } = injectHandlers(rendered, extracted, stubPattern);
         rendered = injected;
         result.filesPreserved.push(...preserved);
