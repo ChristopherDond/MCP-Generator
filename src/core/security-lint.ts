@@ -3,15 +3,6 @@ import fs from "fs";
 import type { OpenAPIV3 } from "openapi-types";
 import yaml from "js-yaml";
 
-/**
- * MCP Security & Lint Layer
- * 
- * Provides:
- * - Credential scanning (detect raw secrets in specs/handlers)
- * - authContext contract validation
- * - Tool policy enforcement
- * - Lint rules (naming, descriptions, schemas, incremental markers)
- */
 
 export interface SecurityRule {
   id: string;
@@ -33,7 +24,6 @@ export interface SecurityReport {
   passed: boolean;
 }
 
-/** Keywords that indicate raw credentials (blocked by default) */
 export const RAW_CREDENTIAL_KEYWORDS = [
   "authorization",
   "token",
@@ -54,7 +44,6 @@ export const RAW_CREDENTIAL_KEYWORDS = [
   "ssh_key",
 ];
 
-/** Reserved words that shouldn't be tool names */
 export const RESERVED_TOOL_NAMES = [
   "new", "delete", "class", "function", "var", "let", "const",
   "if", "else", "for", "while", "switch", "case", "default",
@@ -66,7 +55,6 @@ export const RESERVED_TOOL_NAMES = [
   "private", "protected", "public", "static", "abstract",
 ];
 
-/** Expected authContext fields */
 export const EXPECTED_AUTH_CONTEXT_FIELDS = [
   "tokenId",
   "principal",
@@ -79,7 +67,6 @@ export const EXPECTED_AUTH_CONTEXT_FIELDS = [
   "requestId",
 ];
 
-/** Scan a string for credential-like patterns */
 export function scanForCredentials(
   content: string,
   filePath: string = "unknown"
@@ -91,11 +78,9 @@ export function scanForCredentials(
     const line = lines[i];
     const lowerLine = line.toLowerCase();
 
-    // Check for credential keywords
     for (const keyword of RAW_CREDENTIAL_KEYWORDS) {
       const regex = new RegExp(`\\b${keyword}\\b`, "i");
       if (regex.test(lowerLine)) {
-        // Skip if it's in a comment about blocking credentials
         if (lowerLine.includes("block") || lowerLine.includes("deny") || 
             lowerLine.includes("not allowed") || lowerLine.includes("forbidden") ||
             lowerLine.includes("raw_credential") || lowerLine.includes("rawcredential")) {
@@ -114,7 +99,6 @@ export function scanForCredentials(
       }
     }
 
-    // Check for actual secret patterns (high entropy strings, common prefixes)
     const secretPatterns = [
       { pattern: /sk_[a-zA-Z0-9]{20,}/g, type: "sk_" },
       { pattern: /pk_[a-zA-Z0-9]{20,}/g, type: "pk_" },
@@ -149,7 +133,6 @@ export function scanForCredentials(
   return rules;
 }
 
-/** Validate authContext structure in generated code */
 export function validateAuthContext(
   content: string,
   filePath: string = "unknown"
@@ -163,12 +146,10 @@ export function validateAuthContext(
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Check for auth_context parameter in tool handlers
     if (line.includes("auth_context") || line.includes("authContext")) {
       hasAuthContextParam = true;
     }
 
-    // Check for require_security or similar validation call
     if (line.includes("require_security") || line.includes("requireSecurity") ||
         line.includes("validate_auth") || line.includes("validateAuth")) {
       hasAuthContextValidation = true;
@@ -189,7 +170,6 @@ export function validateAuthContext(
   return rules;
 }
 
-/** Validate tool policies are defined */
 export function validateToolPolicies(
   content: string,
   filePath: string = "unknown"
@@ -237,7 +217,6 @@ export function validateToolPolicies(
   return rules;
 }
 
-/** Lint naming conventions */
 export function lintNaming(
   content: string,
   filePath: string = "unknown"
@@ -248,7 +227,6 @@ export function lintNaming(
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Check for snake_case function names in TypeScript (should be camelCase)
     if (filePath.endsWith(".ts") || filePath.endsWith(".js")) {
       const fnMatch = line.match(/^\s*(async\s+)?function\s+([a-z_][a-z0-9_]*)/);
       if (fnMatch && fnMatch[2].includes("_")) {
@@ -264,10 +242,8 @@ export function lintNaming(
       }
     }
 
-    // Check for PascalCase variable names
     const varMatch = line.match(/(?:const|let|var)\s+([A-Z][a-zA-Z0-9]*)\s*=/);
     if (varMatch && !varMatch[1].match(/^[A-Z_]+$/)) {
-      // Allow UPPER_CASE constants
       rules.push({
         id: "LINT-PASCAL-VAR",
         severity: "info",
@@ -283,7 +259,6 @@ export function lintNaming(
   return rules;
 }
 
-/** Lint descriptions */
 export function lintDescriptions(
   content: string,
   filePath: string = "unknown"
@@ -294,7 +269,6 @@ export function lintDescriptions(
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Check for empty descriptions in tool definitions
     if (line.includes("WithDescription") || line.includes("withDescription")) {
       if (line.includes('""') || line.includes("''") || line.includes('""') || 
           line.match(/WithDescription\(\s*\)/)) {
@@ -310,7 +284,6 @@ export function lintDescriptions(
       }
     }
 
-    // Check for TODO/FIXME in generated code
     if (line.match(/TODO|FIXME|XXX|HACK/i)) {
       rules.push({
         id: "LINT-TODO-IN-GENERATED",
@@ -327,7 +300,6 @@ export function lintDescriptions(
   return rules;
 }
 
-/** Lint incremental markers */
 export function lintIncrementalMarkers(
   content: string,
   filePath: string = "unknown"
@@ -365,7 +337,6 @@ export function lintIncrementalMarkers(
     });
   }
 
-  // Check for nested markers (which shouldn't happen)
   for (const start of startLines) {
     const matchingEnd = endLines.find(e => e > start);
     if (matchingEnd) {
@@ -388,7 +359,6 @@ export function lintIncrementalMarkers(
   return rules;
 }
 
-/** Lint schema usage */
 export function lintSchemas(
   spec: OpenAPIV3.Document,
   filePath: string = "spec"
@@ -405,7 +375,6 @@ export function lintSchemas(
       const op = pathItem[method as keyof typeof pathItem] as OpenAPIV3.OperationObject | undefined;
       if (!op) continue;
 
-      // Check for missing summary/description
       if (!op.summary && !op.description) {
         rules.push({
           id: "LINT-NO-OP-DESCRIPTION",
@@ -417,7 +386,6 @@ export function lintSchemas(
         });
       }
 
-      // Check for missing examples in responses
       if (op.responses) {
         for (const [status, response] of Object.entries(op.responses)) {
           if (response && "content" in response) {
@@ -445,37 +413,28 @@ export function lintSchemas(
   return rules;
 }
 
-/** Main security/lint scan for a generated project */
 export async function scanProject(projectPath: string): Promise<SecurityReport> {
   const allRules: SecurityRule[] = [];
 
-  // Scan all files in project
   const files = findFiles(projectPath, [".ts", ".js", ".py", ".go", ".json", ".yaml", ".yml"]);
 
   for (const file of files) {
     const content = fs.readFileSync(file, "utf-8");
     const relativePath = path.relative(projectPath, file);
 
-    // Credential scanning
     allRules.push(...scanForCredentials(content, relativePath));
 
-    // AuthContext validation
     allRules.push(...validateAuthContext(content, relativePath));
 
-    // Tool policies
     allRules.push(...validateToolPolicies(content, relativePath));
 
-    // Naming conventions
     allRules.push(...lintNaming(content, relativePath));
 
-    // Descriptions
     allRules.push(...lintDescriptions(content, relativePath));
 
-    // Incremental markers
     allRules.push(...lintIncrementalMarkers(content, relativePath));
   }
 
-  // Scan OpenAPI spec if present
   const specFiles = findFiles(projectPath, [".json", ".yaml", ".yml"])
     .filter(f => f.includes("openapi") || f.includes("swagger") || f.includes("api"));
 
@@ -487,7 +446,6 @@ export async function scanProject(projectPath: string): Promise<SecurityReport> 
         : yaml.load(specContent);
       allRules.push(...lintSchemas(spec, path.relative(projectPath, specFile)));
     } catch {
-      // Ignore parse errors
     }
   }
 
@@ -504,7 +462,6 @@ export async function scanProject(projectPath: string): Promise<SecurityReport> 
   };
 }
 
-/** Find files with given extensions */
 function findFiles(dir: string, extensions: string[]): string[] {
   const results: string[] = [];
   
@@ -515,7 +472,6 @@ function findFiles(dir: string, extensions: string[]): string[] {
       const fullPath = path.join(currentDir, entry.name);
       
       if (entry.isDirectory()) {
-        // Skip node_modules, .git, dist, build
         if (![".git", "node_modules", "dist", "build", "__pycache__", ".github"].includes(entry.name)) {
           walk(fullPath);
         }
@@ -531,7 +487,6 @@ function findFiles(dir: string, extensions: string[]): string[] {
   return results;
 }
 
-/** Format report for console output */
 export function formatReport(report: SecurityReport): string {
   const lines: string[] = [];
   
@@ -551,7 +506,6 @@ export function formatReport(report: SecurityReport): string {
     return lines.join("\n");
   }
 
-  // Group by category
   const byCategory: Record<string, SecurityRule[]> = {};
   for (const rule of report.rules) {
     if (!byCategory[rule.category]) byCategory[rule.category] = [];
