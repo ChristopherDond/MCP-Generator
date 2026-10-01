@@ -170,6 +170,12 @@ describe("filterTools", () => {
     expect(filterTools(tools, { allowlist: ["GET:/orders"] }).map((t) => t.name)).toEqual(["get_orders"]);
   });
 
+  it("allowlist matches METHOD path case-insensitively", () => {
+    expect(filterTools(tools, { allowlist: ["get /orders"] }).map((t) => t.name)).toEqual(["get_orders"]);
+    expect(filterTools(tools, { allowlist: ["get:/orders"] }).map((t) => t.name)).toEqual(["get_orders"]);
+    expect(filterTools(tools, { allowlist: ["Get /orders"] }).map((t) => t.name)).toEqual(["get_orders"]);
+  });
+
   it("combines tag include with allowlist", () => {
     expect(
       filterTools(tools, { includeTags: ["pets", "orders"], allowlist: ["get_orders"] }).map((t) => t.name)

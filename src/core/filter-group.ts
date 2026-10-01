@@ -106,6 +106,15 @@ function matchesAllowlist(tool: MCPTool, allow: Set<string>): boolean {
   if (tool.operationId && allow.has(tool.operationId)) return true;
   if (allow.has(`${tool.method} ${tool.path}`)) return true;
   if (allow.has(`${tool.method}:${tool.path}`)) return true;
+  for (const entry of allow) {
+    const sep = entry.includes(":") ? ":" : entry.includes(" ") ? " " : null;
+    if (!sep) continue;
+    const idx = entry.indexOf(sep);
+    const method = entry.slice(0, idx).trim().toUpperCase();
+    const path = entry.slice(idx + 1).trim();
+    if (!method || !path) continue;
+    if (`${method}${sep}${path}` === `${tool.method}${sep}${tool.path}`) return true;
+  }
   return false;
 }
 
