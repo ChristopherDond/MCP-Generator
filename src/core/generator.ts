@@ -79,7 +79,6 @@ function writeFile(filePath: string, content: string, force: boolean, baseDir?: 
   if (fs.existsSync(filePath) && !force) {
     throw new Error(`File already exists: ${filePath}. Use --force to overwrite.`);
   }
-  // Validate path to prevent traversal attacks
   if (baseDir) {
     validateOutputPath(filePath, baseDir);
   }
