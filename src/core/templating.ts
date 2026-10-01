@@ -70,7 +70,6 @@ Handlebars.registerHelper("literal", (val: unknown): string => {
   return JSON.stringify(val);
 });
 
-/** Filter params by required/optional */
 Handlebars.registerHelper(
   "requiredParams",
   (params: Array<{ required: boolean }>) =>
@@ -213,7 +212,6 @@ Handlebars.registerHelper("escapeText", (val: unknown): string => {
   return out.join("");
 });
 
-/** Indent a block of text by N spaces */
 Handlebars.registerHelper(
   "indent",
   (text: string, spaces: number) => {
@@ -246,7 +244,6 @@ export function renderTemplate(
   return fn(context);
 }
 
-/** Load all .hbs files in a directory as named partials */
 export function registerPartials(partialsDir: string): void {
   if (!fs.existsSync(partialsDir)) return;
   const files = fs.readdirSync(partialsDir).filter((f) => f.endsWith(".hbs"));
