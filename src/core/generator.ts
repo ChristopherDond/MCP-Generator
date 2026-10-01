@@ -190,6 +190,7 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
     result.errors.push(err instanceof Error ? err.message : String(err));
     return result;
   }
+  const totalTools = ast.tools.length;
   ast.tools = filterTools(ast.tools, {
     includeTags: parseTagList(options.includeTags ?? []),
     excludeTags: parseTagList(options.excludeTags ?? []),
@@ -198,6 +199,18 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
     excludePaths: parsePathList(options.excludePaths ?? []),
     allowlist,
   });
+  const filteredCount = ast.tools.length;
+  const hasFilters = allowlist.length > 0 ||
+    (options.includeTags ?? []).length > 0 ||
+    (options.excludeTags ?? []).length > 0 ||
+    Boolean((options.pathPrefix ?? "").trim()) ||
+    (options.includePaths ?? []).length > 0 ||
+    (options.excludePaths ?? []).length > 0;
+  if (filteredCount === 0 && totalTools > 0 && hasFilters) {
+    result.warnings.push(
+      `Filters matched 0 of ${totalTools} tools. Check filter flags or use --dry-run to list available tools.`
+    );
+  }
   if (groupBy) {
     const grouped = groupTools(ast.tools, groupBy);
     ast.groups = toGroupMetadata(grouped);
