@@ -6,7 +6,7 @@ Thank you for considering contributing to `mcp-gen`! This document provides guid
 
 ## 🚀 We're Production Ready!
 
-We've just released **v2.3.0** and are actively welcoming community contributions:
+We've just released **v2.3.5** and are actively welcoming community contributions:
 
 - 🐛 **Found a bug?** Open an [Issue](https://github.com/ChristopherDond/MCP-Generator/issues)
 - 💡 **Have a suggestion?** Start a [Discussion](https://github.com/ChristopherDond/MCP-Generator/discussions)
@@ -104,9 +104,8 @@ refactor: simplify parser logic
 ```
 src/
 ├── cli/              # CLI commands
-├── core/             # Core generator logic
+├── core/             # Core generator logic (incl. types.ts)
 ├── templates/        # Handlebars templates
-└── types.ts          # Shared types
 
 tests/                # Jest test files
 examples/             # Example specs
@@ -194,10 +193,9 @@ node dist/cli/index.js generate \
 
 When adding a feature, please update:
 
-1. **Code comments** for complex functions
+1. **No code comments** — project rule is ZERO comments (no inline, no JSDoc); express intent in names and tests
 2. **README.md** if it's a user-facing feature
 3. **CHANGELOG.md** for releases
-4. **Type definitions** in `src/types.ts`
 
 ## Questions?
 
@@ -261,7 +259,7 @@ Obrigado por considerar contribuir para `mcp-gen`! Este documento fornece diretr
 
 ## 🚀 Produção Pronta!
 
-Lançamos **v2.3.0** e estamos ativamente acolhendo contribuições da comunidade:
+Lançamos **v2.3.5** e estamos ativamente acolhendo contribuições da comunidade:
 
 - 🐛 **Encontrou um bug?** Abra uma [Issue](https://github.com/ChristopherDond/MCP-Generator/issues)
 - 💡 **Tem uma sugestão?** Comece uma [Discussion](https://github.com/ChristopherDond/MCP-Generator/discussions)
@@ -359,9 +357,8 @@ refactor: simplifique lógica do parser
 ```
 src/
 ├── cli/              # Comandos CLI
-├── core/             # Lógica principal do gerador
+├── core/             # Lógica principal do gerador (incl. types.ts)
 ├── templates/        # Templates Handlebars
-└── types.ts          # Tipos compartilhados
 
 tests/                # Testes Jest
 examples/             # Specs de exemplo
@@ -449,10 +446,9 @@ node dist/cli/index.js generate \
 
 Ao adicionar uma feature, por favor atualize:
 
-1. **Comentários de código** para funções complexas
+1. **Sem comentários de código** — a regra do projeto é ZERO comentários (sem inline, sem JSDoc); expresse a intenção em nomes e testes
 2. **README.md** se for uma feature visível ao usuário
 3. **CHANGELOG.md** para releases
-4. **Type definitions** em `src/types.ts`
 
 ## Dúvidas?
 
