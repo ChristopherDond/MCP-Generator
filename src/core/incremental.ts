@@ -31,7 +31,6 @@ export function isCustomFile(outputFile: string): boolean {
 }
 
 export interface ExtractedHandlers {
-  /** Map of tool name → custom code block (the lines between start/end markers) */
   handlers: Map<string, string>;
 }
 
@@ -77,14 +76,6 @@ export function extractHandlers(filePath: string): ExtractedHandlers {
   return { handlers };
 }
 
-/**
- * Given a rendered template string and a map of extracted handlers,
- * replaces the content between @@mcp-gen markers with the preserved custom code.
- *
- * Only replaces handlers that:
- * - Exist in the extracted map (i.e. user modified them from the default stub)
- * - Are not identical to the generated stub (avoids no-op replacements)
- */
 export function injectHandlers(
   rendered: string,
   extracted: ExtractedHandlers,
@@ -120,7 +111,6 @@ export function injectHandlers(
   return { result, preserved };
 }
 
-/** Default stub patterns — code that was never customized by the user */
 export const TS_DEFAULT_STUB_PATTERN =
   /throw new McpError\(ErrorCode\.InternalError.*Handler not implemented/;
 
