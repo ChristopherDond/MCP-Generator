@@ -10,13 +10,9 @@ export interface GeneratorOptions {
   out: string;
   force: boolean;
   incremental: boolean;
-  /** When true, generated handlers call the real API (HTTP) instead of returning example stubs. */
   http: boolean;
-  /** Load an .env style file for the generated server's credentials. */
   envFile?: string;
-  /** Paths to plugin folders or modules that can provide templates/helpers. */
   plugins?: string[];
-  /** Optional directory to discover plugins (scanned before core templates). */
   pluginsDir?: string;
   serverName?: string;
   serverVersion?: string;
@@ -28,7 +24,6 @@ export interface GeneratorOptions {
   operationAllowlist?: string[];
   operationAllowlistFile?: string;
   groupBy?: GroupByMode;
-  /** When true, list what would be generated without writing files. */
   dryRun?: boolean;
 }
 
@@ -36,13 +31,10 @@ export interface MCPToolParam {
   name: string;
   description: string;
   type: "string" | "number" | "boolean" | "object" | "array";
-  /** Where the param lives: path | query | header | cookie | body */
   in: "path" | "query" | "header" | "cookie" | "body";
   required: boolean;
   schema: OpenAPIV3.SchemaObject;
-  /** OpenAPI format hint (date-time, uuid, email, int32, ...) used for typing. */
   format?: string;
-  /** Populated when the parameter schema is an enum. */
   enum?: (string | number)[];
 }
 
@@ -74,10 +66,8 @@ export interface MCPModel {
   description: string;
   properties: MCPModelProperty[];
   required: string[];
-  /** True when the schema is a plain enum (no object properties). */
   isEnum: boolean;
   enumValues?: (string | number)[];
-  // For schemas that use oneOf/anyOf
   oneOf?: string[];
   anyOf?: string[];
   discriminator?: {
@@ -97,14 +87,12 @@ export interface MCPModelProperty {
 
 export interface MCPAuth {
   baseUrl: string;
-  /** Non-empty when any operation requires security. Maps scheme name → info. */
   schemes: Record<string, string>;
 }
 
 export interface MCPServerAST {
   serverName: string;
   serverVersion: string;
-  /** mcp-gen version, injected at render time by the generator. */
   generatorVersion: string;
   tools: MCPTool[];
   groups?: MCPToolGroup[];
@@ -115,10 +103,8 @@ export interface MCPServerAST {
     version: string;
   };
   baseUrl: string;
-  /** True when any route declares security requirements. */
   requiresAuth: boolean;
   securitySchemes?: Record<string, OpenAPIV3.SecuritySchemeObject | OpenAPIV3.ReferenceObject>;
-  /** Schemas with partially-supported constructs (allOf $ref, inline oneOf/anyOf). */
   warnings?: string[];
 }
 
@@ -140,9 +126,7 @@ export interface GenerationResult {
   filesPreserved: string[];
   errors: string[];
   warnings: string[];
-  /** True when the run was a dry-run (no files written). */
   dryRun?: boolean;
-  /** Machine-readable summary (always present on success, including dry-runs). */
   summary?: GenerationSummary;
 }
 
