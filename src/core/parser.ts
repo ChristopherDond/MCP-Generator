@@ -33,7 +33,6 @@ const GO_RESERVED = new Set([
 
 const ALL_RESERVED = new Set([...TS_RESERVED, ...PY_RESERVED, ...GO_RESERVED]);
 
-// Resolve a $ref string to its component name: "#/components/schemas/User" → "User"
 function refToName(ref: string): string {
   return ref.split("/").pop() ?? ref;
 }
@@ -54,13 +53,11 @@ function openapiTypeToTS(type: string): string {
   }
 }
 
-/** Map an OpenAPI schema to an MCP tool-argument type, honoring enums. */
 function schemaToParamType(
   schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject | undefined
 ): { type: MCPToolParam["type"]; format?: string; enum?: (string | number)[] } {
   if (!schema) return { type: "string" };
   if ("$ref" in schema) {
-    // We don't resolve refs here — the template layer uses `schema` when available.
     return { type: "object" };
   }
   const s = schema as OpenAPIV3.SchemaObject;
@@ -73,7 +70,6 @@ function resolveSchemaProperties(
   components: OpenAPIV3.ComponentsObject | undefined,
   visited: Set<OpenAPIV3.SchemaObject> = new Set()
 ): MCPModelProperty[] {
-  // Guard against circular $ref chains (e.g. TreeNode -> children: TreeNode[])
   if (visited.has(schema)) return [];
   visited.add(schema);
 
@@ -141,7 +137,6 @@ function extractExampleResponse(
   const jsonContent = preferred;
   if (!jsonContent) return null;
 
-  // Try example first, then schema example
   if (jsonContent.example) return jsonContent.example;
   if (jsonContent.schema && !("$ref" in jsonContent.schema)) {
     return (jsonContent.schema as OpenAPIV3.SchemaObject).example ?? null;
@@ -247,7 +242,6 @@ function buildTools(
 
       const params: MCPToolParam[] = [];
 
-      // Path + query + header + cookie parameters (path-level merged, deduped)
       for (const rawParam of collectParameters(pathItem, operation)) {
         const param = rawParam as OpenAPIV3.ParameterObject;
         const schema = (param.schema ?? { type: "string" }) as OpenAPIV3.SchemaObject;
@@ -267,7 +261,6 @@ function buildTools(
         });
       }
 
-      // Request body (resolving $ref) → add as "body" param
       let requestBody: OpenAPIV3.RequestBodyObject | undefined;
       const rawBody = operation.requestBody;
       if (rawBody) {
@@ -285,14 +278,12 @@ function buildTools(
         const mediaTypes = Object.keys(content);
         const jsonSchema = content["application/json"]?.schema ?? content[mediaTypes[0]]?.schema;
         if (jsonSchema) {
-          // If body schema is a $ref, use a "body" object whose schema points at the ref name.
           let bodySchema: OpenAPIV3.SchemaObject;
           let bodyEnum: (string | number)[] | undefined;
           let bodyFormat: string | undefined;
           if ("$ref" in jsonSchema) {
             bodySchema = { type: "object" } as OpenAPIV3.SchemaObject;
             const refName = refToName(jsonSchema.$ref);
-            // remember ref via format-less trick: store name in description? No — use enum-free schema.
             (bodySchema as OpenAPIV3.SchemaObject & { mcpRef?: string }).mcpRef = refName;
           } else {
             bodySchema = jsonSchema as OpenAPIV3.SchemaObject;
@@ -344,7 +335,6 @@ function buildModels(
     if ("$ref" in rawSchema) continue;
     const schema = rawSchema as OpenAPIV3.SchemaObject;
 
-    // Enums become real model types (string/number unions)
     if (schema.enum) {
       models.push({
         name,
@@ -357,7 +347,6 @@ function buildModels(
       continue;
     }
 
-    // Handle allOf (simple merge, no polymorphism in MVP)
     let resolvedSchema = schema;
     if (schema.allOf) {
       const merged: OpenAPIV3.SchemaObject = {
@@ -381,8 +370,6 @@ function buildModels(
       resolvedSchema = merged;
     }
 
-    // Handle oneOf / anyOf by recording referenced component names
-    // (inline variants have no $ref name to reference — flag them instead of dropping silently)
     if (schema.oneOf) {
       const inlineOneOf = schema.oneOf.filter(
         (s) => !("$ref" in s)
@@ -404,7 +391,6 @@ function buildModels(
       }
     }
 
-    // Handle oneOf / anyOf by recording referenced component names
     const oneOf: string[] | undefined = schema.oneOf
       ? (schema.oneOf
           .map((s) => {
@@ -468,7 +454,6 @@ function v2ParamToV3Schema(p: Record<string, unknown>): Record<string, unknown> 
   return schema;
 }
 
-/** Minimal Swagger 2.0 → OpenAPI 3.0.3 conversion (mantém o resto do pipeline intacto). */
 export function convertSwagger2ToOpenApi3(swagger: Record<string, any>): OpenAPIV3.Document {
   const consumesGlobal: string[] = Array.isArray(swagger.consumes) ? swagger.consumes : [];
   const producesGlobal: string[] = Array.isArray(swagger.produces) ? swagger.produces : [];
@@ -511,8 +496,6 @@ export function convertSwagger2ToOpenApi3(swagger: Record<string, any>): OpenAPI
     for (const [name, p] of Object.entries(swagger.parameters as Record<string, any>)) {
       const pp = p as Record<string, any>;
       if (pp.in === "body") {
-        // Guarda como requestBody para referência futura; alias em parameters não é válido em v3,
-        // mas o rewrite aponta #/parameters/ → #/components/parameters/, então mantemos um alias simples.
         params[name] = {
           name: pp.name ?? name,
           in: "query",
@@ -651,14 +634,11 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
   let raw: OpenAPIV3.Document;
 
   try {
-    // parse returns the original document with $ref intact
     const parsed = (await SwaggerParser.parse(inputPath)) as unknown as Record<string, unknown>;
 
     if (isSwagger2Document(parsed)) {
       const converted = convertSwagger2ToOpenApi3(parsed as Record<string, any>);
       raw = converted;
-      // dereference resolves $refs inline; circular:"ignore" prevents infinite loops
-      // on self-referential schemas (e.g. TreeNode { children: TreeNode[] })
       api = (await SwaggerParser.dereference(JSON.parse(JSON.stringify(converted)) as any, {
         dereference: { circular: "ignore" },
       }) as unknown) as OpenAPIV3.Document;
@@ -687,8 +667,6 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
   }
 
   const tools = buildTools(api.paths ?? {}, api.components);
-  // Build models from the raw (non-dereferenced) components so $ref targets
-  // like oneOf/anyOf remain as ReferenceObjects and we can extract names.
   const { models, warnings } = buildModels(raw.components);
 
   const serverName = (api.info.title ?? "mcp-server")
