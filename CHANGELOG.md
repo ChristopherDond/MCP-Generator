@@ -2,6 +2,16 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.3.5] - 2026-10-01 (preparada, não publicada)
+
+### Correções e DX sem breaking
+
+- **Filtro**: allowlist `METHOD path` agora casa sem diferenciar maiúsculas (`get /pets` = `GET /pets`).
+- **Filtro vazio**: quando os filtros zeram as tools, emite warning `Filters matched 0 of N tools` sugerindo `--dry-run`.
+- **Go incremental**: regeneração usa o stub default do Go (`handler not implemented`); stubs intocados não são mais preservados como custom.
+- **Body non-JSON**: requestBody e example de response caem para o primeiro content-type quando não há `application/json` (cobre `multipart/form-data` e `urlencoded` da conversão Swagger 2.0 `formData`).
+- **Testes e gates**: 19 suites / 244 testes Jest, smoke de exit codes da CLI 3/3, smokes dos scaffolds TypeScript, Python e Go, `npm audit --omit=dev` zero.
+
 ## [2.3.4] - 2026-09-29
 
 ### Correções e DX sem breaking

@@ -4,9 +4,19 @@
 
 Gere servidores MCP a partir de specs OpenAPI.
 
-> **Status**: `@christopher_dondici/mcp-gen` 2.3.4 é a última versão publicada no npm. Veja as [notas de release](RELEASE_NOTES.md).
+> **Status**: `@christopher_dondici/mcp-gen` 2.3.4 é a última versão publicada no npm. `2.3.5` está preparada localmente (não publicada). Veja as [notas de release](RELEASE_NOTES.md).
 
 `mcp-gen` transforma uma spec OpenAPI v3 ou Swagger 2.0 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript, Python ou Go. Cada rota vira uma tool, e a geração incremental preserva o código customizado entre os marcadores indicados.
+
+## Novidades da 2.3.5 (preparada, não publicada)
+
+(Patch sem breaking changes.)
+
+- Allowlist `METHOD path` agora casa sem diferenciar maiúsculas (`get /pets` = `GET /pets`).
+- Filtros que zeram as tools emitem warning `Filters matched 0 of N tools` sugerindo `--dry-run`.
+- Regeneração incremental de Go usa o stub default do Go (`handler not implemented`); stubs intocados não são mais preservados como custom.
+- Bodies e examples non-JSON caem para o primeiro content-type quando não há `application/json` (cobre `multipart/form-data` e `urlencoded` da conversão Swagger 2.0 `formData`).
+- Verificação local: 19 suites / 244 testes Jest, smoke de exit codes 3/3, smokes TypeScript/Python/Go, `npm audit --omit=dev` limpo.
 
 ## Novidades da 2.3.4
 
@@ -513,6 +523,7 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.4 | Publicada no npm | Filtros de path com glob, allowlist inline, group-by tag/path-prefix com roteamento por action, dedup com method/hash, guardas `<generated:handlers>` com merge 3-way, middleware de auth separado, `handlers.custom.*` nunca sobrescrito, correção do template de auth para specs sem `securitySchemes` |
 | v2.1.5 | Publicada no npm | Fase 0 P0 (PR #4): serialização de query no TS, query/headers no Python, HTTP real no Go, registry só v3 com orientação |
 | v2.2.0 | Publicada no npm | Fase 1: `generate --dry-run` + resumo `--json`, filtros/grupos no `watch` (+ prompts interativos, correção do `--once` em arquivos), avisos por schema parcial em `validate`/`generate`, docs do CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` |
+| v2.3.5 | Preparada localmente (não publicada) | Allowlist METHOD sem case, warning de filtro zero com dica de `--dry-run`, stub Go na regeneração incremental, fallback non-JSON para body/example |
 | v2.3.4 | Publicada no npm (atual) | `ip-address` 10.4.0 → 10.7.2 via cadeia do SDK, guard de snapshot do lockfile do scaffold, `js-yaml` dev-only segue documentado |
 | v2.3.3 | Publicada no npm | Erro explícito de `--env-file` inexistente, next steps de Go no `init`, placeholders trocados, `dist` limpa antes do build |
 | v2.3.2 | Publicada no npm | Deps diretas js-yaml/openapi-types, testes reais do registry, `/**` final casa a base, stub Go + round-trip dos guards, smoke Go na CI |
