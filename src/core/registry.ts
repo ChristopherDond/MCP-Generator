@@ -63,12 +63,10 @@ export async function fetchSpecToCwd(key: string, targetPath?: string): Promise<
     throw new Error(`Unknown registry key: "${key}". Known keys: ${known}. Use 'mcp-gen init --from list' to see them.`);
   }
 
-  // Security: validate URL
   validateRemoteUrl(entry.url);
 
-  // Create abort controller for timeout
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   try {
     const res = await fetch(entry.url, {
@@ -77,11 +75,9 @@ export async function fetchSpecToCwd(key: string, targetPath?: string): Promise<
     
     if (!res.ok) throw new Error(`Failed to fetch ${entry.url}: ${res.status} ${res.statusText}`);
 
-    // Security: validate Content-Type
     const contentType = res.headers.get("content-type");
     validateContentType(contentType);
 
-    // Security: validate content size before reading
     const contentLength = res.headers.get("content-length");
     if (contentLength) {
       validateContentSize(parseInt(contentLength, 10));
@@ -89,7 +85,6 @@ export async function fetchSpecToCwd(key: string, targetPath?: string): Promise<
 
     const content = await res.text();
     
-    // Security: ensure content size after reading (in case header was missing/wrong)
     validateContentSize(Buffer.byteLength(content, "utf-8"));
 
     const filename = entry.filename ?? (path.basename(new URL(entry.url).pathname) || "openapi.json");
