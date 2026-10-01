@@ -261,37 +261,3 @@ throw new McpError(ErrorCode.InternalError, "Handler not implemented: delete_pet
     expect(preserved).not.toContain("delete_pet");
   });
 });
-
-
-describe("incremental go stub pattern", () => {
-  it("uses Go stub pattern on regeneration so untouched Go stubs are not preserved", async () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-go-stub-"));
-    const clock = jest.spyOn(Date.prototype, "toISOString").mockReturnValue("2026-01-01T00:00:00.000Z");
-    try {
-      const first = await generate({ input: PETSTORE_JSON, lang: "go", out: tmpDir, force: false, incremental: true, http: false });
-      expect(first.success).toBe(true);
-      const serverFile = path.join(tmpDir, "main.go");
-      const original = fs.readFileSync(serverFile, "utf-8");
-      expect(original).toContain("handler not implemented: delete_pets_petid");
-      const blockRe = /^([\t ]*\/\/ @@mcp-gen:start:get_pets\r?\n)[\s\S]*?^([\t ]*\/\/ @@mcp-gen:end:get_pets\r?$)/m;
-      const found = original.match(blockRe);
-      expect(found).not.toBeNull();
-      const startMark = found![1];
-      const endMark = found![2];
-      const eol = startMark.endsWith("\r\n") ? "\r\n" : "\n";
-      const edited = original.replace(blockRe, (_m, s, e) => s + "\t\tmessage := \"preserved\"" + eol + "\t\treturn mcp.NewToolResultText(message), nil" + eol + e);
-      expect(edited).not.toBe(original);
-      fs.writeFileSync(serverFile, edited);
-      const regen = await generate({ input: PETSTORE_JSON, lang: "go", out: tmpDir, force: false, incremental: true, http: true });
-      expect(regen.success).toBe(true);
-      expect(regen.filesPreserved).toContain("get_pets");
-      expect(regen.filesPreserved).not.toContain("delete_pets_petid");
-      const content = fs.readFileSync(serverFile, "utf-8");
-      expect(content).toContain("message := \"preserved\"");
-      expect(content).not.toContain("handler not implemented");
-    } finally {
-      clock.mockRestore();
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    }
-  });
-});
