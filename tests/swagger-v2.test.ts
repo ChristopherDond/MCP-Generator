@@ -92,3 +92,99 @@ describe("2.1 Swagger 2.0 support (Fase 2.1)", () => {
     }
   });
 });
+
+describe("non-JSON request bodies", () => {
+  function writeDoc(dir: string, name: string, doc: unknown): string {
+    const file = path.join(dir, name);
+    fs.writeFileSync(file, JSON.stringify(doc));
+    return file;
+  }
+
+  it("keeps body param for multipart/form-data", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-multipart-"));
+    try {
+      const spec = writeDoc(dir, "spec.json", {
+        openapi: "3.0.3",
+        info: { title: "Upload", version: "1.0.0" },
+        servers: [{ url: "https://example.com" }],
+        paths: {
+          "/upload": {
+            post: {
+              summary: "Upload file",
+              requestBody: {
+                required: true,
+                content: {
+                  "multipart/form-data": {
+                    schema: { type: "object", properties: { file: { type: "string", format: "binary" } } },
+                  },
+                },
+              },
+              responses: { "200": { description: "ok", content: { "application/json": { example: {} } } } },
+            },
+          },
+        },
+      });
+      const ast = await parseOpenAPI(spec);
+      const tool = ast.tools.find((t) => t.path === "/upload")!;
+      expect(tool.params.some((p) => p.name === "body")).toBe(true);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps body param for swagger 2.0 formData", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-formdata-"));
+    try {
+      const spec = writeDoc(dir, "spec.json", {
+        swagger: "2.0",
+        info: { title: "Form", version: "1.0.0" },
+        host: "example.com",
+        basePath: "/v1",
+        schemes: ["https"],
+        paths: {
+          "/upload": {
+            post: {
+              summary: "Upload",
+              consumes: ["multipart/form-data"],
+              produces: ["application/json"],
+              parameters: [
+                { name: "file", in: "formData", required: true, type: "file" },
+                { name: "note", in: "formData", required: false, type: "string" },
+              ],
+              responses: { "200": { description: "ok", schema: { type: "object" } } },
+            },
+          },
+        },
+      });
+      const ast = await parseOpenAPI(spec);
+      const tool = ast.tools.find((t) => t.path === "/upload")!;
+      expect(tool.params.some((p) => p.name === "body")).toBe(true);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("extracts example from non-JSON response", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-resp-"));
+    try {
+      const spec = writeDoc(dir, "spec.json", {
+        openapi: "3.0.3",
+        info: { title: "Ping", version: "1.0.0" },
+        servers: [{ url: "https://example.com" }],
+        paths: {
+          "/ping": {
+            get: {
+              summary: "Ping",
+              responses: { "200": { description: "ok", content: { "text/plain": { example: "pong" } } } },
+            },
+          },
+        },
+      });
+      const ast = await parseOpenAPI(spec);
+      const tool = ast.tools.find((t) => t.path === "/ping")!;
+      expect(tool.exampleResponse).toBe("pong");
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

@@ -136,7 +136,9 @@ function extractExampleResponse(
   const response = responses[successCode] as OpenAPIV3.ResponseObject;
   if (!response?.content) return null;
 
-  const jsonContent = response.content["application/json"];
+  const mediaTypes = Object.keys(response.content);
+  const preferred = response.content["application/json"] ?? response.content[mediaTypes[0]];
+  const jsonContent = preferred;
   if (!jsonContent) return null;
 
   // Try example first, then schema example
@@ -279,7 +281,9 @@ function buildTools(
       }
 
       if (requestBody) {
-        const jsonSchema = requestBody.content?.["application/json"]?.schema;
+        const content = requestBody.content ?? {};
+        const mediaTypes = Object.keys(content);
+        const jsonSchema = content["application/json"]?.schema ?? content[mediaTypes[0]]?.schema;
         if (jsonSchema) {
           // If body schema is a $ref, use a "body" object whose schema points at the ref name.
           let bodySchema: OpenAPIV3.SchemaObject;
