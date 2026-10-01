@@ -29,7 +29,6 @@ export function validatePluginPath(pluginPath: string): void {
 
   const stat = fs.lstatSync(resolvedPath);
 
-  // Reject symbolic links to prevent symlink attacks
   if (stat.isSymbolicLink()) {
     throw new Error(`Security error: Plugin path is a symbolic link: ${pluginPath}`);
   }
@@ -47,15 +46,12 @@ export function validateRemoteUrl(urlString: string): void {
   try {
     const url = new URL(urlString);
 
-    // Only allow HTTPS (enforce encrypted transport)
     if (url.protocol !== "https:") {
       throw new Error("Only HTTPS URLs are allowed for remote specs");
     }
 
-    // Blacklist localhost and private IPs to prevent SSRF attacks
     const hostname = url.hostname;
     
-    // Handle IPv6 format - URL.hostname returns it without brackets and normalized
     const privatePatterns = [
       /^localhost$/i,
       /^127\./,
@@ -123,7 +119,6 @@ export function sanitizeInput(input: string, maxLength: number = 256): string {
     throw new Error(`Input exceeds maximum length of ${maxLength} characters`);
   }
 
-  // Remove null bytes and control characters
   return input.replace(/[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]/g, "");
 }
 
@@ -146,7 +141,6 @@ export function validatePluginModule(module: unknown): boolean {
 
   const moduleObj = module as Record<string, unknown>;
 
-  // Only allow specific exported functions
   const allowedExports = ["registerHandlebars"];
   const exportedKeys = Object.keys(moduleObj);
 
@@ -156,7 +150,6 @@ export function validatePluginModule(module: unknown): boolean {
     }
   }
 
-  // If registerHandlebars exists, it must be a function
   if ("registerHandlebars" in moduleObj && typeof moduleObj.registerHandlebars !== "function") {
     throw new Error("Plugin exports invalid registerHandlebars: must be a function");
   }
