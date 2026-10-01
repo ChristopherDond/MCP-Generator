@@ -17,7 +17,6 @@ export interface WatchCliOptions {
   groupBy?: string;
 }
 
-/** Build generator options for `watch` runs, repassing filter/group flags. */
 export function buildWatchGeneratorOptions(
   input: string,
   outDir: string,
