@@ -193,3 +193,27 @@ describe("generation grouping", () => {
     expect(server).toContain("action");
   });
 });
+
+describe("generation zero-filter warning", () => {
+  it("warns and suggests --dry-run when filters match zero tools", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-zero-"));
+    try {
+      const spec = path.join(dir, "spec.json");
+      fs.writeFileSync(spec, JSON.stringify({
+        openapi: "3.0.3",
+        info: { title: "Zero", version: "1.0.0" },
+        servers: [{ url: "https://example.com" }],
+        paths: {
+          "/pets": { get: { summary: "List pets", responses: { "200": { description: "ok", content: { "application/json": { example: [] } } } } } },
+          "/orders": { get: { summary: "List orders", responses: { "200": { description: "ok", content: { "application/json": { example: [] } } } } } },
+        },
+      }));
+      const result = await generate({ input: spec, lang: "typescript", out: path.join(dir, "out"), force: true, incremental: false, http: false, operationAllowlist: ["nope_nothing_matches"] });
+      expect(result.success).toBe(true);
+      expect(result.warnings.join("\n")).toMatch(/Filters matched 0 of 2 tools/);
+      expect(result.warnings.join("\n")).toMatch(/--dry-run/);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
