@@ -1,8 +1,8 @@
 # Notas de release
 
-> **Status em 01/10/2026:** `2.3.5` está preparada localmente (não publicada). `2.3.4` segue como a versão publicada no npm (`latest`) e a GitHub Release atual.
+> **Status em 01/10/2026:** `2.3.5` é a versão publicada no npm (`latest`) e a GitHub Release atual.
 
-## 2.3.5 — Preparada em 01/10/2026 (não publicada)
+## 2.3.5 — Publicada em 01/10/2026
 
 Patch sem breaking changes: allowlist `METHOD path` case-insensitive, warning quando filtros zeram as tools, stub default do Go na regeneração incremental e fallback non-JSON para requestBody/example.
 
@@ -12,7 +12,9 @@ Patch sem breaking changes: allowlist `METHOD path` case-insensitive, warning qu
 
 ### Publicação
 
-Pendente: push da `main` + tag `v2.3.5` → `.github/workflows/release.yml` valida, publica via Trusted Publisher OIDC (com provenance assinada) e cria a GitHub Release. Confirmar com `npm view @christopher_dondici/mcp-gen version` e `gh release view v2.3.5`.
+Publicada pelo caminho oficial: push da `main` + tag `v2.3.5` → `.github/workflows/release.yml` validou, publicou via Trusted Publisher OIDC (com provenance assinada) e criou a GitHub Release.
+
+Confirmado com `npm view @christopher_dondici/mcp-gen version` (`2.3.5`, dist-tag `latest`) e `gh release view v2.3.5`.
 
 ## 2.3.4 — Publicada em 29/09/2026
 

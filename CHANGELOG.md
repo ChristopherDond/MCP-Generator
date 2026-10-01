@@ -2,7 +2,7 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
-## [2.3.5] - 2026-10-01 (preparada, não publicada)
+## [2.3.5] - 2026-10-01
 
 ### Correções e DX sem breaking
 
@@ -11,6 +11,7 @@ Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 - **Go incremental**: regeneração usa o stub default do Go (`handler not implemented`); stubs intocados não são mais preservados como custom.
 - **Body non-JSON**: requestBody e example de response caem para o primeiro content-type quando não há `application/json` (cobre `multipart/form-data` e `urlencoded` da conversão Swagger 2.0 `formData`).
 - **Testes e gates**: 19 suites / 244 testes Jest, smoke de exit codes da CLI 3/3, smokes dos scaffolds TypeScript, Python e Go, `npm audit --omit=dev` zero.
+- **Publicação**: `2.3.5` publicada no npm como `latest` via Trusted Publisher OIDC, com provenance assinada e GitHub Release `v2.3.5`.
 
 ## [2.3.4] - 2026-09-29
 

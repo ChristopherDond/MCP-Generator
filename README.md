@@ -4,11 +4,11 @@
 
 Generate MCP servers from OpenAPI specs.
 
-> **Status**: `@christopher_dondici/mcp-gen` 2.3.4 is the latest published version on npm. `2.3.5` is prepared locally (not published). See [release notes](RELEASE_NOTES.md) (PT-BR).
+> **Status**: `@christopher_dondici/mcp-gen` 2.3.5 is the latest published version on npm. See [release notes](RELEASE_NOTES.md) (PT-BR).
 
 `mcp-gen` turns an OpenAPI v3 or Swagger 2.0 spec into an MCP server in **TypeScript**, **Python**, or **Go**. It maps each route to a tool, generates typed models (including enums, oneOf/anyOf), and keeps custom code when you regenerate.
 
-## What's new in 2.3.5 (prepared, not published)
+## What's new in 2.3.5
 
 (Patch release — no breaking changes.)
 
@@ -596,7 +596,7 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.4 | Released on npm | Path glob filters, inline operation allowlist, group-by tag/path-prefix with action routing, method/hash dedup, `<generated:handlers>` guards with 3-way merge, separate auth middleware, never-overwritten `handlers.custom.*`, auth template fix for specs without `securitySchemes` |
 | v2.1.5 | Released on npm | Fase 0 P0 fixes (PR #4): TS query serialization, Python query/headers, Go HTTP wiring, v3-only registry with guidance |
 | v2.2.0 | Released on npm | Fase 1: `generate --dry-run` + `--json` summary, filter/group flags on `watch` (+ interactive prompts, `--once` file fix), per-schema partial-support warnings in `validate`/`generate`, CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` docs |
-| v2.3.5 | Prepared locally (not published) | Case-insensitive allowlist METHOD, zero-filter warning with `--dry-run` hint, Go stub pattern on incremental regen, non-JSON body/example fallback |
+| v2.3.5 | Released on npm (latest) | Case-insensitive allowlist METHOD, zero-filter warning with `--dry-run` hint, Go stub pattern on incremental regen, non-JSON body/example fallback |
 | v2.3.4 | Released on npm (latest) | `ip-address` 10.4.0 → 10.7.2 via SDK chain, scaffold lockfile snapshot guard, dev-only `js-yaml` stays documented |
 | v2.3.3 | Released on npm (latest) | Explicit missing `--env-file` error, Go next steps in interactive `init`, placeholder links replaced, `dist` cleaned before build |
 | v2.3.2 | Released on npm | Direct js-yaml/openapi-types deps, real registry validation tests, trailing `/**` matches base path, Go stub pattern + guard round-trip, Go build smoke in CI |

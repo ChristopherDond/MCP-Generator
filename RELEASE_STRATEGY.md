@@ -1,6 +1,6 @@
 # Estratégia de release — MCP-Generator
 
-> **Estado em 01/10/2026:** `2.3.5` preparada localmente (não publicada). `2.3.4` segue como a release publicada (npm `latest` + GitHub Release `v2.3.4`, via OIDC).
+> **Estado em 01/10/2026:** `2.3.5` é a release publicada (npm `latest` + GitHub Release `v2.3.5`, via OIDC).
 
 ## Versionamento
 
