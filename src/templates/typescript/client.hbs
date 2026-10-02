@@ -1,5 +1,3 @@
-// Auto-generated client SDK for {{info.title}} v{{info.version}}
-// Generated: {{generatedAt}}
 
 export class ApiClient {
   constructor(public baseUrl: string = "{{baseUrl}}", public token?: string) {}
@@ -56,7 +54,6 @@ export class ApiClient {
   }
 
   {{#each tools}}
-  /** {{escapeText description}} */
   async {{name}}(params: Record<string, unknown> = {}): Promise<unknown> {
     const url = this.buildUrl("{{path}}", params, [{{#each (queryParams params)}}"{{name}}", {{/each}}]);
     const method = "{{method}}";
@@ -65,7 +62,6 @@ export class ApiClient {
   }
   {{#if isGroup}}
   {{#each groupMembers}}
-  /** {{escapeText description}} */
   async {{name}}(params: Record<string, unknown> = {}): Promise<unknown> {
     const url = this.buildUrl("{{path}}", params, [{{#each (queryParams params)}}"{{name}}", {{/each}}]);
     const method = "{{method}}";
