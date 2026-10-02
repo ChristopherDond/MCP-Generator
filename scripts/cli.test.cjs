@@ -21,6 +21,43 @@ function runWatch(input, out) {
   );
 }
 
+function runWatchArgs(args) {
+  return spawnSync(process.execPath, [cli, "watch", ...args], {
+    cwd: root,
+    encoding: "utf8",
+    shell: false,
+    timeout: 30000,
+  });
+}
+
+test("watch rejects invalid --interval for URL inputs", { timeout: 40000 }, () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "mcp-cli-watch-interval-"));
+  const out = path.join(dir, "output");
+
+  try {
+    const result = runWatchArgs([
+      "--input",
+      "http://127.0.0.1:9/spec.json",
+      "--out",
+      out,
+      "--lang",
+      "typescript",
+      "--once",
+      "--interval",
+      "abc",
+    ]);
+    assert.equal(result.error, undefined);
+    assert.equal(
+      result.status,
+      1,
+      `expected status 1\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
+    );
+    assert.match(`${result.stdout}\n${result.stderr}`, /Invalid --interval/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+  }
+});
+
 test("watch --once exits with failure when generation fails", { timeout: 40000 }, () => {
   const dir = mkdtempSync(path.join(tmpdir(), "mcp-cli-watch-"));
   const input = path.join(dir, "invalid.json");

@@ -389,7 +389,12 @@ program
 
     if (opts.input.startsWith("http://") || opts.input.startsWith("https://")) {
       let last = "";
-      const interval = Number(opts.interval) || 30000;
+      const parsed = Number(opts.interval);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        console.error(chalk.red(`Invalid --interval "${opts.interval}": expected a positive number of milliseconds.`));
+        process.exit(1);
+      }
+      const interval = parsed;
       console.log(chalk.dim(`[watch] polling ${opts.input} every ${interval}ms`));
       const check = async (): Promise<boolean> => {
         try {
