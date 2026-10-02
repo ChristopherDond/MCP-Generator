@@ -11,7 +11,14 @@ permissions:
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
@@ -53,8 +60,10 @@ jobs:
 
       - name: Pack
         run: npm pack --pack-destination "$RUNNER_TEMP"
+        shell: bash
 
       - name: Smoke test installed tarball
+        shell: bash
         run: |
           npm install --prefix "$RUNNER_TEMP/mcp-gen-smoke" "$RUNNER_TEMP/christopher_dondici-mcp-gen-"*.tgz --no-audit --no-fund
           "$RUNNER_TEMP/mcp-gen-smoke/node_modules/.bin/mcp-gen" --version
