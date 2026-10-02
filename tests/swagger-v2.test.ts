@@ -164,6 +164,36 @@ describe("non-JSON request bodies", () => {
     }
   });
 
+  it("reports swagger 2.0 fidelity warnings through parseOpenAPI", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-v2warn-"));
+    try {
+      const spec = writeDoc(dir, "spec.json", {
+        swagger: "2.0",
+        info: { title: "Warn", version: "1.0.0" },
+        host: "example.com",
+        basePath: "/v1",
+        schemes: ["https"],
+        paths: {
+          "/items": {
+            get: {
+              summary: "List",
+              parameters: [
+                { name: "ids", in: "query", required: false, type: "array", items: { type: "string" }, collectionFormat: "ssv" },
+                { name: "avatar", in: "query", required: false, type: "file" },
+              ],
+              responses: { "200": { description: "ok", schema: { type: "object" } } },
+            },
+          },
+        },
+      });
+      const ast = await parseOpenAPI(spec);
+      expect((ast.warnings ?? []).some((w) => w.includes("collectionFormat"))).toBe(true);
+      expect((ast.warnings ?? []).some((w) => w.includes("file parameter"))).toBe(true);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it("extracts example from non-JSON response", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-resp-"));
     try {

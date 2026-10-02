@@ -454,7 +454,7 @@ function v2ParamToV3Schema(p: Record<string, unknown>): Record<string, unknown> 
   return schema;
 }
 
-export function convertSwagger2ToOpenApi3(swagger: Record<string, any>): OpenAPIV3.Document {
+export function convertSwagger2ToOpenApi3(swagger: Record<string, any>, warnings: string[] = []): OpenAPIV3.Document {
   const consumesGlobal: string[] = Array.isArray(swagger.consumes) ? swagger.consumes : [];
   const producesGlobal: string[] = Array.isArray(swagger.produces) ? swagger.produces : [];
   const defaultConsume = consumesGlobal[0] ?? "application/json";
@@ -496,6 +496,7 @@ export function convertSwagger2ToOpenApi3(swagger: Record<string, any>): OpenAPI
     for (const [name, p] of Object.entries(swagger.parameters as Record<string, any>)) {
       const pp = p as Record<string, any>;
       if (pp.in === "body") {
+        warnings.push(`Global parameter "${name}": body parameter converted to a query object placeholder; body fidelity may be reduced`);
         params[name] = {
           name: pp.name ?? name,
           in: "query",
@@ -555,6 +556,9 @@ export function convertSwagger2ToOpenApi3(swagger: Record<string, any>): OpenAPI
           newParams.push({ ...pp, $ref: rewriteV2Ref(pp.$ref as string) });
           continue;
         }
+        if (pp.type === "file" && pp.in !== "formData") {
+          warnings.push(`Operation ${method.toUpperCase()} ${p}: file parameter outside formData converted as string; upload fidelity may be reduced`);
+        }
         if (pp.in === "body") {
           requestBody = {
             description: pp.description ?? "",
@@ -564,6 +568,9 @@ export function convertSwagger2ToOpenApi3(swagger: Record<string, any>): OpenAPI
         } else if (pp.in === "formData") {
           formParams.push(pp);
         } else {
+          if (pp.collectionFormat && pp.collectionFormat !== "csv") {
+            warnings.push(`Operation ${method.toUpperCase()} ${p}: collectionFormat "${pp.collectionFormat}" not preserved; arrays serialize as csv`);
+          }
           newParams.push({
             name: pp.name,
             in: pp.in,
@@ -632,12 +639,13 @@ export function isSwagger2Document(doc: unknown): boolean {
 export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
   let api: OpenAPIV3.Document;
   let raw: OpenAPIV3.Document;
+  const v2Warnings: string[] = [];
 
   try {
     const parsed = (await SwaggerParser.parse(inputPath)) as unknown as Record<string, unknown>;
 
     if (isSwagger2Document(parsed)) {
-      const converted = convertSwagger2ToOpenApi3(parsed as Record<string, any>);
+      const converted = convertSwagger2ToOpenApi3(parsed as Record<string, any>, v2Warnings);
       raw = converted;
       api = (await SwaggerParser.dereference(JSON.parse(JSON.stringify(converted)) as any, {
         dereference: { circular: "ignore" },
@@ -668,6 +676,7 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
 
   const tools = buildTools(api.paths ?? {}, api.components);
   const { models, warnings } = buildModels(raw.components);
+  warnings.unshift(...v2Warnings);
 
   const serverName = (api.info.title ?? "mcp-server")
     .toLowerCase()
