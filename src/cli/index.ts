@@ -75,7 +75,7 @@ program
   .option("--group-by <mode>", "Group endpoints into one tool per group: tag | path-prefix")
   .option("--dry-run", "List tools/models/groups/files that would be generated without writing anything", false)
   .option("--json", "Output the generation summary as machine-readable JSON", false)
-  .option("--plugin <path>", "Path to a plugin module or folder to load", (val, acc) => {
+  .option("--plugin <path>", "Path to a plugin directory or .js module file to load", (val, acc) => {
     if (!acc) return [val];
     acc.push(val);
     return acc;
@@ -307,27 +307,32 @@ program
   .option("--json", "Output results as JSON", false)
   .action(async (opts) => {
     const projectPath = path.resolve(opts.project);
+    const jsonMode = Boolean(opts.json);
 
     if (!fs.existsSync(projectPath)) {
-      console.error(chalk.red(`\n  ✗ Project not found: ${projectPath}\n`));
+      if (jsonMode) {
+        console.log(JSON.stringify({ passed: false, summary: { errors: 1, warnings: 0, info: 0 }, rules: [], error: `Project not found: ${projectPath}` }));
+      } else {
+        console.error(chalk.red(`\n  ✗ Project not found: ${projectPath}\n`));
+      }
       process.exit(1);
     }
 
-    console.log(chalk.bold("\nmcp-gen security") + ` v${VERSION} — Security & Lint Scan\n`);
-    console.log(`  Project:    ${chalk.cyan(projectPath)}\n`);
+    if (!jsonMode) {
+      console.log(chalk.bold("\nmcp-gen security") + ` v${VERSION} — Security & Lint Scan\n`);
+      console.log(`  Project:    ${chalk.cyan(projectPath)}\n`);
+    }
 
     const { scanProject, formatReport } = await import("../core/security-lint");
-
-    const spinner = ora("Scanning project...").start();
+    const spinner = jsonMode ? null : ora("Scanning project...").start();
 
     try {
       const report = await scanProject(projectPath);
 
-      if (opts.json) {
-        spinner.stop();
+      if (jsonMode) {
         console.log(JSON.stringify(report, null, 2));
       } else {
-        spinner.succeed("Scan complete");
+        spinner!.succeed("Scan complete");
         console.log(formatReport(report));
       }
 
@@ -335,8 +340,13 @@ program
         process.exit(1);
       }
     } catch (err: unknown) {
-      spinner.fail("Scan failed");
-      console.error(chalk.red(err instanceof Error ? err.message : String(err)));
+      const message = err instanceof Error ? err.message : String(err);
+      if (jsonMode) {
+        console.log(JSON.stringify({ passed: false, summary: { errors: 1, warnings: 0, info: 0 }, rules: [], error: message }));
+      } else {
+        spinner!.fail("Scan failed");
+        console.error(chalk.red(message));
+      }
       process.exit(1);
     }
   });
@@ -349,7 +359,7 @@ program
   .option("-o, --out <dir>", "Output directory for the generated project", "./mcp-server")
   .option("--once", "Run generation once on first change then exit", false)
   .option("--interval <ms>", "Polling interval for URL inputs (ms)", "30000")
-  .option("--plugin <path>", "Path to a plugin module or folder to load", (val, acc) => {
+  .option("--plugin <path>", "Path to a plugin directory or .js module file to load", (val, acc) => {
     if (!acc) return [val];
     acc.push(val);
     return acc;
