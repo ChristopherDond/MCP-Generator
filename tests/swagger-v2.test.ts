@@ -57,7 +57,7 @@ describe("2.1 Swagger 2.0 support (Fase 2.1)", () => {
       expect(real.success).toBe(true);
       expect(real.errors).toEqual([]);
       const server = fs.readFileSync(path.join(tmp, "real", "src/server.ts"), "utf-8");
-      expect(server).toContain("@@mcp-gen:start:get_pets");
+      expect(server).toContain("@@mcp-gen:start:list_pets");
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }

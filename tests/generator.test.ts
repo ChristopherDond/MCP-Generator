@@ -27,13 +27,13 @@ describe("parseOpenAPI", () => {
 
   it("marks path params as required", async () => {
     const ast = await parseOpenAPI(PETSTORE_JSON);
-    const tool = ast.tools.find((t) => t.name === "get_pets_petid")!;
+    const tool = ast.tools.find((t) => t.name === "get_pet_by_id")!;
     expect(tool.params.find((p) => p.name === "petId")!.required).toBe(true);
   });
 
   it("marks query params as optional", async () => {
     const ast = await parseOpenAPI(PETSTORE_JSON);
-    const tool = ast.tools.find((t) => t.name === "get_pets")!;
+    const tool = ast.tools.find((t) => t.name === "list_pets")!;
     expect(tool.params.find((p) => p.name === "limit")!.required).toBe(false);
   });
 
@@ -71,9 +71,9 @@ describe("generate (typescript)", () => {
   it("server.ts contains tool names", async () => {
     await generate({ input: PETSTORE_JSON, lang: "typescript", out: tmpDir, force: true, incremental: false, http: false });
     const content = fs.readFileSync(path.join(tmpDir, "src/server.ts"), "utf-8");
-    expect(content).toContain("get_pets");
-    expect(content).toContain("@@mcp-gen:start:get_pets");
-    expect(content).toContain("@@mcp-gen:end:get_pets");
+    expect(content).toContain("list_pets");
+    expect(content).toContain("@@mcp-gen:start:list_pets");
+    expect(content).toContain("@@mcp-gen:end:list_pets");
   });
 
   it("server.ts enforces scoped authContext and blocks raw credentials", async () => {
@@ -116,8 +116,8 @@ describe("generate (python)", () => {
     await generate({ input: PETSTORE_JSON, lang: "python", out: tmpDir, force: true, incremental: false, http: false });
     const content = fs.readFileSync(path.join(tmpDir, "server.py"), "utf-8");
     expect(content).toContain("@mcp.tool()");
-    expect(content).toContain("async def get_pets");
-    expect(content).toContain("@@mcp-gen:start:get_pets");
+    expect(content).toContain("async def list_pets");
+    expect(content).toContain("@@mcp-gen:start:list_pets");
   });
 
   it("server.py enforces auth_context policy and blocks raw credentials", async () => {
@@ -154,7 +154,7 @@ describe("incremental", () => {
       expect(initial.success).toBe(true);
       const serverFile = path.join(tmpDir, file);
       const original = fs.readFileSync(serverFile, "utf-8");
-      const block = /^([\t ]*(?:\/\/|#) @@mcp-gen:start:get_pets\r?\n)[\s\S]*?^([\t ]*(?:\/\/|#) @@mcp-gen:end:get_pets\r?$)/m;
+      const block = /^([\t ]*(?:\/\/|#) @@mcp-gen:start:list_pets\r?\n)[\s\S]*?^([\t ]*(?:\/\/|#) @@mcp-gen:end:list_pets\r?$)/m;
       const match = original.match(block);
       expect(match).not.toBeNull();
       const eol = match![1].endsWith("\r\n") ? "\r\n" : "\n";
@@ -167,10 +167,10 @@ describe("incremental", () => {
         const regenerated = await generate({ ...options, incremental: true });
         expect(regenerated.errors).toEqual([]);
         expect(regenerated.success).toBe(true);
-        expect(regenerated.filesPreserved).toContain("get_pets");
+        expect(regenerated.filesPreserved).toContain("list_pets");
         const content = fs.readFileSync(serverFile, "utf-8");
         expect(content).toBe(edited);
-        expect(extractHandlers(serverFile).handlers.get("get_pets")).toBe(customCode);
+        expect(extractHandlers(serverFile).handlers.get("list_pets")).toBe(customCode);
         const markerLines = content.split(/\r?\n/).filter((line) => /@@mcp-gen:(start|end):/.test(line));
         expect(markerLines).toHaveLength(8);
         expect(markerLines.every((line) => line.trimStart().startsWith(`${prefix} @@mcp-gen:`))).toBe(true);
@@ -191,7 +191,7 @@ describe("incremental", () => {
 
       const serverFile = path.join(tmpDir, "src/server.ts");
       const original = fs.readFileSync(serverFile, "utf-8");
-      const block = /^([\t ]*\/\/ @@mcp-gen:start:get_pets\r?\n)[\s\S]*?^([\t ]*\/\/ @@mcp-gen:end:get_pets\r?$)/m;
+      const block = /^([\t ]*\/\/ @@mcp-gen:start:list_pets\r?\n)[\s\S]*?^([\t ]*\/\/ @@mcp-gen:end:list_pets\r?$)/m;
       const match = original.match(block);
       expect(match).not.toBeNull();
       const eol = match![1].endsWith("\r\n") ? "\r\n" : "\n";
@@ -203,7 +203,7 @@ describe("incremental", () => {
 
       const regenerated = await generate({ ...options, incremental: true });
       expect(regenerated.success).toBe(true);
-      expect(regenerated.filesPreserved).not.toContain("get_pets");
+      expect(regenerated.filesPreserved).not.toContain("list_pets");
       expect(fs.readFileSync(serverFile, "utf-8")).not.toContain("custom_force_marker");
     } finally {
       clock.mockRestore();
@@ -272,8 +272,8 @@ describe("incremental go stub pattern", () => {
       expect(first.success).toBe(true);
       const serverFile = path.join(tmpDir, "main.go");
       const original = fs.readFileSync(serverFile, "utf-8");
-      expect(original).toContain("handler not implemented: delete_pets_petid");
-      const blockRe = /^([\t ]*\/\/ @@mcp-gen:start:get_pets\r?\n)[\s\S]*?^([\t ]*\/\/ @@mcp-gen:end:get_pets\r?$)/m;
+      expect(original).toContain("handler not implemented: delete_pet");
+      const blockRe = /^([\t ]*\/\/ @@mcp-gen:start:list_pets\r?\n)[\s\S]*?^([\t ]*\/\/ @@mcp-gen:end:list_pets\r?$)/m;
       const found = original.match(blockRe);
       expect(found).not.toBeNull();
       const startMark = found![1];
@@ -284,8 +284,8 @@ describe("incremental go stub pattern", () => {
       fs.writeFileSync(serverFile, edited);
       const regen = await generate({ input: PETSTORE_JSON, lang: "go", out: tmpDir, force: false, incremental: true, http: true });
       expect(regen.success).toBe(true);
-      expect(regen.filesPreserved).toContain("get_pets");
-      expect(regen.filesPreserved).not.toContain("delete_pets_petid");
+      expect(regen.filesPreserved).toContain("list_pets");
+      expect(regen.filesPreserved).not.toContain("delete_pet");
       const content = fs.readFileSync(serverFile, "utf-8");
       expect(content).toContain("message := \"preserved\"");
       expect(content).not.toContain("handler not implemented");

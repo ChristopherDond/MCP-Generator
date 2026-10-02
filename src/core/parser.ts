@@ -170,16 +170,20 @@ export function resolveToolName(
   path: string,
   used: Set<string>
 ): string {
-  void operationId;
-  let base = `${method.toLowerCase()}_${path
-    .replace(/\//g, "_")
-    .replace(/[{}]/g, "")
-    .replace(/[^a-zA-Z0-9_]/g, "")
-    .replace(/^_/, "")
-    .replace(/_+/g, "_")
-    .toLowerCase()}`;
-  base = base.replace(/-+$/g, "");
-  if (ALL_RESERVED.has(base) || base === "") base = `${base || "tool"}_handler`;
+  let base: string;
+  if (operationId !== undefined && operationId.trim() !== "") {
+    base = sanitizeToolName(operationId);
+  } else {
+    base = `${method.toLowerCase()}_${path
+      .replace(/\//g, "_")
+      .replace(/[{}]/g, "")
+      .replace(/[^a-zA-Z0-9_]/g, "")
+      .replace(/^_/, "")
+      .replace(/_+/g, "_")
+      .toLowerCase()}`;
+    base = base.replace(/-+$/g, "");
+    if (ALL_RESERVED.has(base) || base === "") base = `${base || "tool"}_handler`;
+  }
   if (!used.has(base)) {
     used.add(base);
     return base;
@@ -228,7 +232,7 @@ function buildTools(
 ): MCPTool[] {
   const tools: MCPTool[] = [];
   const usedNames = new Set<string>();
-  const METHODS = ["get", "post", "put", "patch", "delete", "head", "options"] as const;
+  const METHODS = ["get", "post", "put", "patch", "delete", "head", "options", "trace"] as const;
   const REF_SCHEMAS = components?.schemas ?? {};
 
   for (const [path, pathItem] of Object.entries(paths)) {
@@ -265,9 +269,12 @@ function buildTools(
       const rawBody = operation.requestBody;
       if (rawBody) {
         if ("$ref" in rawBody) {
-          const refName = refToName(rawBody.$ref);
-          requestBody = (REF_SCHEMAS[refName] as OpenAPIV3.RequestBodyObject) ??
-            undefined;
+          const ref = (rawBody as OpenAPIV3.ReferenceObject).$ref;
+          const refName = refToName(ref);
+          const fromBodies = (components as unknown as Record<string, Record<string, unknown>> | undefined)?.["requestBodies"]?.[refName] as OpenAPIV3.RequestBodyObject | undefined;
+          const fromSchemas = REF_SCHEMAS[refName] as unknown as OpenAPIV3.RequestBodyObject | undefined;
+          const fromParams = (components as unknown as Record<string, Record<string, unknown>> | undefined)?.["parameters"]?.[refName] as unknown as OpenAPIV3.RequestBodyObject | undefined;
+          requestBody = fromBodies ?? fromSchemas ?? fromParams ?? undefined;
         } else {
           requestBody = rawBody;
         }
@@ -349,24 +356,65 @@ function buildModels(
 
     let resolvedSchema = schema;
     if (schema.allOf) {
+      const schemasMap = components.schemas ?? {};
+      const seenRefs = new Set<string>();
+      const collectRefProps = (refName: string): OpenAPIV3.SchemaObject | undefined => {
+        if (seenRefs.has(refName)) return undefined;
+        seenRefs.add(refName);
+        const target = schemasMap[refName] as OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject | undefined;
+        if (!target || "$ref" in target) return undefined;
+        if (target.allOf) {
+          const nested: OpenAPIV3.SchemaObject = {
+            type: "object",
+            properties: { ...(target.properties ?? {}) },
+            required: [...(target.required ?? [])],
+          };
+          for (const nestedSub of target.allOf) {
+            if ("$ref" in nestedSub) {
+              const nestedProps = collectRefProps(refToName((nestedSub as OpenAPIV3.ReferenceObject).$ref));
+              if (nestedProps) {
+                Object.assign(nested.properties!, nestedProps.properties ?? {});
+                const combined = [...(nested.required ?? []), ...(nestedProps.required ?? [])];
+                nested.required = [...new Set(combined)];
+              }
+            } else {
+              Object.assign(nested.properties!, (nestedSub as OpenAPIV3.SchemaObject).properties ?? {});
+              const combined = [...(nested.required ?? []), ...((nestedSub as OpenAPIV3.SchemaObject).required ?? [])];
+              nested.required = [...new Set(combined)];
+            }
+          }
+          return nested;
+        }
+        return target;
+      };
       const merged: OpenAPIV3.SchemaObject = {
         type: "object",
-        properties: {},
-        required: [],
+        properties: { ...(schema.properties ?? {}) },
+        required: [...(schema.required ?? [])],
       };
       for (const sub of schema.allOf) {
         if ("$ref" in sub) {
-          warnings.push(
-            `Schema "${name}": allOf $ref "${(sub as OpenAPIV3.ReferenceObject).$ref}" ignored — referenced properties are not merged (partial allOf support)`
-          );
+          const refName = refToName((sub as OpenAPIV3.ReferenceObject).$ref);
+          const refSchema = collectRefProps(refName);
+          if (refSchema) {
+            Object.assign(merged.properties!, refSchema.properties ?? {});
+            const combined = [...(merged.required ?? []), ...(refSchema.required ?? [])];
+            merged.required = [...new Set(combined)];
+          } else {
+            warnings.push(
+              `Schema "${name}": allOf $ref "${(sub as OpenAPIV3.ReferenceObject).$ref}" ignored — referenced properties are not merged (partial allOf support)`
+            );
+          }
           continue;
         }
         Object.assign(merged.properties!, (sub as OpenAPIV3.SchemaObject).properties ?? {});
-        merged.required = [
+        const combined = [
           ...(merged.required ?? []),
           ...((sub as OpenAPIV3.SchemaObject).required ?? []),
         ];
+        merged.required = [...new Set(combined)];
       }
+      merged.description = schema.description;
       resolvedSchema = merged;
     }
 
@@ -419,7 +467,7 @@ function buildModels(
       name,
       description: schema.description ?? "",
       properties: resolveSchemaProperties(resolvedSchema, components),
-      required: schema.required ?? [],
+      required: resolvedSchema.required ?? [],
       isEnum: false,
       oneOf,
       anyOf,

@@ -25,9 +25,13 @@ export function validatePluginPath(pluginPath: string): void {
     throw new Error(`Security error: Plugin path is a symbolic link: ${pluginPath}`);
   }
 
-  if (!stat.isDirectory()) {
-    throw new Error(`Plugin path must be a directory: ${pluginPath}`);
+  if (stat.isDirectory()) {
+    return;
   }
+  if (stat.isFile() && /\.(js|cjs|mjs)$/.test(resolvedPath)) {
+    return;
+  }
+  throw new Error(`Plugin path must be a directory or a .js file: ${pluginPath}`);
 }
 
 export function validateRemoteUrl(urlString: string): void {

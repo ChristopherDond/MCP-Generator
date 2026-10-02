@@ -67,9 +67,9 @@ describe("partial schema support warnings (Fase 1.3)", () => {
     fs.rmSync(specFile, { force: true });
   });
 
-  it("parseOpenAPI reports Extended (allOf $ref) and Choice (oneOf inline)", async () => {
+  it("parseOpenAPI reports Choice (oneOf inline)", async () => {
     const ast = await parseOpenAPI(specFile);
-    expect(ast.warnings!.join("\n")).toMatch(/Extended/);
+    expect(ast.warnings!.join("\n")).not.toMatch(/Extended/);
     expect(ast.warnings!.join("\n")).toMatch(/Choice/);
     expect(ast.warnings!.join("\n")).toMatch(/Poly.*discriminator/);
   });
@@ -77,7 +77,7 @@ describe("partial schema support warnings (Fase 1.3)", () => {
   it("validate and generate (dry-run) surface the same warnings", async () => {
     const validation = await validateSpec(specFile);
     expect(validation.valid).toBe(true);
-    expect(validation.warnings.join("\n")).toMatch(/Extended/);
+    expect(validation.warnings.join("\n")).not.toMatch(/Extended/);
     expect(validation.warnings.join("\n")).toMatch(/Choice/);
     expect(validation.warnings.join("\n")).toMatch(/Poly.*discriminator/);
 
@@ -92,7 +92,7 @@ describe("partial schema support warnings (Fase 1.3)", () => {
       dryRun: true,
     });
     expect(gen.success).toBe(true);
-    expect(gen.warnings.join("\n")).toMatch(/Extended/);
+    expect(gen.warnings.join("\n")).not.toMatch(/Extended/);
     expect(gen.warnings.join("\n")).toMatch(/Choice/);
   });
 });

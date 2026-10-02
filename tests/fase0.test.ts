@@ -23,7 +23,7 @@ describe("0.1 query params", () => {
       const client = fs.readFileSync(path.join(tmp, "src/client.ts"), "utf-8");
       expect(client).toContain("queryNames");
       expect(client).toContain("URLSearchParams");
-      expect(client).toContain("get_pets");
+      expect(client).toContain("list_pets");
       expect(client).toContain('"limit"');
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });

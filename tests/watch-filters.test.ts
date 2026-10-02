@@ -45,9 +45,9 @@ describe("watch filter passthrough (Fase 1.2)", () => {
       const result = await generate(options);
       expect(result.success).toBe(true);
       const server = fs.readFileSync(path.join(tmp, "src/server.ts"), "utf-8");
-      expect(server).toContain("@@mcp-gen:start:get_pets");
-      expect(server).not.toContain("@@mcp-gen:start:post_pets");
-      expect(server).not.toContain("@@mcp-gen:start:get_pets_petid");
+      expect(server).toContain("@@mcp-gen:start:list_pets");
+      expect(server).not.toContain("@@mcp-gen:start:create_pet");
+      expect(server).not.toContain("@@mcp-gen:start:get_pet_by_id");
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
