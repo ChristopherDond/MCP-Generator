@@ -193,10 +193,7 @@ def _expand_path(path: str, params: dict, quote=None) -> str:
     return out
 
 
-# ─── Tools ───────────────────────────────────────────────────────────────────
 # <generated:handlers>
-# Business logic lives between @@mcp-gen markers and is preserved with --incremental.
-# Auth and validation run in auth.py so guards only cover business logic.
 
 {{#each tools}}
 @mcp.tool()
@@ -247,7 +244,6 @@ async def {{name}}({{#each params}}{{name}}: {{#if required}}{{#eq type "string"
 
  {{/each}}
 # </generated:handlers>
-# ─── Start ───────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     mcp.run()
