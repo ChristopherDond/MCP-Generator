@@ -242,6 +242,8 @@ program
   .option("-i, --input <path>", "If provided, use this as the saved filename instead of the registry default")
   .option("-l, --lang <language>", `Target language: ${SUPPORTED_LANGS.join(" | ")}`, "typescript")
   .option("-o, --out <dir>", "Output directory for the generated project", "./mcp-server")
+  .option("--timeout <ms>", "Fetch timeout for the registry download (ms)", "30000")
+  .option("--max-bytes <bytes>", "Maximum spec size for the registry download (bytes)", String(50 * 1024 * 1024))
   .action(async (opts) => {
     const key = opts.from;
     try {
@@ -258,7 +260,19 @@ program
       }
 
       const spinner = ora(`Fetching ${key}...`).start();
-      const saved = await fetchSpecToCwd(key, opts.input ? resolveInput(opts.input) : undefined);
+      const timeoutMs = Number(opts.timeout);
+      if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+        spinner.fail("Invalid --timeout");
+        console.error(chalk.red(`Invalid --timeout "${opts.timeout}": expected a positive number of milliseconds.`));
+        process.exit(1);
+      }
+      const maxBytes = Number(opts.maxBytes);
+      if (!Number.isFinite(maxBytes) || maxBytes <= 0) {
+        spinner.fail("Invalid --max-bytes");
+        console.error(chalk.red(`Invalid --max-bytes "${opts.maxBytes}": expected a positive number of bytes.`));
+        process.exit(1);
+      }
+      const saved = await fetchSpecToCwd(key, opts.input ? resolveInput(opts.input) : undefined, { timeoutMs, maxBytes });
       spinner.succeed(`Saved spec to ${chalk.green(path.basename(saved))}`);
 
       if (opts.generate) {

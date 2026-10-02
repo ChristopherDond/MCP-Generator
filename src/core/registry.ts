@@ -54,7 +54,11 @@ export const REMOVED_SPECS: Record<string, string> = {
   azure: "The previous azure entry pointed at a common-types fragment (types.json), not a full OpenAPI document.",
 };
 
-export async function fetchSpecToCwd(key: string, targetPath?: string): Promise<string> {
+export async function fetchSpecToCwd(
+  key: string,
+  targetPath?: string,
+  fetchOptions?: { timeoutMs?: number; maxBytes?: number }
+): Promise<string> {
   const removed = REMOVED_SPECS[key];
   if (removed) throw new Error(`Registry key "${key}" was removed: ${removed}`);
   const entry = KNOWN_SPECS[key];
@@ -65,14 +69,16 @@ export async function fetchSpecToCwd(key: string, targetPath?: string): Promise<
 
   validateRemoteUrl(entry.url);
 
+  const timeoutMs = fetchOptions?.timeoutMs ?? 30000;
+  const maxBytes = fetchOptions?.maxBytes ?? 50 * 1024 * 1024;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const res = await fetch(entry.url, {
       signal: controller.signal,
     });
-    
+
     if (!res.ok) throw new Error(`Failed to fetch ${entry.url}: ${res.status} ${res.statusText}`);
 
     const contentType = res.headers.get("content-type");
@@ -80,12 +86,12 @@ export async function fetchSpecToCwd(key: string, targetPath?: string): Promise<
 
     const contentLength = res.headers.get("content-length");
     if (contentLength) {
-      validateContentSize(parseInt(contentLength, 10));
+      validateContentSize(parseInt(contentLength, 10), maxBytes);
     }
 
     const content = await res.text();
-    
-    validateContentSize(Buffer.byteLength(content, "utf-8"));
+
+    validateContentSize(Buffer.byteLength(content, "utf-8"), maxBytes);
 
     const filename = entry.filename ?? (path.basename(new URL(entry.url).pathname) || "openapi.json");
     const outPath = path.resolve(targetPath ? targetPath : path.join(process.cwd(), filename));
