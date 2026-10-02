@@ -430,7 +430,9 @@ export async function scanProject(projectPath: string): Promise<SecurityReport> 
 
     allRules.push(...lintNaming(content, relativePath));
 
-    allRules.push(...lintDescriptions(content, relativePath));
+    if (!relativePath.split(path.sep).includes("examples")) {
+      allRules.push(...lintDescriptions(content, relativePath));
+    }
 
     allRules.push(...lintIncrementalMarkers(content, relativePath));
   }

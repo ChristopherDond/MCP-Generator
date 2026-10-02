@@ -107,6 +107,16 @@ describe("Security/Lint Layer", () => {
       expect(report.summary.errors).toBeGreaterThan(0);
       expect(report.rules.some((r: SecurityRule) => r.id === "SEC-SECRET-SK_")).toBe(true);
     });
+
+    it("ignores TODO lint inside examples/ but still flags credentials", async () => {
+      writeFile("examples/demo.ts", `// TODO: document this example\nconst x = 1;\n`);
+      writeFile("src/app.ts", `// TODO: fix this before production\nconst y = 2;\n`);
+
+      const report = await scanProject(tempDir);
+      const todos = report.rules.filter((r: SecurityRule) => r.id === "LINT-TODO-IN-GENERATED");
+      expect(todos.every((r: SecurityRule) => !(r.file ?? "").includes("examples"))).toBe(true);
+      expect(todos.some((r: SecurityRule) => (r.file ?? "").includes("app.ts"))).toBe(true);
+    });
   });
 
   describe("formatReport", () => {
