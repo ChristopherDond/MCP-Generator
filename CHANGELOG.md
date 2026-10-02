@@ -2,6 +2,18 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.3.6] - 2026-10-02
+
+### Correções e DX sem breaking
+
+- **`watch --interval`**: valor inválido agora falha com erro explícito em vez de cair para 30s em silêncio.
+- **Registry**: `init` aceita `--timeout <ms>` e `--max-bytes <bytes>` (defaults 30s / 50MB) com validação explícita.
+- **Parser Swagger 2.0**: conversão emite warnings de fidelidade (`body` global, `file` fora de `formData`, `collectionFormat` não-csv).
+- **Parser**: `discriminator` ignorado agora gera warning por schema (só aviso, sem quebrar).
+- **Security-lint**: `LINT-TODO-IN-GENERATED` não dispara dentro de `examples/`.
+- **CI**: matriz `ubuntu-latest` + `windows-latest`.
+- **Testes e gates**: 19 suites / 246 testes Jest, smoke de exit codes da CLI 4/4, lint + typecheck limpos.
+
 ## [2.3.5] - 2026-10-01
 
 ### Correções e DX sem breaking

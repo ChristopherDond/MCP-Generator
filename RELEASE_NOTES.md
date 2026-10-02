@@ -1,6 +1,20 @@
 # Notas de release
 
-> **Status em 01/10/2026:** `2.3.5` é a versão publicada no npm (`latest`) e a GitHub Release atual.
+> **Status em 02/10/2026:** `2.3.6` é a versão publicada no npm (`latest`) e a GitHub Release atual.
+
+## 2.3.6 — Publicada em 02/10/2026
+
+Patch sem breaking changes: erro explícito de `--interval` inválido, `--timeout`/`--max-bytes` no `init`, warnings de fidelidade da conversão Swagger 2.0, warning de `discriminator` ignorado, `LINT-TODO-IN-GENERATED` ignora `examples/` e CI no Ubuntu + Windows.
+
+### Validação
+
+- Verificação local: `npm run lint`, `npx tsc --noEmit`, `npm test -- --runInBand` (19 suites, 246 testes), `npm run build`, `npm run test:cli` (4/4), `npm run test:generated`, `npm run test:generated:py`, `npm run test:generated:go`, `npm pack --dry-run`, `npm audit --omit=dev` zero.
+
+### Publicação
+
+Publicada pelo caminho oficial: push da `main` + tag `v2.3.6` → `.github/workflows/release.yml` validou, publicou via Trusted Publisher OIDC (com provenance assinada) e criou a GitHub Release.
+
+Confirmado com `npm view @christopher_dondici/mcp-gen version` (`2.3.6`, dist-tag `latest`) e `gh release view v2.3.6`.
 
 ## 2.3.5 — Publicada em 01/10/2026
 
