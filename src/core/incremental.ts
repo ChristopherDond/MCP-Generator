@@ -1,19 +1,5 @@
 import fs from "fs";
 
-/**
- * Marker format embedded in generated server files:
- *
- * TypeScript:
- *   // @@mcp-gen:start:get_pets
- *   return { content: [{ type: "text", text: "..." }] };
- *   // @@mcp-gen:end:get_pets
- *
- * Python:
- *   # @@mcp-gen:start:get_pets
- *   return [{"id": 1}]
- *   # @@mcp-gen:end:get_pets
- */
-
 const MARKER_START = (name: string) => `@@mcp-gen:start:${name}`;
 const MARKER_END = (name: string) => `@@mcp-gen:end:${name}`;
 
@@ -34,10 +20,6 @@ export interface ExtractedHandlers {
   handlers: Map<string, string>;
 }
 
-/**
- * Extracts all @@mcp-gen:start/end blocks from an existing generated file.
- * Returns an empty map if the file doesn't exist or has no markers.
- */
 export function extractHandlers(filePath: string): ExtractedHandlers {
   const handlers = new Map<string, string>();
 

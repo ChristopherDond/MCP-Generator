@@ -2,7 +2,6 @@ import Handlebars from "handlebars";
 import fs from "fs";
 import path from "path";
 
-// Register helpers used across templates
 
 Handlebars.registerHelper("eq", function (this: unknown, a: unknown, b: unknown, options: { fn: (ctx: unknown) => string; inverse: (ctx: unknown) => string }) {
   const cond = a === b;
@@ -38,7 +37,6 @@ Handlebars.registerHelper("hasBodyParam", (params: Array<{ in: string }>) =>
   (params ?? []).some((p) => p.in === "body")
 );
 
-/** snake_case → PascalCase */
 Handlebars.registerHelper("pascal", (str: string) => {
   if (typeof str !== "string") return str;
   return str
@@ -47,7 +45,6 @@ Handlebars.registerHelper("pascal", (str: string) => {
     .join("");
 });
 
-/** PascalCase or snake_case → camelCase */
 Handlebars.registerHelper("camel", (str: string) => {
   if (typeof str !== "string") return str;
   const pascal = str
@@ -57,12 +54,10 @@ Handlebars.registerHelper("camel", (str: string) => {
   return pascal.charAt(0).toLowerCase() + pascal.slice(1);
 });
 
-/** Stringify a value as JSON for example responses */
 Handlebars.registerHelper("json", (val: unknown) =>
   JSON.stringify(val, null, 2)
 );
 
-/** Render a literal: strings get quoted+escaped, everything else is JSON. */
 Handlebars.registerHelper("literal", (val: unknown): string => {
   if (typeof val === "string") {
     return '"' + val.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
@@ -76,7 +71,6 @@ Handlebars.registerHelper(
     (params ?? []).filter((p) => p.required)
 );
 
-/** Collect unique header parameters across all tools (used to render the client's buildHeaders once). */
 Handlebars.registerHelper("allHeaderParams", (tools: Array<{ params: Array<{ name: string; in: string }> }>) => {
   const seen = new Set<string>();
   const out: Array<{ name: string }> = [];
@@ -108,7 +102,6 @@ Handlebars.registerHelper(
     (params ?? []).filter((p) => !p.required)
 );
 
-/** Map MCP type to TypeScript type string */
 Handlebars.registerHelper("tsType", (type: string): string => {
   switch (type) {
     case "number":
@@ -124,7 +117,6 @@ Handlebars.registerHelper("tsType", (type: string): string => {
   }
 });
 
-/** Map MCP type to Go type string */
 Handlebars.registerHelper("goType", (type: string): string => {
   switch (type) {
     case "number":
@@ -140,7 +132,6 @@ Handlebars.registerHelper("goType", (type: string): string => {
   }
 });
 
-/** Type name → Go type constructor for mcp-go's With<Type> option (String from "string", Number from "number"...). */
 Handlebars.registerHelper("pascalGoType", (type: string): string => {
   switch (type) {
     case "number":
@@ -156,10 +147,8 @@ Handlebars.registerHelper("pascalGoType", (type: string): string => {
   }
 });
 
-/** typeof helper so Go enum literals can quote strings vs leave numbers raw. */
 Handlebars.registerHelper("typeof", (val: unknown): string => typeof val);
 
-/** Escape a string for a Go double-quoted string literal (\\ \n \r \t \"). */
 Handlebars.registerHelper("escapeLiteral", (val: unknown): string => {
   if (val === null || val === undefined) return "";
   const out: string[] = [];
@@ -176,7 +165,6 @@ Handlebars.registerHelper("escapeLiteral", (val: unknown): string => {
   return out.join("");
 });
 
-/** Map MCP type to Python type annotation. */
 Handlebars.registerHelper("pyType", (prop: { type: string; ref?: string; isArray: boolean }): string => {
   const base = prop.ref ?? (() => {
     switch (prop.type) {
@@ -190,9 +178,6 @@ Handlebars.registerHelper("pyType", (prop: { type: string; ref?: string; isArray
   return prop.isArray ? `List[${base}]` : base;
 });
 
-/** Escape a string for safe embedding inside a double-quoted string literal.
- *  Escapes backslashes, double quotes, control chars and newlines so arbitrary
- *  OpenAPI descriptions cannot break or inject into generated code. */
 Handlebars.registerHelper("escapeText", (val: unknown): string => {
   if (val === null || val === undefined) return "";
   const out: string[] = [];
