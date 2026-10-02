@@ -16,7 +16,6 @@ import (
 var baseURL = "{{baseUrl}}"
 var apiToken = os.Getenv("TOKEN")
 
-// RAW_CREDENTIAL_KEYS defines credential keywords that are blocked by default
 var RAW_CREDENTIAL_KEYS = map[string]bool{
 	"authorization": true,
 	"token":         true,
@@ -30,7 +29,6 @@ var RAW_CREDENTIAL_KEYS = map[string]bool{
 	"secret":        true,
 }
 
-// TOOL_POLICIES defines per-tool security policies
 var TOOL_POLICIES = map[string]struct {
 	Endpoint               string
 	RequiresTTL            bool
