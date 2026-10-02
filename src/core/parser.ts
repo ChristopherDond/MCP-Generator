@@ -391,6 +391,12 @@ function buildModels(
       }
     }
 
+    if (schema.discriminator) {
+      warnings.push(
+        `Schema "${name}": discriminator${(schema.discriminator as OpenAPIV3.DiscriminatorObject).propertyName ? ` on "${(schema.discriminator as OpenAPIV3.DiscriminatorObject).propertyName}"` : ""} ignored — generated models do not dispatch on polymorphic types`
+      );
+    }
+
     const oneOf: string[] | undefined = schema.oneOf
       ? (schema.oneOf
           .map((s) => {

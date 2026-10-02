@@ -45,6 +45,11 @@ function writePartialSpec(): string {
             { type: "object", properties: { inline: { type: "string" } } },
           ],
         },
+        Poly: {
+          type: "object",
+          properties: { kind: { type: "string" } },
+          discriminator: { propertyName: "kind" },
+        },
       },
     },
   };
@@ -66,6 +71,7 @@ describe("partial schema support warnings (Fase 1.3)", () => {
     const ast = await parseOpenAPI(specFile);
     expect(ast.warnings!.join("\n")).toMatch(/Extended/);
     expect(ast.warnings!.join("\n")).toMatch(/Choice/);
+    expect(ast.warnings!.join("\n")).toMatch(/Poly.*discriminator/);
   });
 
   it("validate and generate (dry-run) surface the same warnings", async () => {
@@ -73,6 +79,7 @@ describe("partial schema support warnings (Fase 1.3)", () => {
     expect(validation.valid).toBe(true);
     expect(validation.warnings.join("\n")).toMatch(/Extended/);
     expect(validation.warnings.join("\n")).toMatch(/Choice/);
+    expect(validation.warnings.join("\n")).toMatch(/Poly.*discriminator/);
 
     const tmp = path.join(os.tmpdir(), `mcp-partial-out-${Date.now()}`);
     const gen = await generate({
