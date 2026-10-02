@@ -1,10 +1,6 @@
 import path from "path";
 import fs from "fs";
 
-/**
- * Validates that a file path is within an allowed directory.
- * Prevents path traversal attacks (e.g., ../../../etc/passwd).
- */
 export function validateOutputPath(filePath: string, baseDir: string): void {
   const resolvedPath = path.resolve(filePath);
   const resolvedBase = path.resolve(baseDir);
@@ -16,10 +12,6 @@ export function validateOutputPath(filePath: string, baseDir: string): void {
   }
 }
 
-/**
- * Validates that a plugin path exists and is a directory.
- * Prevents loading arbitrary code from unexpected locations.
- */
 export function validatePluginPath(pluginPath: string): void {
   const resolvedPath = path.resolve(pluginPath);
 
@@ -38,10 +30,6 @@ export function validatePluginPath(pluginPath: string): void {
   }
 }
 
-/**
- * Validates a remote URL for fetching OpenAPI specs.
- * Only allows HTTPS and known safe domains.
- */
 export function validateRemoteUrl(urlString: string): void {
   try {
     const url = new URL(urlString);
@@ -77,10 +65,6 @@ export function validateRemoteUrl(urlString: string): void {
   }
 }
 
-/**
- * Validates the size of remote content to prevent DoS attacks.
- * Max size: 50MB
- */
 export function validateContentSize(size: number, maxBytes: number = 50 * 1024 * 1024): void {
   if (size > maxBytes) {
     throw new Error(
@@ -89,10 +73,6 @@ export function validateContentSize(size: number, maxBytes: number = 50 * 1024 *
   }
 }
 
-/**
- * Validates Content-Type of remote response.
- * Only allows JSON and YAML for OpenAPI specs.
- */
 export function validateContentType(contentType: string | null): void {
   if (!contentType) {
     throw new Error("Security error: Content-Type header is missing");
@@ -106,10 +86,6 @@ export function validateContentType(contentType: string | null): void {
   }
 }
 
-/**
- * Sanitizes user input to prevent injection attacks.
- * Removes/escapes potentially dangerous characters.
- */
 export function sanitizeInput(input: string, maxLength: number = 256): string {
   if (typeof input !== "string") {
     throw new Error("Input must be a string");
@@ -122,18 +98,10 @@ export function sanitizeInput(input: string, maxLength: number = 256): string {
   return input.replace(/[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]/g, "");
 }
 
-/**
- * Creates a whitelist of allowed plugin modules.
- * Returns true if plugin is in the whitelist.
- */
 export function isPluginWhitelisted(pluginName: string, whitelist: string[]): boolean {
   return whitelist.includes(pluginName);
 }
 
-/**
- * Validates that the plugin module exports a valid structure.
- * Prevents malicious modules from executing arbitrary code.
- */
 export function validatePluginModule(module: unknown): boolean {
   if (typeof module !== "object" || module === null) {
     return false;
