@@ -45,6 +45,9 @@ This document outlines the security measures and practices implemented in the MC
 - `js-yaml@3.15.1` (GHSA-2883-xcg3-v3hh, high) appears only in the dev tree, pulled by
   `ts-jest → babel-plugin-istanbul → @istanbuljs/load-nyc-config` (`^3.13.1`).
   Runtime uses `js-yaml@4.3.2` directly and is clean.
+- `brace-expansion@1.1.18` (GHSA-q2hr-2g5m-vwhr, GHSA-qhr7-859c-m2p7, GHSA-6j4f-fj2g-mc7p, high)
+  appears only in the dev tree, pulled by `jest → @jest/core → @jest/reporters → glob@7.2.3 → minimatch@3.1.5`.
+  Runtime has no such chain and is clean.
 - The vulnerable copy is loaded only when `load-nyc-config` parses a `.nycrc.yml`/`.nycrc.yaml`
   file. This project has no such file and never runs Jest with `--coverage`, so the code path
   is unreachable in CI and in published artifacts.

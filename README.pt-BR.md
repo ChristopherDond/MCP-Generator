@@ -4,9 +4,21 @@
 
 Gere servidores MCP a partir de specs OpenAPI.
 
-> **Status**: `@christopher_dondici/mcp-gen` 2.3.6 é a última versão publicada no npm. Veja as [notas de release](RELEASE_NOTES.md).
+> **Status**: `@christopher_dondici/mcp-gen` 2.3.7 é a última versão publicada no npm. Veja as [notas de release](RELEASE_NOTES.md).
 
 `mcp-gen` transforma uma spec OpenAPI v3 ou Swagger 2.0 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript, Python ou Go. Cada rota vira uma tool, e a geração incremental preserva o código customizado entre os marcadores indicados.
+
+## Novidades da 2.3.7
+
+(Patch sem breaking changes.)
+
+- Nomes de tools usam o `operationId` sanitizado quando presente, com fallback para `method_path`.
+- `allOf` com `$ref` faz merge das propriedades referenciadas; `requestBody` resolve via `components.requestBodies`; `trace` é método suportado.
+- `security --json` emite JSON puro no stdout para parsing em CI; `--plugin` aceita diretório ou arquivo de módulo.
+- `watch` de URL valida a URL, impõe timeout de 30s e checks de conteúdo, e compara por hash SHA-256.
+- `security-lint` com menos falsos positivos (regex base64 ancorada, lockfiles ignorados, todas as specs escaneadas).
+- CI com smoke Python gerado e audit de dependências de produção.
+- Verificação local: 19 suites / 246 testes Jest, smoke de exit codes 4/4, lint + typecheck limpos.
 
 ## Novidades da 2.3.6
 
@@ -174,7 +186,7 @@ Cada rota vira uma tool MCP com:
 
 ## Instalação local e comandos abreviados
 
-Instale a última versão com `npm install -g @christopher_dondici/mcp-gen@2.3.4`. Para trabalhar pelo código-fonte, use o build em [Início rápido](#início-rápido).
+Instale a última versão com `npm install -g @christopher_dondici/mcp-gen@2.3.7`. Para trabalhar pelo código-fonte, use o build em [Início rápido](#início-rápido).
 Neste README, `mcp-gen` é uma abreviação de `node dist/cli/index.js`, executado na raiz do repositório. Por exemplo, `mcp-gen validate -i examples/petstore.yaml` equivale a `node dist/cli/index.js validate -i examples/petstore.yaml`.
 
 Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o comando `mcp-gen` apontando para seu checkout local. Isso altera os links globais do npm; não baixa um pacote `@christopher_dondici/mcp-gen` publicado. O nome npm mudou porque `mcp-gen` foi recusado por similaridade com `mcpgen`; o comando continua sendo `mcp-gen`.
@@ -182,7 +194,7 @@ Opcionalmente, execute `npm link` na raiz após o build para disponibilizar o co
 Para instalar um tarball produzido localmente sem publicar:
 
 ```bash
-npm install ./christopher_dondici-mcp-gen-2.3.4.tgz
+npm install ./christopher_dondici-mcp-gen-2.3.7.tgz
 ./node_modules/.bin/mcp-gen --version
 ./node_modules/.bin/mcp-gen validate -i node_modules/@christopher_dondici/mcp-gen/examples/petstore.yaml
 ```
@@ -535,9 +547,10 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.4 | Publicada no npm | Filtros de path com glob, allowlist inline, group-by tag/path-prefix com roteamento por action, dedup com method/hash, guardas `<generated:handlers>` com merge 3-way, middleware de auth separado, `handlers.custom.*` nunca sobrescrito, correção do template de auth para specs sem `securitySchemes` |
 | v2.1.5 | Publicada no npm | Fase 0 P0 (PR #4): serialização de query no TS, query/headers no Python, HTTP real no Go, registry só v3 com orientação |
 | v2.2.0 | Publicada no npm | Fase 1: `generate --dry-run` + resumo `--json`, filtros/grupos no `watch` (+ prompts interativos, correção do `--once` em arquivos), avisos por schema parcial em `validate`/`generate`, docs do CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` |
-| v2.3.6 | Publicada no npm (atual) | Erro explícito de `--interval`, `--timeout`/`--max-bytes` no `init`, warnings de fidelidade Swagger 2.0, warning de `discriminator`, TODO lint ignora `examples/`, CI no Ubuntu + Windows |
-| v2.3.5 | Publicada no npm (atual) | Allowlist METHOD sem case, warning de filtro zero com dica de `--dry-run`, stub Go na regeneração incremental, fallback non-JSON para body/example |
-| v2.3.4 | Publicada no npm (atual) | `ip-address` 10.4.0 → 10.7.2 via cadeia do SDK, guard de snapshot do lockfile do scaffold, `js-yaml` dev-only segue documentado |
+| v2.3.7 | Publicada no npm (atual) | Nomes via `operationId`, merge de `allOf` com $ref, `requestBody` via `requestBodies`, suporte a `trace`, `security --json` puro, watch URL endurecido, security-lint mais silencioso, smoke Python + audit prod na CI |
+| v2.3.6 | Publicada no npm | Erro explícito de `--interval`, `--timeout`/`--max-bytes` no `init`, warnings de fidelidade Swagger 2.0, warning de `discriminator`, TODO lint ignora `examples/`, CI no Ubuntu + Windows |
+| v2.3.5 | Publicada no npm | Allowlist METHOD sem case, warning de filtro zero com dica de `--dry-run`, stub Go na regeneração incremental, fallback non-JSON para body/example |
+| v2.3.4 | Publicada no npm | `ip-address` 10.4.0 → 10.7.2 via cadeia do SDK, guard de snapshot do lockfile do scaffold, `js-yaml` dev-only segue documentado |
 | v2.3.3 | Publicada no npm | Erro explícito de `--env-file` inexistente, next steps de Go no `init`, placeholders trocados, `dist` limpa antes do build |
 | v2.3.2 | Publicada no npm | Deps diretas js-yaml/openapi-types, testes reais do registry, `/**` final casa a base, stub Go + round-trip dos guards, smoke Go na CI |
 | v2.3.1 | Publicada no npm | Lockfile no scaffold TypeScript, precedência de force sobre incremental, exit codes confiáveis no `watch --once`, lint reproduzível |

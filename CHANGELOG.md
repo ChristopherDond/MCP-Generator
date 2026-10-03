@@ -2,6 +2,19 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.3.7] - 2026-10-03
+
+### Parser, CLI e segurança sem breaking
+
+- **Nomes de tools**: `operationId` sanitizado vira o nome quando presente; fallback para `method_path` mantido.
+- **Modelos**: `allOf` com `$ref` faz merge das propriedades referenciadas; `requestBody` resolve via `components.requestBodies`.
+- **Métodos**: `trace` incluído na lista de métodos HTTP.
+- **CLI**: `security --json` emite JSON puro no stdout; `--plugin` aceita diretório ou arquivo de módulo.
+- **Watch URL**: validação de URL, timeout de 30s, checks de content-type/size e comparação por hash SHA-256.
+- **Security-lint**: regex base64 ancorada, lockfiles fora do scan, todas as specs escaneadas.
+- **CI**: smoke Python gerado + audit de dependências de produção; enum `action` de grupos limitado a 50 membros.
+- **Testes e gates**: 19 suites / 246 testes Jest, smoke de exit codes da CLI 4/4, lint + typecheck limpos.
+
 ## [2.3.6] - 2026-10-02
 
 ### Correções e DX sem breaking
