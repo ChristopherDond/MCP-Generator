@@ -6,6 +6,8 @@ import path from "path";
 import { generate, validateSpec } from "../core/generator";
 import type { GeneratorOptions, Lang } from "../core/types";
 import { fetchSpecToCwd, listKnownSpecs, getSpecInfo } from "../core/registry";
+import { validateRemoteUrl, validateContentType, validateContentSize } from "../core/security";
+import { createHash } from "crypto";
 import { buildWatchGeneratorOptions } from "./watch-options";
 import fs from "fs";
 import inquirer from "inquirer";
@@ -412,6 +414,7 @@ program
     };
 
     if (opts.input.startsWith("http://") || opts.input.startsWith("https://")) {
+      validateRemoteUrl(opts.input);
       let last = "";
       const parsed = Number(opts.interval);
       if (!Number.isFinite(parsed) || parsed <= 0) {
@@ -421,22 +424,31 @@ program
       const interval = parsed;
       console.log(chalk.dim(`[watch] polling ${opts.input} every ${interval}ms`));
       const check = async (): Promise<boolean> => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
         try {
-          const r = await fetch(opts.input);
+          const r = await fetch(opts.input, { signal: controller.signal });
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          validateContentType(r.headers.get("content-type"));
+          const contentLength = r.headers.get("content-length");
+          if (contentLength) validateContentSize(parseInt(contentLength, 10));
           const body = await r.text();
+          validateContentSize(Buffer.byteLength(body, "utf-8"));
+          const digest = createHash("sha256").update(body).digest("hex");
           if (!last) {
-            last = body;
+            last = digest;
             return runGenerate();
           }
-          if (body !== last) {
-            last = body;
+          if (digest !== last) {
+            last = digest;
             return runGenerate();
           }
           return true;
         } catch (e) {
           console.error(chalk.red(String(e)));
           return false;
+        } finally {
+          clearTimeout(timeoutId);
         }
       };
       const initialSuccess = await check();

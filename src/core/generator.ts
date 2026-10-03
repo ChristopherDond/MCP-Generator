@@ -256,8 +256,10 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
     try {
       validatePluginPath(p);
 
-      const pluginTemplates = path.join(p, "templates", langDir);
-      if (fs.existsSync(pluginTemplates)) templateRoots.push(pluginTemplates);
+      if (fs.lstatSync(path.resolve(p)).isDirectory()) {
+        const pluginTemplates = path.join(p, "templates", langDir);
+        if (fs.existsSync(pluginTemplates)) templateRoots.push(pluginTemplates);
+      }
 
       if (process.env.MCP_GEN_ALLOW_PLUGINS === "true") {
         try {
