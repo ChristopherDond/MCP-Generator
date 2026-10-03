@@ -180,14 +180,15 @@ export function groupTools(tools: MCPTool[], mode: GroupByMode): MCPTool[] {
     }
     used.add(candidate);
     const memberNames = members.map((m) => m.name);
+    const cappedEnum = memberNames.length > 50 ? undefined : memberNames;
     const actionParam: MCPToolParam = {
       name: "action",
       description: `Action for ${key}`,
       type: "string",
       in: "query",
       required: true,
-      schema: { type: "string", enum: memberNames } as MCPToolParam["schema"],
-      enum: memberNames,
+      schema: { type: "string", ...(cappedEnum ? { enum: cappedEnum } : {}) } as MCPToolParam["schema"],
+      ...(cappedEnum ? { enum: cappedEnum } : {}),
     };
     const union = new Map<string, MCPToolParam>();
     for (const member of members) {

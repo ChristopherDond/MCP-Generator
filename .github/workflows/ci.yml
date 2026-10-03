@@ -49,6 +49,18 @@ jobs:
         timeout-minutes: 6
         run: npm run test:generated
 
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build and smoke test generated Python
+        timeout-minutes: 6
+        run: npm run test:generated:py
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
