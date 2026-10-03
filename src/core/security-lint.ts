@@ -71,6 +71,8 @@ export function scanForCredentials(
   content: string,
   filePath: string = "unknown"
 ): SecurityRule[] {
+  const normalized = filePath.replace(/\\/g, "/");
+  if (/(^|\/)package-lock\.json$/.test(normalized) || normalized.endsWith(".lock")) return [];
   const rules: SecurityRule[] = [];
   const lines = content.split("\n");
 
@@ -111,7 +113,7 @@ export function scanForCredentials(
       { pattern: /ya29\.[a-zA-Z0-9_-]{20,}/g, type: "google_oauth" },
       { pattern: /eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}/g, type: "jwt" },
       { pattern: /AKIA[0-9A-Z]{16}/g, type: "aws_access_key" },
-      { pattern: /[a-zA-Z0-9/+=]{40}/g, type: "base64_secret" },
+      { pattern: /(?<![a-zA-Z0-9/+=])(?:[a-zA-Z0-9+/]{39}[a-zA-Z0-9+/=]|[a-zA-Z0-9+/]{40,}={1,2})(?![a-zA-Z0-9/+=])/g, type: "base64_secret" },
     ];
 
     for (const { pattern, type } of secretPatterns) {
@@ -228,13 +230,13 @@ export function lintNaming(
     const line = lines[i];
 
     if (filePath.endsWith(".ts") || filePath.endsWith(".js")) {
-      const fnMatch = line.match(/^\s*(async\s+)?function\s+([a-z_][a-z0-9_]*)/);
-      if (fnMatch && fnMatch[2].includes("_")) {
+      const fnMatch = line.match(/^\s*(export\s+)?(async\s+)?function\s+([a-z_][a-z0-9_]*)/);
+      if (fnMatch && fnMatch[3].includes("_") && !/^(list|get|create|update|delete|fetch|handle|parse|build|validate|scan|lint|format|extract|resolve|sanitize|register|generate)_[a-z_]+$/.test(fnMatch[3])) {
         rules.push({
           id: "LINT-TS-SNAKE-CASE",
           severity: "info",
           category: "lint",
-          message: `Function "${fnMatch[2]}" uses snake_case; prefer camelCase in TypeScript`,
+          message: `Function "${fnMatch[3]}" uses snake_case; prefer camelCase in TypeScript`,
           file: filePath,
           line: i + 1,
           suggestion: "Rename to camelCase (e.g., get_user → getUser)",
@@ -440,7 +442,7 @@ export async function scanProject(projectPath: string): Promise<SecurityReport> 
   const specFiles = findFiles(projectPath, [".json", ".yaml", ".yml"])
     .filter(f => f.includes("openapi") || f.includes("swagger") || f.includes("api"));
 
-  for (const specFile of specFiles.slice(0, 1)) { // Only first spec
+  for (const specFile of specFiles) {
     try {
       const specContent = fs.readFileSync(specFile, "utf-8");
       const spec = specFile.endsWith(".json") 
