@@ -45,7 +45,7 @@ test("generated Petstore Go scaffolds and compiles (go build)", { timeout: 30000
     assert.ok(result.filesCreated.includes("go.mod"));
 
     const main = readFileSync(path.join(out, "main.go"), "utf8");
-    assert.match(main, /@@mcp-gen:start:get_pets/);
+    assert.match(main, /@@mcp-gen:start:list_pets/);
     assert.match(main, /ServeStdio/);
     const gomod = readFileSync(path.join(out, "go.mod"), "utf8");
     assert.match(gomod, /mcp-go/);

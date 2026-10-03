@@ -77,10 +77,10 @@ test("generated Petstore installs, compiles and serves initialize/tools/list ove
       assert.ok(client.getServerCapabilities().tools);
       const { tools } = await client.listTools(undefined, { timeout: 10000 });
       assert.deepEqual(tools.map((tool) => tool.name).sort(), [
-        "delete_pets_petid",
-        "get_pets",
-        "get_pets_petid",
-        "post_pets",
+        "create_pet",
+        "delete_pet",
+        "get_pet_by_id",
+        "list_pets",
       ]);
       for (const tool of tools) {
         assert.equal(tool.inputSchema.type, "object");

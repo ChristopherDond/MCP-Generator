@@ -102,10 +102,10 @@ test("generated Petstore compiles (py_compile) and serves initialize/tools/list 
       assert.ok(client.getServerCapabilities().tools);
       const { tools } = await client.listTools(undefined, { timeout: 15000 });
       assert.deepEqual(tools.map((tool) => tool.name).sort(), [
-        "delete_pets_petid",
-        "get_pets",
-        "get_pets_petid",
-        "post_pets",
+        "create_pet",
+        "delete_pet",
+        "get_pet_by_id",
+        "list_pets",
       ]);
       process.stdout.write("initialize OK; tools/list OK (4 tools); no tools/call requests\n");
     };
