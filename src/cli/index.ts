@@ -414,7 +414,6 @@ program
     };
 
     if (opts.input.startsWith("http://") || opts.input.startsWith("https://")) {
-      validateRemoteUrl(opts.input);
       let last = "";
       const parsed = Number(opts.interval);
       if (!Number.isFinite(parsed) || parsed <= 0) {
@@ -422,6 +421,7 @@ program
         process.exit(1);
       }
       const interval = parsed;
+      validateRemoteUrl(opts.input);
       console.log(chalk.dim(`[watch] polling ${opts.input} every ${interval}ms`));
       const check = async (): Promise<boolean> => {
         const controller = new AbortController();
