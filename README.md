@@ -628,7 +628,7 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.3.2 | Released on npm | Direct js-yaml/openapi-types deps, real registry validation tests, trailing `/**` matches base path, Go stub pattern + guard round-trip, Go build smoke in CI |
 | v2.3.1 | Released on npm | TypeScript scaffold lockfile, force-over-incremental precedence, reliable `watch --once` exit codes, reproducible lint gate |
 | v2.3.0 | Released on npm | Fase 2: Swagger 2.0 → v3 conversion on ingest, `slack`/`kubernetes`/`digitalocean` back in the registry, `examples/large-scale.json` benchmark (180 → 10 tools) |
-| Distribution | Verified for 2.3.4 | Registry installation works via `npm install -g @christopher_dondici/mcp-gen`; pip publication is not established. Python is a generation target, not a pip installation path for this CLI |
+| Distribution | Verified for 2.3.7 | Registry installation works via `npm install -g @christopher_dondici/mcp-gen`; pip publication is not established. Python is a generation target, not a pip installation path for this CLI |
 | Future | Planned | Streaming/resources/prompts, more registries |
 
 ---
