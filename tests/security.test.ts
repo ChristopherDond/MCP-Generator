@@ -4,6 +4,8 @@ import {
   validateRemoteUrl,
   validateContentSize,
   validateContentType,
+  parseContentLength,
+  readBodyWithLimit,
   sanitizeInput,
   isPluginWhitelisted,
   validatePluginModule,
@@ -214,6 +216,52 @@ describe("Security Validations", () => {
         expect.stringContaining("exports unexpected key")
       );
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe("parseContentLength", () => {
+    it("should parse a valid byte count", () => {
+      expect(parseContentLength("11")).toBe(11);
+    });
+
+    it("should return undefined for missing header", () => {
+      expect(parseContentLength(null)).toBeUndefined();
+    });
+
+    it("should return undefined for malformed header", () => {
+      expect(parseContentLength("not-a-number")).toBeUndefined();
+    });
+  });
+
+  describe("readBodyWithLimit", () => {
+    it("should read a small body fully", async () => {
+      const body = await readBodyWithLimit(async () => "hello");
+      expect(body).toBe("hello");
+    });
+
+    it("should throw before reading when content-length exceeds the limit", async () => {
+      let read = false;
+      await expect(
+        readBodyWithLimit(
+          async () => {
+            read = true;
+            return "x";
+          },
+          11,
+          10
+        )
+      ).rejects.toThrow(/exceeds maximum allowed/);
+      expect(read).toBe(false);
+    });
+
+    it("should throw while streaming when chunks exceed the limit", async () => {
+      async function* reader() {
+        yield "abc";
+        yield "defgh";
+      }
+      await expect(readBodyWithLimit(reader(), null, 5)).rejects.toThrow(
+        /exceeds maximum allowed/
+      );
     });
   });
 });

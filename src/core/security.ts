@@ -77,6 +77,70 @@ export function validateContentSize(size: number, maxBytes: number = 50 * 1024 *
   }
 }
 
+export function parseContentLength(value: string | null): number | undefined {
+  if (value === null || value === undefined) return undefined;
+  const trimmed = String(value).trim();
+  if (!trimmed) return undefined;
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed) || parsed < 0 || !Number.isInteger(parsed)) return undefined;
+  return parsed;
+}
+
+type BodySource =
+  | { text: () => Promise<string>; body?: { getReader: () => { read: () => Promise<{ done: boolean; value?: unknown }>; releaseLock?: () => void; cancel?: () => Promise<void> } } | null }
+  | (() => Promise<string>)
+  | AsyncIterable<string | Uint8Array>;
+
+export async function readBodyWithLimit(
+  source: BodySource,
+  contentLength?: number | null,
+  maxBytes: number = 50 * 1024 * 1024
+): Promise<string> {
+  if (typeof contentLength === "number") validateContentSize(contentLength, maxBytes);
+  if (typeof source === "function") {
+    const text = await source();
+    validateContentSize(Buffer.byteLength(text, "utf-8"), maxBytes);
+    return text;
+  }
+  if (typeof (source as AsyncIterable<unknown>)[Symbol.asyncIterator] === "function") {
+    let size = 0;
+    const chunks: string[] = [];
+    const decoder = new TextDecoder();
+    for await (const chunk of source as AsyncIterable<string | Uint8Array>) {
+      const text = typeof chunk === "string" ? chunk : decoder.decode(chunk, { stream: true });
+      size += Buffer.byteLength(text, "utf-8");
+      validateContentSize(size, maxBytes);
+      chunks.push(text);
+    }
+    chunks.push(decoder.decode());
+    return chunks.join("");
+  }
+  const res = source as { text: () => Promise<string>; body?: { getReader: () => { read: () => Promise<{ done: boolean; value?: unknown }>; releaseLock?: () => void } } | null };
+  if (res.body && typeof res.body.getReader === "function") {
+    const reader = res.body.getReader();
+    try {
+      let size = 0;
+      const chunks: string[] = [];
+      const decoder = new TextDecoder();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const text = typeof value === "string" ? value : decoder.decode(value as Uint8Array, { stream: true });
+        size += Buffer.byteLength(text, "utf-8");
+        validateContentSize(size, maxBytes);
+        chunks.push(text);
+      }
+      chunks.push(decoder.decode());
+      return chunks.join("");
+    } finally {
+      if (typeof reader.releaseLock === "function") reader.releaseLock();
+    }
+  }
+  const text = await res.text();
+  validateContentSize(Buffer.byteLength(text, "utf-8"), maxBytes);
+  return text;
+}
+
 export function validateContentType(contentType: string | null): void {
   if (!contentType) {
     throw new Error("Security error: Content-Type header is missing");

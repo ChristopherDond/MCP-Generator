@@ -6,7 +6,7 @@ import path from "path";
 import { generate, validateSpec } from "../core/generator";
 import type { GeneratorOptions, Lang } from "../core/types";
 import { fetchSpecToCwd, listKnownSpecs, getSpecInfo } from "../core/registry";
-import { validateRemoteUrl, validateContentType, validateContentSize } from "../core/security";
+import { validateRemoteUrl, validateContentType, parseContentLength, readBodyWithLimit } from "../core/security";
 import { createHash } from "crypto";
 import { buildWatchGeneratorOptions } from "./watch-options";
 import fs from "fs";
@@ -430,10 +430,7 @@ program
           const r = await fetch(opts.input, { signal: controller.signal });
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           validateContentType(r.headers.get("content-type"));
-          const contentLength = r.headers.get("content-length");
-          if (contentLength) validateContentSize(parseInt(contentLength, 10));
-          const body = await r.text();
-          validateContentSize(Buffer.byteLength(body, "utf-8"));
+          const body = await readBodyWithLimit(r, parseContentLength(r.headers.get("content-length")));
           const digest = createHash("sha256").update(body).digest("hex");
           if (!last) {
             last = digest;

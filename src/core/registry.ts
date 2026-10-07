@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { validateRemoteUrl, validateContentType, validateContentSize } from "./security";
+import { validateRemoteUrl, validateContentType, parseContentLength, readBodyWithLimit } from "./security";
 
 export const KNOWN_SPECS: Record<string, { url: string; filename?: string; description?: string }> = {
   stripe: {
@@ -84,14 +84,7 @@ export async function fetchSpecToCwd(
     const contentType = res.headers.get("content-type");
     validateContentType(contentType);
 
-    const contentLength = res.headers.get("content-length");
-    if (contentLength) {
-      validateContentSize(parseInt(contentLength, 10), maxBytes);
-    }
-
-    const content = await res.text();
-
-    validateContentSize(Buffer.byteLength(content, "utf-8"), maxBytes);
+    const content = await readBodyWithLimit(res, parseContentLength(res.headers.get("content-length")), maxBytes);
 
     const filename = entry.filename ?? (path.basename(new URL(entry.url).pathname) || "openapi.json");
     const outPath = path.resolve(targetPath ? targetPath : path.join(process.cwd(), filename));
