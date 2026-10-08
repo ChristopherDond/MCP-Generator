@@ -2,6 +2,15 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.3.8] - 2026-10-07
+
+### Segurança, CI e downloads remotos sem breaking
+
+- **Deps**: `@modelcontextprotocol/sdk` 1.30.0 → 1.32.1 e `proxy-addr` → 2.0.8, zerando o `npm audit --omit=dev` (corrige GHSA-6qxp-vccf-f47h high e GHSA-jqcg-44mw-7w3h critical).
+- **Watch/registry**: corpo de spec remota lido em streaming com teto de tamanho (`readBodyWithLimit`); `content-length` malformado não quebra a pré-checagem (`parseContentLength`).
+- **CI**: Node 20 → 22, matriz `ubuntu-24.04` + `windows-latest`, `softprops/action-gh-release` v1 → v2, `engines.node >= 20` + `.nvmrc` 22, `@types/node` 22.
+- **Testes e gates**: 19 suites / 252 testes Jest, smoke de exit codes da CLI 4/4, smokes dos scaffolds TypeScript, Python e Go, `npm audit --omit=dev` zero.
+
 ## [2.3.7] - 2026-10-03
 
 ### Parser, CLI e segurança sem breaking

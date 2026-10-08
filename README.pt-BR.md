@@ -4,9 +4,18 @@
 
 Gere servidores MCP a partir de specs OpenAPI.
 
-> **Status**: `@christopher_dondici/mcp-gen` 2.3.7 é a última versão publicada no npm. Veja as [notas de release](RELEASE_NOTES.md).
+> **Status**: `@christopher_dondici/mcp-gen` 2.3.7 é a última versão publicada no npm; 2.3.8 preparada (publicação pendente). Veja as [notas de release](RELEASE_NOTES.md).
 
 `mcp-gen` transforma uma spec OpenAPI v3 ou Swagger 2.0 em um servidor [Model Context Protocol](https://modelcontextprotocol.io) em TypeScript, Python ou Go. Cada rota vira uma tool, e a geração incremental preserva o código customizado entre os marcadores indicados.
+
+## Novidades da 2.3.8
+
+(Patch sem breaking changes. Preparada, publicação pendente.)
+
+- SDK 1.30.0 → 1.32.1 e `proxy-addr` → 2.0.8; `npm audit --omit=dev` limpo (corrige 1 high + 1 critical).
+- `watch` de URL e downloads do registry leem o corpo remoto em streaming com teto de 50MB e parse seguro de `content-length`.
+- CI no Node 22 com `ubuntu-24.04` pinado + `windows-latest`, `action-gh-release` v2, `engines.node >= 20` + `.nvmrc` 22.
+- Verificação local: 19 suites / 252 testes Jest, smoke de exit codes 4/4, smokes TypeScript/Python/Go, `npm audit --omit=dev` limpo.
 
 ## Novidades da 2.3.7
 
@@ -547,7 +556,8 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.4 | Publicada no npm | Filtros de path com glob, allowlist inline, group-by tag/path-prefix com roteamento por action, dedup com method/hash, guardas `<generated:handlers>` com merge 3-way, middleware de auth separado, `handlers.custom.*` nunca sobrescrito, correção do template de auth para specs sem `securitySchemes` |
 | v2.1.5 | Publicada no npm | Fase 0 P0 (PR #4): serialização de query no TS, query/headers no Python, HTTP real no Go, registry só v3 com orientação |
 | v2.2.0 | Publicada no npm | Fase 1: `generate --dry-run` + resumo `--json`, filtros/grupos no `watch` (+ prompts interativos, correção do `--once` em arquivos), avisos por schema parcial em `validate`/`generate`, docs do CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` |
-| v2.3.7 | Publicada no npm (atual) | Nomes via `operationId`, merge de `allOf` com $ref, `requestBody` via `requestBodies`, suporte a `trace`, `security --json` puro, watch URL endurecido, security-lint mais silencioso, smoke Python + audit prod na CI |
+| v2.3.8 | Preparada (publicação pendente) | SDK 1.32.1 + `proxy-addr` 2.0.8 (audit prod limpo), leitura remota em streaming com teto, CI no Node 22 + `ubuntu-24.04` pinado |
+| v2.3.7 | Publicada no npm | Nomes via `operationId`, merge de `allOf` com $ref, `requestBody` via `requestBodies`, suporte a `trace`, `security --json` puro, watch URL endurecido, security-lint mais silencioso, smoke Python + audit prod na CI |
 | v2.3.6 | Publicada no npm | Erro explícito de `--interval`, `--timeout`/`--max-bytes` no `init`, warnings de fidelidade Swagger 2.0, warning de `discriminator`, TODO lint ignora `examples/`, CI no Ubuntu + Windows |
 | v2.3.5 | Publicada no npm | Allowlist METHOD sem case, warning de filtro zero com dica de `--dry-run`, stub Go na regeneração incremental, fallback non-JSON para body/example |
 | v2.3.4 | Publicada no npm | `ip-address` 10.4.0 → 10.7.2 via cadeia do SDK, guard de snapshot do lockfile do scaffold, `js-yaml` dev-only segue documentado |

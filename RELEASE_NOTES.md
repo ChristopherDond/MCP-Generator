@@ -1,6 +1,18 @@
 # Notas de release
 
-> **Status em 03/10/2026:** `2.3.7` é a versão publicada no npm (`latest`) e a GitHub Release atual.
+> **Status em 07/10/2026:** `2.3.7` segue publicada no npm (`latest`); `2.3.8` preparada, publicação pendente (push da `main` + tag `v2.3.8`).
+
+## 2.3.8 — Preparada em 07/10/2026 (publicação pendente)
+
+Patch sem breaking changes: SDK 1.30.0 → 1.32.1 e `proxy-addr` → 2.0.8 (audit prod zero, corrige 1 high + 1 critical); `watch` e `init --from` leem spec remota em streaming com teto de 50MB e parse seguro de `content-length`; CI no Node 22 com `ubuntu-24.04` pinado, `action-gh-release` v2, `engines` + `.nvmrc`.
+
+### Validação
+
+- Verificação local: `npm run lint`, `npx tsc --noEmit`, `npm test` (19 suites, 252 testes), `npm run build`, `npm run test:cli` (4/4), `npm run test:generated`, `npm run test:generated:py`, `npm run test:generated:go`, `npm audit --omit=dev` zero.
+
+### Publicação
+
+Pendente: push da `main` + tag `v2.3.8` → `.github/workflows/release.yml` valida, publica via Trusted Publisher OIDC e cria a GitHub Release. Confirmar com `npm view @christopher_dondici/mcp-gen version` e `gh release view v2.3.8`.
 
 ## 2.3.7 — Publicada em 03/10/2026
 

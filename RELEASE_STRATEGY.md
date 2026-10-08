@@ -1,6 +1,6 @@
 # Estratégia de release — MCP-Generator
 
-> **Estado em 03/10/2026:** `2.3.7` é a release publicada (npm `latest` + GitHub Release `v2.3.7`, via OIDC).
+> **Estado em 07/10/2026:** `2.3.7` é a release publicada (npm `latest` + GitHub Release `v2.3.7`, via OIDC); `2.3.8` preparada, publicação pendente.
 
 ## Versionamento
 
