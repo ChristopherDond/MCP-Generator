@@ -361,31 +361,35 @@ function buildModels(
       const collectRefProps = (refName: string): OpenAPIV3.SchemaObject | undefined => {
         if (seenRefs.has(refName)) return undefined;
         seenRefs.add(refName);
-        const target = schemasMap[refName] as OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject | undefined;
-        if (!target || "$ref" in target) return undefined;
-        if (target.allOf) {
-          const nested: OpenAPIV3.SchemaObject = {
-            type: "object",
-            properties: { ...(target.properties ?? {}) },
-            required: [...(target.required ?? [])],
-          };
-          for (const nestedSub of target.allOf) {
-            if ("$ref" in nestedSub) {
-              const nestedProps = collectRefProps(refToName((nestedSub as OpenAPIV3.ReferenceObject).$ref));
-              if (nestedProps) {
-                Object.assign(nested.properties!, nestedProps.properties ?? {});
-                const combined = [...(nested.required ?? []), ...(nestedProps.required ?? [])];
+        try {
+          const target = schemasMap[refName] as OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject | undefined;
+          if (!target || "$ref" in target) return undefined;
+          if (target.allOf) {
+            const nested: OpenAPIV3.SchemaObject = {
+              type: "object",
+              properties: { ...(target.properties ?? {}) },
+              required: [...(target.required ?? [])],
+            };
+            for (const nestedSub of target.allOf) {
+              if ("$ref" in nestedSub) {
+                const nestedProps = collectRefProps(refToName((nestedSub as OpenAPIV3.ReferenceObject).$ref));
+                if (nestedProps) {
+                  Object.assign(nested.properties!, nestedProps.properties ?? {});
+                  const combined = [...(nested.required ?? []), ...(nestedProps.required ?? [])];
+                  nested.required = [...new Set(combined)];
+                }
+              } else {
+                Object.assign(nested.properties!, (nestedSub as OpenAPIV3.SchemaObject).properties ?? {});
+                const combined = [...(nested.required ?? []), ...((nestedSub as OpenAPIV3.SchemaObject).required ?? [])];
                 nested.required = [...new Set(combined)];
               }
-            } else {
-              Object.assign(nested.properties!, (nestedSub as OpenAPIV3.SchemaObject).properties ?? {});
-              const combined = [...(nested.required ?? []), ...((nestedSub as OpenAPIV3.SchemaObject).required ?? [])];
-              nested.required = [...new Set(combined)];
             }
+            return nested;
           }
-          return nested;
+          return target;
+        } finally {
+          seenRefs.delete(refName);
         }
-        return target;
       };
       const merged: OpenAPIV3.SchemaObject = {
         type: "object",

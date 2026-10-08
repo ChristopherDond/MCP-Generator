@@ -46,6 +46,40 @@ describe("parseOpenAPI", () => {
   it("rejects invalid specs", async () => {
     await expect(parseOpenAPI("/nonexistent/spec.json")).rejects.toThrow();
   });
+
+  it("merges duplicate allOf $refs without spurious warning", async () => {
+    const spec = {
+      openapi: "3.0.3",
+      info: { title: "Dup", version: "1.0.0" },
+      servers: [{ url: "https://example.com" }],
+      paths: {},
+      components: {
+        schemas: {
+          Base: {
+            type: "object",
+            properties: { id: { type: "integer" } },
+          },
+          Dup: {
+            type: "object",
+            allOf: [
+              { $ref: "#/components/schemas/Base" },
+              { $ref: "#/components/schemas/Base" },
+            ],
+          },
+        },
+      },
+    };
+    const file = path.join(os.tmpdir(), `mcp-dup-allof-${Date.now()}.json`);
+    fs.writeFileSync(file, JSON.stringify(spec), "utf-8");
+    try {
+      const ast = await parseOpenAPI(file);
+      const dup = ast.models.find((m) => m.name === "Dup")!;
+      expect(dup.properties.map((p) => p.name)).toContain("id");
+      expect((ast.warnings ?? []).join("\n")).not.toMatch(/Dup/);
+    } finally {
+      fs.rmSync(file, { force: true });
+    }
+  });
 });
 
 // ─── Generator — TypeScript ───────────────────────────────────────────────────
