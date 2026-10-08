@@ -118,7 +118,11 @@ export function scanForCredentials(
 
     for (const { pattern, type } of secretPatterns) {
       const matches = line.match(pattern);
-      if (matches) {
+      if (!matches) continue;
+      const kept = type === "base64_secret"
+        ? matches.filter((m) => !/^[0-9a-fA-F]{40}$/.test(m) && !/^[0-9a-fA-F]{64}$/.test(m))
+        : matches;
+      if (kept.length > 0) {
         rules.push({
           id: `SEC-SECRET-${type.toUpperCase()}`,
           severity: "error",

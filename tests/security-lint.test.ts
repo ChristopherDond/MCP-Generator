@@ -42,6 +42,18 @@ describe("Security/Lint Layer", () => {
       // Should flag the token in code but not the "credentials" word in comment
       expect(credRules.length).toBeGreaterThanOrEqual(1);
     });
+
+    it("ignores 40-char SHA hex as base64", () => {
+      const content = `const sha = "da39a3ee5e6b4b0d3255bfef95601890afd80709";`;
+      const rules = scanForCredentials(content, "test.ts");
+      expect(rules.some((r: SecurityRule) => r.id === "SEC-SECRET-BASE64_SECRET")).toBe(false);
+    });
+
+    it("detects padded base64 secret", () => {
+      const content = `const key = "dGVzdHNlY3JldGtleXRlc3R0ZXN0c2VjcmV0a2V5dGVzdA==";`;
+      const rules = scanForCredentials(content, "test.ts");
+      expect(rules.some((r: SecurityRule) => r.id === "SEC-SECRET-BASE64_SECRET")).toBe(true);
+    });
   });
 
   describe("validateAuthContext", () => {
