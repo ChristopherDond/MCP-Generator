@@ -235,7 +235,7 @@ export function lintNaming(
 
     if (filePath.endsWith(".ts") || filePath.endsWith(".js")) {
       const fnMatch = line.match(/^\s*(export\s+)?(async\s+)?function\s+([a-z_][a-z0-9_]*)/);
-      if (fnMatch && fnMatch[3].includes("_") && !/^(list|get|create|update|delete|fetch|handle|parse|build|validate|scan|lint|format|extract|resolve|sanitize|register|generate)_[a-z_]+$/.test(fnMatch[3])) {
+      if (fnMatch && fnMatch[3].includes("_") && !/^(list|get|post|put|patch|trace|head|options|create|update|delete|fetch|handle|parse|build|validate|scan|lint|format|extract|resolve|sanitize|register|generate|search|approve|require|send|sync|export|import|remove|set|run)_[a-z_]+$/.test(fnMatch[3])) {
         rules.push({
           id: "LINT-TS-SNAKE-CASE",
           severity: "info",

@@ -1,4 +1,4 @@
-import { scanProject, formatReport, scanForCredentials, validateAuthContext, lintIncrementalMarkers, type SecurityRule } from "../src/core/security-lint";
+import { scanProject, formatReport, scanForCredentials, validateAuthContext, lintIncrementalMarkers, lintNaming, type SecurityRule } from "../src/core/security-lint";
 import fs from "fs";
 import path from "path";
 import os from "os";
@@ -53,6 +53,27 @@ describe("Security/Lint Layer", () => {
       const content = `const key = "dGVzdHNlY3JldGtleXRlc3R0ZXN0c2VjcmV0a2V5dGVzdA==";`;
       const rules = scanForCredentials(content, "test.ts");
       expect(rules.some((r: SecurityRule) => r.id === "SEC-SECRET-BASE64_SECRET")).toBe(true);
+    });
+  });
+
+  describe("lintNaming", () => {
+    it("ignores operation verbs post/put/patch/search/approve/require", () => {
+      const content = [
+        "function post_message() {}",
+        "function put_setting() {}",
+        "function patch_item() {}",
+        "function search_users() {}",
+        "function approve_payment() {}",
+        "function require_security() {}",
+      ].join("\n");
+      const rules = lintNaming(content, "test.ts");
+      expect(rules.filter((r) => r.id === "LINT-TS-SNAKE-CASE")).toHaveLength(0);
+    });
+
+    it("still flags genuine snake_case", () => {
+      const content = `function my_helper() {}`;
+      const rules = lintNaming(content, "test.ts");
+      expect(rules.some((r) => r.id === "LINT-TS-SNAKE-CASE")).toBe(true);
     });
   });
 
