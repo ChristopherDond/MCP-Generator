@@ -200,9 +200,14 @@ export function groupTools(tools: MCPTool[], mode: GroupByMode): MCPTool[] {
       }
     }
     const groupPath = `/group/${base}`;
+    const shownNames = memberNames.slice(0, 10);
+    const remaining = memberNames.length - shownNames.length;
+    const description = remaining > 0
+      ? `Group ${key} with ${members.length} operations: ${shownNames.join(", ")} and ${remaining} more`
+      : `Group ${key} with ${members.length} operations: ${memberNames.join(", ")}`;
     out.push({
       name: candidate,
-      description: `Group ${key} with ${members.length} operations: ${memberNames.join(", ")}`,
+      description,
       method: "GROUP",
       path: groupPath,
       params: [actionParam, ...union.values()],

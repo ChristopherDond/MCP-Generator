@@ -279,6 +279,16 @@ describe("groupTools by tag", () => {
   it("handles empty input", () => {
     expect(groupTools([], "tag")).toEqual([]);
   });
+
+  it("truncates long member lists in group description", () => {
+    const many = Array.from({ length: 60 }, (_, i) =>
+      tool({ name: `op_${String(i).padStart(2, "0")}`, path: `/bulk/${i}`, tags: ["bulk"] })
+    );
+    const [group] = groupTools(many, "tag");
+    expect(group.description).toMatch(/60 operations/);
+    expect(group.description).not.toContain("op_59");
+    expect(group.description).toMatch(/and \d+ more/);
+  });
 });
 
 describe("groupTools by path-prefix", () => {
