@@ -4,11 +4,11 @@
 
 ## 2.3.8 — Preparada em 07/10/2026 (publicação pendente)
 
-Patch sem breaking changes: SDK 1.30.0 → 1.32.1 e `proxy-addr` → 2.0.8 (audit prod zero, corrige 1 high + 1 critical); `watch` e `init --from` leem spec remota em streaming com teto de 50MB e parse seguro de `content-length`; CI no Node 22 com `ubuntu-24.04` pinado, `action-gh-release` v2, `engines` + `.nvmrc`.
+Patch sem breaking changes: SDK 1.30.0 → 1.32.1, `proxy-addr` → 2.0.8 e `handlebars` → 4.7.10 (audit prod zero, corrige 1 high + 4 critical); `watch` e `init --from` leem spec remota em streaming com teto de 50MB e parse seguro de `content-length`; CI no Node 22 com `ubuntu-24.04` pinado, `action-gh-release` v2, `engines` + `.nvmrc`; 4 lows da Wave 1 (base64 ignora hex digests, snake-case com verbos de operação, `seenRefs` como pilha, descrição de grupo truncada).
 
 ### Validação
 
-- Verificação local: `npm run lint`, `npx tsc --noEmit`, `npm test` (19 suites, 252 testes), `npm run build`, `npm run test:cli` (4/4), `npm run test:generated`, `npm run test:generated:py`, `npm run test:generated:go`, `npm audit --omit=dev` zero.
+- Verificação local: `npm run lint`, `npx tsc --noEmit`, `npm test` (19 suites, 258 testes), `npm run build`, `npm run test:cli` (4/4), `npm run test:generated`, `npm run test:generated:py`, `npm run test:generated:go`, `npm audit --omit=dev` zero.
 
 ### Publicação
 

@@ -12,10 +12,11 @@ Generate MCP servers from OpenAPI specs.
 
 (Patch release — no breaking changes. Prepared, publication pending.)
 
-- `@modelcontextprotocol/sdk` 1.30.0 → 1.32.1 and `proxy-addr` → 2.0.8, so `npm audit --omit=dev` is clean (fixes one high + one critical advisory).
+- `@modelcontextprotocol/sdk` 1.30.0 → 1.32.1, `proxy-addr` → 2.0.8 and `handlebars` → 4.7.10, so `npm audit --omit=dev` is clean (fixes one high + four critical advisories).
 - URL `watch` and registry downloads stream the remote body with a 50MB cap and parse `content-length` safely.
 - CI moves to Node 22 on pinned `ubuntu-24.04` + `windows-latest`, `action-gh-release` v2, `engines.node >= 20` + `.nvmrc` 22.
-- Local verification: 19 Jest suites / 252 tests, CLI exit-code smoke 4/4, TypeScript/Python/Go generated-server smokes, `npm audit --omit=dev` clean.
+- 4 Wave 1 lows: base64 scan ignores hex digests, snake-case allowlist with operation verbs, `allOf` seenRefs as recursion stack, group description truncated to 10 names.
+- Local verification: 19 Jest suites / 258 tests, CLI exit-code smoke 4/4, TypeScript/Python/Go generated-server smokes, `npm audit --omit=dev` clean.
 
 ## What's new in 2.3.7
 
@@ -629,7 +630,7 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.4 | Released on npm | Path glob filters, inline operation allowlist, group-by tag/path-prefix with action routing, method/hash dedup, `<generated:handlers>` guards with 3-way merge, separate auth middleware, never-overwritten `handlers.custom.*`, auth template fix for specs without `securitySchemes` |
 | v2.1.5 | Released on npm | Fase 0 P0 fixes (PR #4): TS query serialization, Python query/headers, Go HTTP wiring, v3-only registry with guidance |
 | v2.2.0 | Released on npm | Fase 1: `generate --dry-run` + `--json` summary, filter/group flags on `watch` (+ interactive prompts, `--once` file fix), per-schema partial-support warnings in `validate`/`generate`, CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` docs |
-| v2.3.8 | Prepared (publication pending) | SDK 1.32.1 + `proxy-addr` 2.0.8 (prod audit clean), streamed remote reads with size cap, CI on Node 22 + pinned `ubuntu-24.04` |
+| v2.3.8 | Prepared (publication pending) | SDK 1.32.1 + `proxy-addr` 2.0.8 + `handlebars` 4.7.10 (prod audit clean), streamed remote reads with size cap, 4 Wave 1 lows, CI on Node 22 + pinned `ubuntu-24.04` |
 | v2.3.7 | Released on npm | `operationId` tool names, `allOf` $ref merge, `requestBody` via `requestBodies`, `trace` support, pure `security --json`, hardened URL watch, quieter security-lint, Python smoke + prod audit in CI |
 | v2.3.6 | Released on npm | Explicit `watch --interval` error, `--timeout`/`--max-bytes` on `init`, Swagger 2.0 fidelity warnings, `discriminator` warning, TODO lint skips `examples/`, CI on Ubuntu + Windows |
 | v2.3.5 | Released on npm | Case-insensitive allowlist METHOD, zero-filter warning with `--dry-run` hint, Go stub pattern on incremental regen, non-JSON body/example fallback |
