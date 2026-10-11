@@ -72,7 +72,7 @@ export function scanForCredentials(
   filePath: string = "unknown"
 ): SecurityRule[] {
   const normalized = filePath.replace(/\\/g, "/");
-  if (/(^|\/)package-lock\.json$/.test(normalized) || normalized.endsWith(".lock")) return [];
+  if (/(^|\/)(package-lock\.json|pnpm-lock\.yaml|bun\.lockb?)$/.test(normalized) || normalized.endsWith(".lock")) return [];
   const rules: SecurityRule[] = [];
   const lines = content.split("\n");
 

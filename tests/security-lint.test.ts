@@ -54,6 +54,13 @@ describe("Security/Lint Layer", () => {
       const rules = scanForCredentials(content, "test.ts");
       expect(rules.some((r: SecurityRule) => r.id === "SEC-SECRET-BASE64_SECRET")).toBe(true);
     });
+
+    it("skips pnpm and bun lockfiles", () => {
+      const content = `const api_key = "«redacted:sk_…»";`;
+      expect(scanForCredentials(content, "pnpm-lock.yaml")).toHaveLength(0);
+      expect(scanForCredentials(content, "bun.lockb")).toHaveLength(0);
+      expect(scanForCredentials(content, "sub/dir/pnpm-lock.yaml")).toHaveLength(0);
+    });
   });
 
   describe("lintNaming", () => {
