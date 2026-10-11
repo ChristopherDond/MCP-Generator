@@ -2,7 +2,18 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
-## [2.3.8] - 2026-10-07
+## [2.4.0] - 2026-10-11
+
+### Parser e lint sem breaking (inclui a 2.3.8, nunca publicada)
+
+- **Feature**: variantes inline de `oneOf`/`anyOf` viram membros sintéticos da união (`ChoiceOneOf2`) com as propriedades expandidas, em vez de warning; `discriminator` segue só aviso.
+- **allOf aninhado**: membros inline com `allOf` próprio expandem recursivamente (merge + `required` unidos).
+- **requestBody**: `$ref` para `schemas/*` resolve como param `body`; `$ref` para `parameters/*` ou seção desconhecida emite warning em vez de sumir mudo.
+- **Parâmetros**: `$ref` para `components.parameters` é resolvido; `$ref` irresolvível emite warning em vez de ser descartado mudo.
+- **Security-lint**: `pnpm-lock.yaml` e `bun.lock`/`bun.lockb` fora do scan de credenciais.
+- **Testes e gates**: 19 suites / 265 testes Jest, smoke de exit codes da CLI 4/4, smokes dos scaffolds TypeScript, Python e Go, `npm audit --omit=dev` zero.
+
+## [2.3.8] - 2026-10-07 (substituída pela 2.4.0, nunca publicada)
 
 ### Segurança, CI e downloads remotos sem breaking
 

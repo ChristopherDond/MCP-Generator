@@ -1,8 +1,20 @@
 # Notas de release
 
-> **Status em 07/10/2026:** `2.3.7` segue publicada no npm (`latest`); `2.3.8` preparada, publicação pendente (push da `main` + tag `v2.3.8`).
+> **Status em 11/10/2026:** `2.3.7` segue publicada no npm (`latest`); `2.4.0` preparada, publicação pendente (push da `main` + tag `v2.4.0`). A `2.3.8` foi substituída antes de publicar e não terá release própria.
 
-## 2.3.8 — Preparada em 07/10/2026 (publicação pendente)
+## 2.4.0 — Preparada em 11/10/2026 (publicação pendente)
+
+Minor sem breaking changes: variantes inline de `oneOf`/`anyOf` viram membros sintéticos da união; `allOf` aninhado inline expande recursivamente; `requestBody.$ref` para `schemas/*` resolve como param `body` (para `parameters/*` emite warning); parâmetros `$ref` via `components.parameters` são resolvidos; `pnpm-lock.yaml` e `bun.lock`/`bun.lockb` fora do scan de credenciais. Inclui todo o conteúdo da 2.3.8 (SDK 1.32.1, `proxy-addr` 2.0.8, `handlebars` 4.7.10, streaming remoto com teto, CI Node 22, 4 lows da Wave 1).
+
+### Validação
+
+- Verificação local: `npm run lint`, `npx tsc --noEmit`, `npm test` (19 suites, 265 testes), `npm run build`, `npm run test:cli` (4/4), `npm run test:generated`, `npm run test:generated:py`, `npm run test:generated:go`, `npm audit --omit=dev` zero.
+
+### Publicação
+
+Pendente: push da `main` + tag `v2.4.0` → `.github/workflows/release.yml` valida, publica via Trusted Publisher OIDC e cria a GitHub Release. Confirmar com `npm view @christopher_dondici/mcp-gen version` e `gh release view v2.4.0`.
+
+## 2.3.8 — Substituída pela 2.4.0 em 11/10/2026 (nunca publicada)
 
 Patch sem breaking changes: SDK 1.30.0 → 1.32.1, `proxy-addr` → 2.0.8 e `handlebars` → 4.7.10 (audit prod zero, corrige 1 high + 4 critical); `watch` e `init --from` leem spec remota em streaming com teto de 50MB e parse seguro de `content-length`; CI no Node 22 com `ubuntu-24.04` pinado, `action-gh-release` v2, `engines` + `.nvmrc`; 4 lows da Wave 1 (base64 ignora hex digests, snake-case com verbos de operação, `seenRefs` como pilha, descrição de grupo truncada).
 
