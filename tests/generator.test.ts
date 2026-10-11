@@ -47,6 +47,43 @@ describe("parseOpenAPI", () => {
     await expect(parseOpenAPI("/nonexistent/spec.json")).rejects.toThrow();
   });
 
+  it("expands nested inline allOf members", async () => {
+    const spec = {
+      openapi: "3.0.3",
+      info: { title: "Nested", version: "1.0.0" },
+      servers: [{ url: "https://example.com" }],
+      paths: {},
+      components: {
+        schemas: {
+          Base: {
+            type: "object",
+            properties: { id: { type: "integer" } },
+          },
+          Top: {
+            type: "object",
+            allOf: [
+              {
+                allOf: [
+                  { $ref: "#/components/schemas/Base" },
+                  { type: "object", properties: { extra: { type: "string" } } },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    };
+    const file = path.join(os.tmpdir(), `mcp-nested-allof-${Date.now()}.json`);
+    fs.writeFileSync(file, JSON.stringify(spec), "utf-8");
+    try {
+      const ast = await parseOpenAPI(file);
+      const top = ast.models.find((m) => m.name === "Top")!;
+      expect(top.properties.map((p) => p.name).sort()).toEqual(["extra", "id"]);
+      expect((ast.warnings ?? []).join("\n")).not.toMatch(/Top/);
+    } finally {
+      fs.rmSync(file, { force: true });
+    }
+  });
   it("merges duplicate allOf $refs without spurious warning", async () => {
     const spec = {
       openapi: "3.0.3",

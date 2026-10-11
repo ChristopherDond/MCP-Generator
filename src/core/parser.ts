@@ -370,26 +370,34 @@ function buildModels(
               properties: { ...(target.properties ?? {}) },
               required: [...(target.required ?? [])],
             };
-            for (const nestedSub of target.allOf) {
-              if ("$ref" in nestedSub) {
-                const nestedProps = collectRefProps(refToName((nestedSub as OpenAPIV3.ReferenceObject).$ref));
-                if (nestedProps) {
-                  Object.assign(nested.properties!, nestedProps.properties ?? {});
-                  const combined = [...(nested.required ?? []), ...(nestedProps.required ?? [])];
-                  nested.required = [...new Set(combined)];
-                }
-              } else {
-                Object.assign(nested.properties!, (nestedSub as OpenAPIV3.SchemaObject).properties ?? {});
-                const combined = [...(nested.required ?? []), ...((nestedSub as OpenAPIV3.SchemaObject).required ?? [])];
-                nested.required = [...new Set(combined)];
-              }
-            }
+            for (const nestedSub of target.allOf) mergeSubInto(nested, nestedSub);
             return nested;
           }
           return target;
         } finally {
           seenRefs.delete(refName);
         }
+      };
+      const mergePropsInto = (
+        dest: OpenAPIV3.SchemaObject,
+        src: OpenAPIV3.SchemaObject
+      ): void => {
+        Object.assign(dest.properties!, src.properties ?? {});
+        const combined = [...(dest.required ?? []), ...(src.required ?? [])];
+        dest.required = [...new Set(combined)];
+      };
+      const mergeSubInto = (
+        dest: OpenAPIV3.SchemaObject,
+        sub: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject
+      ): void => {
+        if ("$ref" in sub) {
+          const refSchema = collectRefProps(refToName((sub as OpenAPIV3.ReferenceObject).$ref));
+          if (refSchema) mergePropsInto(dest, refSchema);
+          return;
+        }
+        const inline = sub as OpenAPIV3.SchemaObject;
+        mergePropsInto(dest, inline);
+        if (inline.allOf) for (const inner of inline.allOf) mergeSubInto(dest, inner);
       };
       const merged: OpenAPIV3.SchemaObject = {
         type: "object",
@@ -401,9 +409,7 @@ function buildModels(
           const refName = refToName((sub as OpenAPIV3.ReferenceObject).$ref);
           const refSchema = collectRefProps(refName);
           if (refSchema) {
-            Object.assign(merged.properties!, refSchema.properties ?? {});
-            const combined = [...(merged.required ?? []), ...(refSchema.required ?? [])];
-            merged.required = [...new Set(combined)];
+            mergePropsInto(merged, refSchema);
           } else {
             warnings.push(
               `Schema "${name}": allOf $ref "${(sub as OpenAPIV3.ReferenceObject).$ref}" ignored — referenced properties are not merged (partial allOf support)`
@@ -411,12 +417,7 @@ function buildModels(
           }
           continue;
         }
-        Object.assign(merged.properties!, (sub as OpenAPIV3.SchemaObject).properties ?? {});
-        const combined = [
-          ...(merged.required ?? []),
-          ...((sub as OpenAPIV3.SchemaObject).required ?? []),
-        ];
-        merged.required = [...new Set(combined)];
+        mergeSubInto(merged, sub);
       }
       merged.description = schema.description;
       resolvedSchema = merged;
