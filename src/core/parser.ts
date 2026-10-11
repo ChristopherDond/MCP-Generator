@@ -477,50 +477,40 @@ function buildModels(
       resolvedSchema = merged;
     }
 
-    if (schema.oneOf) {
-      const inlineOneOf = schema.oneOf.filter(
-        (s) => !("$ref" in s)
-      ).length;
-      if (inlineOneOf > 0) {
-        warnings.push(
-          `Schema "${name}": oneOf has ${inlineOneOf} inline variant(s) ignored — only $ref variants become union members`
-        );
-      }
-    }
-    if (schema.anyOf) {
-      const inlineAnyOf = schema.anyOf.filter(
-        (s) => !("$ref" in s)
-      ).length;
-      if (inlineAnyOf > 0) {
-        warnings.push(
-          `Schema "${name}": anyOf has ${inlineAnyOf} inline variant(s) ignored — only $ref variants become union members`
-        );
-      }
-    }
+    const expandVariants = (
+      kind: "OneOf" | "AnyOf",
+      variants: (OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject)[] | undefined
+    ): string[] | undefined => {
+      if (!variants) return undefined;
+      const members: string[] = [];
+      variants.forEach((s, idx) => {
+        if ("$ref" in s) {
+          members.push(refToName((s as OpenAPIV3.ReferenceObject).$ref));
+          return;
+        }
+        const inline = s as OpenAPIV3.SchemaObject;
+        const memberName = `${name}${kind}${idx + 1}`;
+        models.push({
+          name: memberName,
+          description: inline.description ?? "",
+          properties: resolveSchemaProperties(inline, components),
+          required: inline.required ?? [],
+          isEnum: false,
+        });
+        members.push(memberName);
+      });
+      return members.length > 0 ? members : undefined;
+    };
+
+    const oneOf = expandVariants("OneOf", schema.oneOf);
+
+    const anyOf = expandVariants("AnyOf", schema.anyOf);
 
     if (schema.discriminator) {
       warnings.push(
         `Schema "${name}": discriminator${(schema.discriminator as OpenAPIV3.DiscriminatorObject).propertyName ? ` on "${(schema.discriminator as OpenAPIV3.DiscriminatorObject).propertyName}"` : ""} ignored — generated models do not dispatch on polymorphic types`
       );
     }
-
-    const oneOf: string[] | undefined = schema.oneOf
-      ? (schema.oneOf
-          .map((s) => {
-            if ("$ref" in s) return refToName((s as OpenAPIV3.ReferenceObject).$ref);
-            return undefined;
-          })
-          .filter(Boolean) as string[])
-      : undefined;
-
-    const anyOf: string[] | undefined = schema.anyOf
-      ? (schema.anyOf
-          .map((s) => {
-            if ("$ref" in s) return refToName((s as OpenAPIV3.ReferenceObject).$ref);
-            return undefined;
-          })
-          .filter(Boolean) as string[])
-      : undefined;
 
     models.push({
       name,

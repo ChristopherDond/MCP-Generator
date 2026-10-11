@@ -67,10 +67,20 @@ describe("partial schema support warnings (Fase 1.3)", () => {
     fs.rmSync(specFile, { force: true });
   });
 
-  it("parseOpenAPI reports Choice (oneOf inline)", async () => {
+  it("expands inline oneOf variants into synthetic union members", async () => {
+    const ast = await parseOpenAPI(specFile);
+    const choice = ast.models.find((m) => m.name === "Choice")!;
+    expect(choice.oneOf).toContain("Base");
+    expect(choice.oneOf).toContain("ChoiceOneOf2");
+    const synthetic = ast.models.find((m) => m.name === "ChoiceOneOf2")!;
+    expect(synthetic.properties.map((p) => p.name)).toContain("inline");
+    expect((ast.warnings ?? []).join("\n")).not.toMatch(/Choice/);
+  });
+
+  it("parseOpenAPI no longer warns on expanded Choice (oneOf inline)", async () => {
     const ast = await parseOpenAPI(specFile);
     expect(ast.warnings!.join("\n")).not.toMatch(/Extended/);
-    expect(ast.warnings!.join("\n")).toMatch(/Choice/);
+    expect(ast.warnings!.join("\n")).not.toMatch(/Choice/);
     expect(ast.warnings!.join("\n")).toMatch(/Poly.*discriminator/);
   });
 
@@ -78,7 +88,7 @@ describe("partial schema support warnings (Fase 1.3)", () => {
     const validation = await validateSpec(specFile);
     expect(validation.valid).toBe(true);
     expect(validation.warnings.join("\n")).not.toMatch(/Extended/);
-    expect(validation.warnings.join("\n")).toMatch(/Choice/);
+    expect(validation.warnings.join("\n")).not.toMatch(/Choice/);
     expect(validation.warnings.join("\n")).toMatch(/Poly.*discriminator/);
 
     const tmp = path.join(os.tmpdir(), `mcp-partial-out-${Date.now()}`);
@@ -93,6 +103,6 @@ describe("partial schema support warnings (Fase 1.3)", () => {
     });
     expect(gen.success).toBe(true);
     expect(gen.warnings.join("\n")).not.toMatch(/Extended/);
-    expect(gen.warnings.join("\n")).toMatch(/Choice/);
+    expect(gen.warnings.join("\n")).not.toMatch(/Choice/);
   });
 });
