@@ -228,9 +228,11 @@ function collectParameters(
 
 function buildTools(
   paths: OpenAPIV3.PathsObject,
-  components: OpenAPIV3.ComponentsObject | undefined
-): MCPTool[] {
+  components: OpenAPIV3.ComponentsObject | undefined,
+  rawPaths?: OpenAPIV3.PathsObject
+): { tools: MCPTool[]; warnings: string[] } {
   const tools: MCPTool[] = [];
+  const warnings: string[] = [];
   const usedNames = new Set<string>();
   const METHODS = ["get", "post", "put", "patch", "delete", "head", "options", "trace"] as const;
   const REF_SCHEMAS = components?.schemas ?? {};
@@ -267,7 +269,41 @@ function buildTools(
 
       let requestBody: OpenAPIV3.RequestBodyObject | undefined;
       const rawBody = operation.requestBody;
-      if (rawBody) {
+      const rawOp = rawPaths?.[path]?.[method] as OpenAPIV3.OperationObject | undefined;
+      const rawOpBody = rawOp?.requestBody as OpenAPIV3.RequestBodyObject | OpenAPIV3.ReferenceObject | undefined;
+      const rawBodyRef = rawOpBody && "$ref" in rawOpBody ? (rawOpBody as OpenAPIV3.ReferenceObject).$ref : undefined;
+      if (rawBodyRef) {
+        const parts = rawBodyRef.split("/");
+        const section = parts[2];
+        const refName = refToName(rawBodyRef);
+        if (section === "requestBodies") {
+          requestBody = (components as unknown as Record<string, Record<string, unknown>> | undefined)?.["requestBodies"]?.[refName] as OpenAPIV3.RequestBodyObject | undefined;
+          if (!requestBody) {
+            warnings.push(
+              `Operation ${method.toUpperCase()} ${path}: requestBody $ref "${rawBodyRef}" could not be resolved — body ignored`
+            );
+          }
+        } else if (section === "schemas") {
+          const schemaObj = REF_SCHEMAS[refName] as unknown as OpenAPIV3.SchemaObject | undefined;
+          if (schemaObj && !("$ref" in (schemaObj as object))) {
+            requestBody = {
+              content: { "application/json": { schema: { $ref: `#/components/schemas/${refName}` } as unknown as OpenAPIV3.SchemaObject } },
+            } as unknown as OpenAPIV3.RequestBodyObject;
+          } else if (schemaObj) {
+            requestBody = {
+              content: { "application/json": { schema: schemaObj } },
+            } as unknown as OpenAPIV3.RequestBodyObject;
+          } else {
+            warnings.push(
+              `Operation ${method.toUpperCase()} ${path}: requestBody $ref "${rawBodyRef}" could not be resolved — body ignored`
+            );
+          }
+        } else {
+          warnings.push(
+            `Operation ${method.toUpperCase()} ${path}: requestBody $ref "${rawBodyRef}" points at components/${section ?? "?"} — not a request body, body ignored`
+          );
+        }
+      } else if (rawBody) {
         if ("$ref" in rawBody) {
           const ref = (rawBody as OpenAPIV3.ReferenceObject).$ref;
           const refName = refToName(ref);
@@ -278,6 +314,8 @@ function buildTools(
         } else {
           requestBody = rawBody;
         }
+      } else if (rawOpBody && !("$ref" in rawOpBody)) {
+        requestBody = rawOpBody as OpenAPIV3.RequestBodyObject;
       }
 
       if (requestBody) {
@@ -327,7 +365,7 @@ function buildTools(
     }
   }
 
-  return tools;
+  return { tools, warnings };
 }
 
 function buildModels(
@@ -733,9 +771,10 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
     );
   }
 
-  const tools = buildTools(api.paths ?? {}, api.components);
+  const { tools: builtTools, warnings: toolWarnings } = buildTools(api.paths ?? {}, api.components, raw.paths);
+  const tools = builtTools;
   const { models, warnings } = buildModels(raw.components);
-  warnings.unshift(...v2Warnings);
+  warnings.unshift(...toolWarnings, ...v2Warnings);
 
   const serverName = (api.info.title ?? "mcp-server")
     .toLowerCase()

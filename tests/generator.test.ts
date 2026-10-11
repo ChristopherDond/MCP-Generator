@@ -84,6 +84,74 @@ describe("parseOpenAPI", () => {
       fs.rmSync(file, { force: true });
     }
   });
+  it("resolves requestBody $ref to schemas/* as body param", async () => {
+    const spec = {
+      openapi: "3.0.3",
+      info: { title: "BodyRef", version: "1.0.0" },
+      servers: [{ url: "https://example.com" }],
+      paths: {
+        "/pets": {
+          post: {
+            operationId: "createPet",
+            requestBody: { $ref: "#/components/schemas/NewPet" },
+            responses: { "200": { description: "ok" } },
+          },
+        },
+      },
+      components: {
+        schemas: {
+          NewPet: {
+            type: "object",
+            properties: { name: { type: "string" } },
+            required: ["name"],
+          },
+        },
+      },
+    };
+    const file = path.join(os.tmpdir(), `mcp-bodyref-${Date.now()}.json`);
+    fs.writeFileSync(file, JSON.stringify(spec), "utf-8");
+    try {
+      const ast = await parseOpenAPI(file);
+      const tool = ast.tools.find((t) => t.name === "create_pet")!;
+      const body = tool.params.find((p) => p.name === "body");
+      expect(body).toBeDefined();
+      expect(body!.required).toBe(false);
+      expect((ast.warnings ?? []).join("\n")).not.toMatch(/createPet|requestBody/);
+    } finally {
+      fs.rmSync(file, { force: true });
+    }
+  });
+
+  it("warns when requestBody $ref points at parameters/*", async () => {
+    const spec = {
+      openapi: "3.0.3",
+      info: { title: "BodyParam", version: "1.0.0" },
+      servers: [{ url: "https://example.com" }],
+      paths: {
+        "/pets": {
+          post: {
+            operationId: "createPet",
+            requestBody: { $ref: "#/components/parameters/Limit" },
+            responses: { "200": { description: "ok" } },
+          },
+        },
+      },
+      components: {
+        parameters: {
+          Limit: { name: "limit", in: "query", schema: { type: "integer" } },
+        },
+      },
+    };
+    const file = path.join(os.tmpdir(), `mcp-bodyparam-${Date.now()}.json`);
+    fs.writeFileSync(file, JSON.stringify(spec), "utf-8");
+    try {
+      const ast = await parseOpenAPI(file);
+      expect((ast.warnings ?? []).join("\n")).toMatch(/requestBody/);
+    } finally {
+      fs.rmSync(file, { force: true });
+    }
+  });
+
   it("merges duplicate allOf $refs without spurious warning", async () => {
     const spec = {
       openapi: "3.0.3",
