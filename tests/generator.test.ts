@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { parseOpenAPI } from "../src/core/parser";
+import { parseOpenAPI, collectParameters } from "../src/core/parser";
 import { generate } from "../src/core/generator";
 import { extractHandlers, injectHandlers, TS_DEFAULT_STUB_PATTERN } from "../src/core/incremental";
 
@@ -150,6 +150,46 @@ describe("parseOpenAPI", () => {
     } finally {
       fs.rmSync(file, { force: true });
     }
+  });
+
+  it("resolves $ref parameters via components.parameters", async () => {
+    const spec = {
+      openapi: "3.0.3",
+      info: { title: "ParamRef", version: "1.0.0" },
+      servers: [{ url: "https://example.com" }],
+      paths: {
+        "/pets": {
+          get: {
+            operationId: "listPets",
+            parameters: [{ $ref: "#/components/parameters/Limit" }],
+            responses: { "200": { description: "ok" } },
+          },
+        },
+      },
+      components: {
+        parameters: {
+          Limit: { name: "limit", in: "query", schema: { type: "integer" } },
+        },
+      },
+    };
+    const file = path.join(os.tmpdir(), `mcp-paramref-${Date.now()}.json`);
+    fs.writeFileSync(file, JSON.stringify(spec), "utf-8");
+    try {
+      const ast = await parseOpenAPI(file);
+      const tool = ast.tools.find((t) => t.name === "list_pets")!;
+      expect(tool.params.map((p) => p.name)).toContain("limit");
+      expect((ast.warnings ?? []).join("\n")).not.toMatch(/Parameter \$ref/);
+    } finally {
+      fs.rmSync(file, { force: true });
+    }
+  });
+
+  it("warns on unresolvable $ref parameters instead of dropping silently", () => {
+    const pathItem = { parameters: [{ $ref: "#/components/parameters/Missing" }] } as never;
+    const operation = {} as never;
+    const { params, warnings } = collectParameters(pathItem, operation, {});
+    expect(params).toHaveLength(0);
+    expect(warnings.join("\n")).toMatch(/Missing/);
   });
 
   it("merges duplicate allOf $refs without spurious warning", async () => {

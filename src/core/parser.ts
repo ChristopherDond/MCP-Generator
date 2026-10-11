@@ -208,22 +208,35 @@ export function resolveToolName(
   return candidate;
 }
 
-function collectParameters(
+export function collectParameters(
   pathItem: OpenAPIV3.PathItemObject,
-  operation: OpenAPIV3.OperationObject
-): OpenAPIV3.ParameterObject[] {
+  operation: OpenAPIV3.OperationObject,
+  refParams?: Record<string, OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject>
+): { params: OpenAPIV3.ParameterObject[]; warnings: string[] } {
   const out: OpenAPIV3.ParameterObject[] = [];
+  const warnings: string[] = [];
   const seen = new Set<string>();
   const all = [...(pathItem.parameters ?? []), ...(operation.parameters ?? [])];
   for (const raw of all) {
-    if ("$ref" in raw) continue;
-    const p = raw as OpenAPIV3.ParameterObject;
+    let p: OpenAPIV3.ParameterObject;
+    if ("$ref" in raw) {
+      const ref = (raw as OpenAPIV3.ReferenceObject).$ref;
+      const refName = ref.split("/").pop() ?? ref;
+      const resolved = refParams?.[refName];
+      if (!resolved || "$ref" in resolved) {
+        warnings.push(`Parameter $ref "${ref}" could not be resolved — parameter ignored`);
+        continue;
+      }
+      p = resolved as OpenAPIV3.ParameterObject;
+    } else {
+      p = raw as OpenAPIV3.ParameterObject;
+    }
     const key = `${p.in}:${p.name}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(p);
   }
-  return out;
+  return { params: out, warnings };
 }
 
 function buildTools(
@@ -247,8 +260,11 @@ function buildTools(
       if (!operation) continue;
 
       const params: MCPToolParam[] = [];
+      const rawParams = (components as unknown as Record<string, Record<string, unknown>> | undefined)?.["parameters"] as Record<string, OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject> | undefined;
+      const collected = collectParameters(pathItem, operation, rawParams);
+      warnings.push(...collected.warnings);
 
-      for (const rawParam of collectParameters(pathItem, operation)) {
+      for (const rawParam of collected.params) {
         const param = rawParam as OpenAPIV3.ParameterObject;
         const schema = (param.schema ?? { type: "string" }) as OpenAPIV3.SchemaObject;
         const typed = schemaToParamType(schema);
