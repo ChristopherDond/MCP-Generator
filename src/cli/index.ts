@@ -6,7 +6,7 @@ import path from "path";
 import { generate, validateSpec } from "../core/generator";
 import type { GeneratorOptions, Lang } from "../core/types";
 import { fetchSpecToCwd, listKnownSpecs, getSpecInfo } from "../core/registry";
-import { validateRemoteUrl, validateContentType, parseContentLength, readBodyWithLimit } from "../core/security";
+import { validateRemoteUrl, validateContentType, parseContentLength, readBodyWithLimit, fetchWithRetry } from "../core/security";
 import { createHash } from "crypto";
 import { buildWatchGeneratorOptions } from "./watch-options";
 import fs from "fs";
@@ -361,6 +361,8 @@ program
   .option("-o, --out <dir>", "Output directory for the generated project", "./mcp-server")
   .option("--once", "Run generation once on first change then exit", false)
   .option("--interval <ms>", "Polling interval for URL inputs (ms)", "30000")
+  .option("--retries <n>", "Retry attempts for a failed remote fetch (transient network/5xx errors)", "2")
+  .option("--retry-delay <ms>", "Base backoff delay in ms between remote fetch retries (doubles each attempt)", "500")
   .option("--plugin <path>", "Path to a plugin directory or .js module file to load", (val, acc) => {
     if (!acc) return [val];
     acc.push(val);
@@ -421,13 +423,24 @@ program
         process.exit(1);
       }
       const interval = parsed;
+      const parsedRetries = Number(opts.retries);
+      if (!Number.isInteger(parsedRetries) || parsedRetries < 0) {
+        console.error(chalk.red(`Invalid --retries "${opts.retries}": expected a non-negative integer.`));
+        process.exit(1);
+      }
+      const parsedRetryDelay = Number(opts.retryDelay);
+      if (!Number.isFinite(parsedRetryDelay) || parsedRetryDelay <= 0) {
+        console.error(chalk.red(`Invalid --retry-delay "${opts.retryDelay}": expected a positive number of milliseconds.`));
+        process.exit(1);
+      }
       validateRemoteUrl(opts.input);
       console.log(chalk.dim(`[watch] polling ${opts.input} every ${interval}ms`));
       const check = async (): Promise<boolean> => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
         try {
-          const r = await fetch(opts.input, { signal: controller.signal });
+          const r = await fetchWithRetry(opts.input, {
+            retries: parsedRetries,
+            baseDelayMs: parsedRetryDelay,
+          });
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           validateContentType(r.headers.get("content-type"));
           const body = await readBodyWithLimit(r, parseContentLength(r.headers.get("content-length")));
@@ -444,8 +457,6 @@ program
         } catch (e) {
           console.error(chalk.red(String(e)));
           return false;
-        } finally {
-          clearTimeout(timeoutId);
         }
       };
       const initialSuccess = await check();

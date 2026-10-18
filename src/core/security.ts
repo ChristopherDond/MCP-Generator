@@ -154,6 +154,49 @@ export function validateContentType(contentType: string | null): void {
   }
 }
 
+export interface FetchRetryOptions {
+  fetchImpl?: typeof fetch;
+  retries?: number;
+  baseDelayMs?: number;
+  timeoutMs?: number;
+}
+
+const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+
+export async function fetchWithRetry(url: string, options: FetchRetryOptions = {}): Promise<Response> {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const retries = options.retries ?? 0;
+  const baseDelayMs = options.baseDelayMs ?? 500;
+  const timeoutMs = options.timeoutMs ?? 30000;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetchImpl(url, { signal: controller.signal });
+      if (res.ok) return res;
+      if (!RETRYABLE_STATUS.has(res.status)) {
+        throw new Error(`HTTP ${res.status} ${res.statusText}`);
+      }
+      lastError = new Error(`HTTP ${res.status} ${res.statusText}`);
+    } catch (e) {
+      if (e instanceof Error && /^HTTP 4\d\d/.test(e.message) && !RETRYABLE_STATUS.has(Number(e.message.split(" ")[1]))) {
+        throw e;
+      }
+      lastError = e;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+    if (attempt < retries) {
+      const delay = baseDelayMs * 2 ** attempt;
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
 export function sanitizeInput(input: string, maxLength: number = 256): string {
   if (typeof input !== "string") {
     throw new Error("Input must be a string");

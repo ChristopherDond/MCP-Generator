@@ -9,6 +9,7 @@ import {
   sanitizeInput,
   isPluginWhitelisted,
   validatePluginModule,
+  fetchWithRetry,
 } from "../src/core/security";
 import path from "path";
 import fs from "fs";
@@ -262,6 +263,83 @@ describe("Security Validations", () => {
       await expect(readBodyWithLimit(reader(), null, 5)).rejects.toThrow(
         /exceeds maximum allowed/
       );
+    });
+  });
+  describe("fetchWithRetry", () => {
+    it("retries a transient network failure and returns the eventual response", async () => {
+      let calls = 0;
+      const fakeFetch = async () => {
+        calls++;
+        if (calls < 3) throw new Error("ECONNRESET");
+        return { ok: true, status: 200, text: async () => "ok" } as unknown as Response;
+      };
+      const res = await fetchWithRetry("http://example.com/spec.json", {
+        fetchImpl: fakeFetch,
+        retries: 3,
+        baseDelayMs: 1,
+      });
+      expect(res.ok).toBe(true);
+      expect(calls).toBe(3);
+    });
+
+    it("does not retry a non-retryable client error", async () => {
+      let calls = 0;
+      const fakeFetch = async () => {
+        calls++;
+        return { ok: false, status: 404, statusText: "Not Found" } as unknown as Response;
+      };
+      await expect(
+        fetchWithRetry("http://example.com/spec.json", {
+          fetchImpl: fakeFetch,
+          retries: 3,
+          baseDelayMs: 1,
+        })
+      ).rejects.toThrow(/404/);
+      expect(calls).toBe(1);
+    });
+
+    it("retries a retryable server error then succeeds", async () => {
+      let calls = 0;
+      const fakeFetch = async () => {
+        calls++;
+        if (calls < 2) return { ok: false, status: 503, statusText: "Service Unavailable" } as unknown as Response;
+        return { ok: true, status: 200, text: async () => "ok" } as unknown as Response;
+      };
+      const res = await fetchWithRetry("http://example.com/spec.json", {
+        fetchImpl: fakeFetch,
+        retries: 3,
+        baseDelayMs: 1,
+      });
+      expect(res.ok).toBe(true);
+      expect(calls).toBe(2);
+    });
+
+    it("gives up after the retry budget and surfaces the last error", async () => {
+      let calls = 0;
+      const fakeFetch = async () => {
+        calls++;
+        throw new Error("ETIMEDOUT");
+      };
+      await expect(
+        fetchWithRetry("http://example.com/spec.json", {
+          fetchImpl: fakeFetch,
+          retries: 2,
+          baseDelayMs: 1,
+        })
+      ).rejects.toThrow(/ETIMEDOUT/);
+      expect(calls).toBe(3);
+    });
+
+    it("defaults to a single attempt when no retry budget is given", async () => {
+      let calls = 0;
+      const fakeFetch = async () => {
+        calls++;
+        throw new Error("ECONNREFUSED");
+      };
+      await expect(
+        fetchWithRetry("http://example.com/spec.json", { fetchImpl: fakeFetch })
+      ).rejects.toThrow(/ECONNREFUSED/);
+      expect(calls).toBe(1);
     });
   });
 });
