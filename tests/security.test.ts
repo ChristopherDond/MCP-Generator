@@ -330,6 +330,27 @@ describe("Security Validations", () => {
       expect(calls).toBe(3);
     });
 
+    it("exposes the HTTP status on the thrown error", async () => {
+      const fakeFetch = async () => {
+        return { ok: false, status: 400, statusText: "Bad Request" } as unknown as Response;
+      };
+      await expect(
+        fetchWithRetry("http://example.com/spec.json", { fetchImpl: fakeFetch, retries: 2, baseDelayMs: 1 })
+      ).rejects.toMatchObject({ status: 400 });
+    });
+
+    it("does not retry a retryable-looking 4xx that is not in the retry set", async () => {
+      let calls = 0;
+      const fakeFetch = async () => {
+        calls++;
+        return { ok: false, status: 418, statusText: "I am a teapot" } as unknown as Response;
+      };
+      await expect(
+        fetchWithRetry("http://example.com/spec.json", { fetchImpl: fakeFetch, retries: 3, baseDelayMs: 1 })
+      ).rejects.toThrow(/418/);
+      expect(calls).toBe(1);
+    });
+
     it("defaults to a single attempt when no retry budget is given", async () => {
       let calls = 0;
       const fakeFetch = async () => {

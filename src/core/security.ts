@@ -163,6 +163,24 @@ export interface FetchRetryOptions {
 
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
 
+export interface HttpFetchError extends Error {
+  status: number;
+}
+
+function httpError(res: Response): HttpFetchError {
+  const err = new Error(`HTTP ${res.status} ${res.statusText}`) as HttpFetchError;
+  err.status = res.status;
+  return err;
+}
+
+function isNonRetryable(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    typeof (err as HttpFetchError).status === "number" &&
+    !RETRYABLE_STATUS.has((err as HttpFetchError).status)
+  );
+}
+
 export async function fetchWithRetry(url: string, options: FetchRetryOptions = {}): Promise<Response> {
   const fetchImpl = options.fetchImpl ?? fetch;
   const retries = options.retries ?? 0;
@@ -176,18 +194,13 @@ export async function fetchWithRetry(url: string, options: FetchRetryOptions = {
     try {
       const res = await fetchImpl(url, { signal: controller.signal });
       if (res.ok) return res;
-      if (!RETRYABLE_STATUS.has(res.status)) {
-        throw new Error(`HTTP ${res.status} ${res.statusText}`);
-      }
-      lastError = new Error(`HTTP ${res.status} ${res.statusText}`);
+      lastError = httpError(res);
     } catch (e) {
-      if (e instanceof Error && /^HTTP 4\d\d/.test(e.message) && !RETRYABLE_STATUS.has(Number(e.message.split(" ")[1]))) {
-        throw e;
-      }
       lastError = e;
     } finally {
       clearTimeout(timeoutId);
     }
+    if (isNonRetryable(lastError)) throw lastError;
     if (attempt < retries) {
       const delay = baseDelayMs * 2 ** attempt;
       await new Promise((r) => setTimeout(r, delay));
