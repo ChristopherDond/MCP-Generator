@@ -20,6 +20,15 @@ Gere servidores MCP a partir de specs OpenAPI.
 
 ## Novidades da 2.3.7
 
+## Novidades da 2.5.0
+
+(Minor sem breaking changes.)
+
+- O `watch` de URL remota tenta novamente em falhas transitórias de fetch em vez de descartar o ciclo de polling: erros de rede e respostas `408`/`425`/`429`/`500`/`502`/`503`/`504` são repetidos com backoff exponencial, enquanto os demais `4xx` falham imediatamente.
+- Novas flags `--retries <n>` (default `2`) e `--retry-delay <ms>` (default `500`) controlam o orçamento de retentativas e o atraso base do backoff, que dobra a cada tentativa. `--retries 0` mantém o comportamento anterior de tentativa única.
+- Falhas de fetch agora carregam o código de status HTTP, permitindo ramificar sem fazer parsing da mensagem de erro.
+- Verificação local: 19 suites / 272 testes Jest, smoke de retry HTTPS contra servidor TLS real (503, 503, 200 → sucesso), lint + typecheck limpos.
+
 (Patch sem breaking changes.)
 
 - Nomes de tools usam o `operationId` sanitizado quando presente, com fallback para `method_path`.
@@ -357,6 +366,13 @@ mcp-gen watch -i https://example.com/spec.json --interval 60000
 
 Para entradas via URL, `--interval <ms>` controla o polling. `--once` executa uma geração imediatamente e encerra. Falhas de fetch, parse ou geração retornam código 1 em vez de sucesso falso.
 
+Falhas transitórias de fetch em entradas por URL passam por retentativa com backoff exponencial — erros de rede e respostas `408`/`425`/`429`/`500`/`502`/`503`/`504`, enquanto os demais `4xx` falham imediatamente. `--retries <n>` (default `2`) define o orçamento de retentativas e `--retry-delay <ms>` (default `500`) o atraso base, que dobra a cada tentativa. Use `--retries 0` para tentativa única.
+
+```bash
+mcp-gen watch -i https://example.com/spec.json --retries 5 --retry-delay 1000
+mcp-gen watch -i https://example.com/spec.json --once --retries 3
+```
+
 O `watch` aceita os mesmos filtros do `generate` (`--include-tags`, `--exclude-tags`, `--path-prefix`, `--include-paths`, `--exclude-paths`, `--operation-allowlist`, `--group-by`), além de `--http`, `--force`/`--incremental`:
 
 ```bash
@@ -557,7 +573,8 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.4 | Publicada no npm | Filtros de path com glob, allowlist inline, group-by tag/path-prefix com roteamento por action, dedup com method/hash, guardas `<generated:handlers>` com merge 3-way, middleware de auth separado, `handlers.custom.*` nunca sobrescrito, correção do template de auth para specs sem `securitySchemes` |
 | v2.1.5 | Publicada no npm | Fase 0 P0 (PR #4): serialização de query no TS, query/headers no Python, HTTP real no Go, registry só v3 com orientação |
 | v2.2.0 | Publicada no npm | Fase 1: `generate --dry-run` + resumo `--json`, filtros/grupos no `watch` (+ prompts interativos, correção do `--once` em arquivos), avisos por schema parcial em `validate`/`generate`, docs do CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` |
-| v2.4.0 | Preparada (publicação pendente) | Variantes inline de oneOf/anyOf como membros sintéticos da união, expansão de allOf aninhado inline, requestBody $ref para schemas/* resolvido, params $ref resolvidos, lockfiles pnpm/bun ignorados; inclui conteúdo da 2.3.8 nunca publicada |
+| v2.4.0 | Publicada no npm | Variantes inline de oneOf/anyOf como membros sintéticos da união, expansão de allOf aninhado inline, requestBody $ref para schemas/* resolvido, params $ref resolvidos, lockfiles pnpm/bun ignorados; inclui conteúdo da 2.3.8 nunca publicada |
+| v2.5.0 | Publicada no npm | `watch` remoto retenta falhas transitórias de fetch com backoff exponencial (`--retries`, `--retry-delay`), `HttpFetchError` tipado |
 | v2.3.8 | Substituída pela 2.4.0 (nunca publicada) | SDK 1.32.1 + `proxy-addr` 2.0.8 + `handlebars` 4.7.10 (audit prod limpo), leitura remota em streaming com teto, 4 lows da Wave 1, CI no Node 22 + `ubuntu-24.04` pinado |
 | v2.3.7 | Publicada no npm | Nomes via `operationId`, merge de `allOf` com $ref, `requestBody` via `requestBodies`, suporte a `trace`, `security --json` puro, watch URL endurecido, security-lint mais silencioso, smoke Python + audit prod na CI |
 | v2.3.6 | Publicada no npm | Erro explícito de `--interval`, `--timeout`/`--max-bytes` no `init`, warnings de fidelidade Swagger 2.0, warning de `discriminator`, TODO lint ignora `examples/`, CI no Ubuntu + Windows |

@@ -2,6 +2,16 @@
 
 Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
+## [2.5.0] - 2026-10-18
+
+### Retry com backoff no watch remoto, sem breaking
+
+- **Feature**: `fetchWithRetry` em `core/security` repete falhas transitórias de rede e respostas `408`/`425`/`429`/`500`/`502`/`503`/`504` com backoff exponencial; demais `4xx` falham na primeira tentativa.
+- **Watch**: entradas por URL passam a usar `fetchWithRetry`; o ciclo de polling não é mais descartado por uma falha transitória.
+- **CLI**: flags `--retries <n>` (default `2`) e `--retry-delay <ms>` (default `500`), com validação explícita de inteiro não-negativo e positivo. `--retries 0` preserva o comportamento de tentativa única.
+- **Erros**: `HttpFetchError` carrega o status HTTP, removendo o parsing de mensagem para decidir retentativa.
+- **Testes e gates**: 19 suites / 272 testes Jest (+7 em `security.test.ts`), smoke de retry HTTPS contra servidor TLS local (503, 503, 200), `tsc --noEmit` e ESLint limpos.
+
 ## [2.4.0] - 2026-10-11
 
 ### Parser e lint sem breaking (inclui a 2.3.8, nunca publicada)

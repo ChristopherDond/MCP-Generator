@@ -20,6 +20,15 @@ Generate MCP servers from OpenAPI specs.
 
 ## What's new in 2.3.7
 
+## What's new in 2.5.0
+
+(Minor release — no breaking changes.)
+
+- Remote URL `watch` retries transient fetch failures instead of dropping the polling cycle: network errors and `408`/`425`/`429`/`500`/`502`/`503`/`504` responses are retried with exponential backoff, while other `4xx` responses fail immediately.
+- New `--retries <n>` (default `2`) and `--retry-delay <ms>` (default `500`) flags control the retry budget and the base backoff, which doubles on each attempt. `--retries 0` keeps the previous single-attempt behaviour.
+- Fetch failures now carry the HTTP status code, so callers can branch on it without parsing error messages.
+- Local verification: 19 Jest suites / 272 tests, HTTPS retry smoke against a live TLS server (503, 503, 200 → success), lint + typecheck clean.
+
 (Patch release — no breaking changes.)
 
 - Tool names use the sanitized `operationId` when present, with fallback to `method_path`.
@@ -366,6 +375,13 @@ mcp-gen watch -i https://example.com/spec.json --interval 60000
 
 For URL inputs, `--interval <ms>` controls the polling interval. `--once` runs one generation immediately and exits. Fetch, parse, or generation failures return exit code 1 instead of a false success.
 
+Transient fetch failures on URL inputs are retried with exponential backoff — network errors and `408`/`425`/`429`/`500`/`502`/`503`/`504` responses, while other `4xx` responses fail immediately. `--retries <n>` (default `2`) sets the retry budget and `--retry-delay <ms>` (default `500`) the base backoff, doubling each attempt. Use `--retries 0` for a single attempt.
+
+```bash
+mcp-gen watch -i https://example.com/spec.json --retries 5 --retry-delay 1000
+mcp-gen watch -i https://example.com/spec.json --once --retries 3
+```
+
 `watch` accepts the same filtering flags as `generate` (`--include-tags`, `--exclude-tags`, `--path-prefix`, `--include-paths`, `--exclude-paths`, `--operation-allowlist`, `--group-by`), plus `--http`, `--force`/`--incremental`:
 
 ```bash
@@ -630,7 +646,8 @@ node dist/cli/index.js generate --input examples/petstore.json --out /tmp/ts-tes
 | v2.1.4 | Released on npm | Path glob filters, inline operation allowlist, group-by tag/path-prefix with action routing, method/hash dedup, `<generated:handlers>` guards with 3-way merge, separate auth middleware, never-overwritten `handlers.custom.*`, auth template fix for specs without `securitySchemes` |
 | v2.1.5 | Released on npm | Fase 0 P0 fixes (PR #4): TS query serialization, Python query/headers, Go HTTP wiring, v3-only registry with guidance |
 | v2.2.0 | Released on npm | Fase 1: `generate --dry-run` + `--json` summary, filter/group flags on `watch` (+ interactive prompts, `--once` file fix), per-schema partial-support warnings in `validate`/`generate`, CONTRIBUTING + `MCP_GEN_ALLOW_PLUGINS` docs |
-| v2.4.0 | Prepared (publication pending) | Inline oneOf/anyOf variants as synthetic union members, nested inline allOf expansion, requestBody $ref to schemas/* resolved, $ref params resolved, pnpm/bun lockfiles skipped; includes unreleased 2.3.8 content |
+| v2.4.0 | Released on npm | Inline oneOf/anyOf variants as synthetic union members, nested inline allOf expansion, requestBody $ref to schemas/* resolved, $ref params resolved, pnpm/bun lockfiles skipped; includes unreleased 2.3.8 content |
+| v2.5.0 | Released on npm | Remote `watch` retries transient fetch failures with exponential backoff (`--retries`, `--retry-delay`), typed `HttpFetchError` |
 | v2.3.8 | Superseded by 2.4.0 (never published) | SDK 1.32.1 + `proxy-addr` 2.0.8 + `handlebars` 4.7.10 (prod audit clean), streamed remote reads with size cap, 4 Wave 1 lows, CI on Node 22 + pinned `ubuntu-24.04` |
 | v2.3.7 | Released on npm | `operationId` tool names, `allOf` $ref merge, `requestBody` via `requestBodies`, `trace` support, pure `security --json`, hardened URL watch, quieter security-lint, Python smoke + prod audit in CI |
 | v2.3.6 | Released on npm | Explicit `watch --interval` error, `--timeout`/`--max-bytes` on `init`, Swagger 2.0 fidelity warnings, `discriminator` warning, TODO lint skips `examples/`, CI on Ubuntu + Windows |
