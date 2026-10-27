@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -91,12 +92,16 @@ func hasRawCredentialKey(value any) bool {
 	return false
 }
 
-func requireSecurity(toolName string, security any, authContext map[string]any, requestArgs map[string]any) error {
+func requireSecurity(toolName string, requiresAuth bool, authContext map[string]any, requestArgs map[string]any) error {
 	if requestArgs != nil && hasRawCredentialKey(requestArgs) {
 		return fmt.Errorf("raw provider credentials are not allowed in tool arguments. use scoped auth_context metadata only")
 	}
 	if authContext != nil && hasRawCredentialKey(authContext) {
 		return fmt.Errorf("raw provider credentials are not allowed in auth_context. use scoped metadata only")
+	}
+
+	if !requiresAuth {
+		return nil
 	}
 
 	policy, ok := TOOL_POLICIES[toolName]
@@ -116,7 +121,8 @@ func requireSecurity(toolName string, security any, authContext map[string]any, 
 
 	if policy.RequiresTTL {
 		if expiresAt, ok := authContext["expires_at"].(string); ok {
-			if expiresAt == "" || expiresAt < "2025-01-01T00:00:00Z" {
+			ts, parseErr := time.Parse(time.RFC3339, expiresAt)
+			if parseErr != nil || !ts.After(time.Now()) {
 				return fmt.Errorf("token expired or missing TTL")
 			}
 		} else {
@@ -167,7 +173,7 @@ func requireSecurity(toolName string, security any, authContext map[string]any, 
 		}
 	}
 
-	if security != nil {
+	if requiresAuth {
 		if _, ok := authContext["token_id"].(string); !ok {
 			return fmt.Errorf("missing token_id for secured operation")
 		}
@@ -195,6 +201,14 @@ func main() {
 	s.AddTool({{name}}Tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		_ = request.Params.Arguments
 		// @@mcp-gen:start:{{name}}
+		{{#if @root.requiresAuth}}
+		{
+			__authContext, _ := request.Params.Arguments["authContext"].(map[string]any)
+			if __err := requireSecurity("{{name}}", {{#if security}}true{{else}}false{{/if}}, __authContext, request.Params.Arguments); __err != nil {
+				return nil, __err
+			}
+		}
+		{{/if}}
 		{{#if isGroup}}
 		__action, _ := request.Params.Arguments["action"].(string)
 		switch (__action) {
