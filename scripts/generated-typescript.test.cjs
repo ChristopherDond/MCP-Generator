@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const { execFileSync } = require("node:child_process");
 const { mkdtempSync, readFileSync, rmSync } = require("node:fs");
+const http = require("node:http");
 const { createRequire } = require("node:module");
 const { tmpdir } = require("node:os");
 const path = require("node:path");
@@ -36,6 +37,12 @@ test("generated Petstore installs, compiles and serves initialize/tools/list ove
   const out = mkdtempSync(path.join(tmpdir(), "mcp-gen-ts-compile-"));
   let transport;
   let timer;
+  const upstream = http.createServer((_req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify([{ id: 1, name: "Whiskers", tag: "cat" }]));
+  });
+  await new Promise((resolve) => upstream.listen(0, "127.0.0.1", resolve));
+  const upstreamUrl = `http://127.0.0.1:${upstream.address().port}`;
   try {
     const result = await generate({
       input: path.join(root, "examples/petstore.json"),
@@ -62,11 +69,12 @@ test("generated Petstore installs, compiles and serves initialize/tools/list ove
     const errors = [];
     client.onerror = (error) => errors.push(error.message);
     transport = new StdioClientTransport({
-      command: process.execPath,
-      args: [path.join(out, "dist/server.js")],
-      cwd: out,
-      stderr: "pipe",
-    });
+          command: process.execPath,
+          args: [path.join(out, "dist/server.js")],
+          cwd: out,
+          stderr: "pipe",
+          env: { ...process.env, BASE_URL: upstreamUrl, TOKEN: "test-token" },
+        });
     let stderr = "";
     transport.stderr.on("data", (chunk) => {
       stderr = (stderr + chunk.toString()).slice(-8192);
@@ -86,7 +94,15 @@ test("generated Petstore installs, compiles and serves initialize/tools/list ove
         assert.equal(tool.inputSchema.type, "object");
       }
       assert.deepEqual(errors, []);
-      process.stdout.write("initialize OK; tools/list OK (4 tools); no tools/call requests\n");
+            const call = await client.callTool({ name: "list_pets", arguments: {} }, undefined, { timeout: 15000 });
+            assert.notEqual(call.isError, true, JSON.stringify(call));
+            assert.ok(!("error" in call), JSON.stringify(call));
+            const text = (call.content ?? []).map((part) => part.text ?? "").join("");
+            assert.ok(text.includes("Whiskers"), `unexpected tool output: ${text}`);
+            const withArgs = await client.callTool({ name: "list_pets", arguments: { limit: 5 } }, undefined, { timeout: 15000 });
+            assert.ok(!("error" in withArgs), JSON.stringify(withArgs));
+            assert.ok(!JSON.stringify(tools).includes("authContext"), "authContext must not leak into the tool schema");
+            process.stdout.write("initialize OK; tools/list OK (4 tools); tools/call OK\n");
     };
     try {
       await Promise.race([
@@ -99,11 +115,12 @@ test("generated Petstore installs, compiles and serves initialize/tools/list ove
       throw new Error(`stdio smoke failed: ${error.message}\n${stderr}`, { cause: error });
     }
   } finally {
-    clearTimeout(timer);
-    try {
-      await transport?.close();
-    } finally {
-      rmSync(out, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
+      clearTimeout(timer);
+      try {
+        await transport?.close();
+      } finally {
+        await new Promise((resolve) => upstream.close(resolve));
+        rmSync(out, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
+      }
     }
-  }
-});
+  });
