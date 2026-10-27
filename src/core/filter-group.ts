@@ -194,7 +194,7 @@ export function groupTools(tools: MCPTool[], mode: GroupByMode): MCPTool[] {
     for (const member of members) {
       for (const param of member.params) {
         if (param.name === "action") continue;
-        const dedupe = `${param.in}:${param.name}`;
+        const dedupe = param.name;
         if (union.has(dedupe)) continue;
         union.set(dedupe, { ...param, required: false });
       }

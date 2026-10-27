@@ -197,18 +197,22 @@ def _expand_path(path: str, params: dict, quote=None) -> str:
 
 {{#each tools}}
 @mcp.tool()
-async def {{name}}({{#each params}}{{name}}: {{#if required}}{{#eq type "string"}}str{{/eq}}{{#eq type "number"}}float{{/eq}}{{#eq type "boolean"}}bool{{/eq}}{{#eq type "object"}}dict{{/eq}}{{#eq type "array"}}list{{/eq}}{{else}}Optional[{{#eq type "string"}}str{{/eq}}{{#eq type "number"}}float{{/eq}}{{#eq type "boolean"}}bool{{/eq}}{{#eq type "object"}}dict{{/eq}}{{#eq type "array"}}list{{/eq}}] = None{{/if}}{{#unless @last}}, {{/unless}}{{/each}}{{#if params}}, {{/if}}auth_context: Optional[dict] = None) -> Any:
+async def {{name}}({{#if isGroup}}**kwargs: Any{{else}}{{#each params}}{{name}}: {{#if required}}{{#eq type "string"}}str{{/eq}}{{#eq type "number"}}float{{/eq}}{{#eq type "boolean"}}bool{{/eq}}{{#eq type "object"}}dict{{/eq}}{{#eq type "array"}}list{{/eq}}{{else}}Optional[{{#eq type "string"}}str{{/eq}}{{#eq type "number"}}float{{/eq}}{{#eq type "boolean"}}bool{{/eq}}{{#eq type "object"}}dict{{/eq}}{{#eq type "array"}}list{{/eq}}] = None{{/if}}{{#unless @last}}, {{/unless}}{{/each}}{{#if params}}, {{/if}}auth_context: Optional[dict] = None{{/if}}) -> Any:
     """{{escapeText description}}
 
     {{method}} {{path}}
     """
     # @@mcp-gen:start:{{name}}
+    {{#if isGroup}}
+    request_args = dict(kwargs)
+    {{else}}
     request_args = {
         key: value
         for key, value in locals().items()
         if key not in {"auth_context", "request_args"}
     }
-    require_security("{{name}}", {{#if security}}{{json security}}{{else}}None{{/if}}, auth_context, request_args)
+    {{/if}}
+    require_security("{{name}}", {{#if security}}{{json security}}{{else}}None{{/if}}, {{#if isGroup}}kwargs.get("auth_context"){{else}}auth_context{{/if}}, request_args)
     {{#if isGroup}}
     __action = request_args.get("action")
     {{#each groupMembers}}
