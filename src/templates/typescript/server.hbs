@@ -9,7 +9,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { ApiClient } from "./client.js";
 
-const BASE_URL = "{{baseUrl}}";
+const BASE_URL = process.env.BASE_URL ?? "{{baseUrl}}";
 const API_TOKEN = typeof process !== "undefined" ? process.env.TOKEN : undefined;
 const client = new ApiClient(BASE_URL, API_TOKEN);
 
@@ -225,6 +225,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           {{#each params}}
           {{name}}: { type: "{{type}}"{{#if (ne type "object")}}{{#if format}}, format: "{{format}}"{{/if}}{{#if enum}}, enum: {{{json enum}}}{{/if}}{{/if}}, description: "{{escapeText description}}" },
           {{/each}}
+          {{#if @root.requiresAuth}}
           authContext: {
             type: "object" as const,
             description: "Scoped auth metadata from a gateway (no raw provider credentials).",
@@ -241,6 +242,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
             },
             additionalProperties: false,
           },
+          {{/if}}
         },
         required: [{{#each params}}{{#if required}}"{{name}}",{{/if}}{{/each}}],
       },
@@ -264,7 +266,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     {{#each tools}}
     case "{{name}}": {
       // @@mcp-gen:start:{{name}}
-      requireSecurity("{{name}}", args as Record<string, unknown> | undefined, {{#if security}}{{json security}}{{else}}null{{/if}});
+      {{#if @root.requiresAuth}}requireSecurity("{{name}}", args as Record<string, unknown> | undefined, {{#if security}}{{json security}}{{else}}null{{/if}});
+      {{/if}}
       {{#if isGroup}}
       const __action = (args as Record<string, unknown> | undefined)?.action as string;
       switch (__action) {
