@@ -242,7 +242,8 @@ export function collectParameters(
 function buildTools(
   paths: OpenAPIV3.PathsObject,
   components: OpenAPIV3.ComponentsObject | undefined,
-  rawPaths?: OpenAPIV3.PathsObject
+  rawPaths?: OpenAPIV3.PathsObject,
+  documentSecurity?: OpenAPIV3.SecurityRequirementObject[]
 ): { tools: MCPTool[]; warnings: string[] } {
   const tools: MCPTool[] = [];
   const warnings: string[] = [];
@@ -373,7 +374,7 @@ function buildTools(
         method: method.toUpperCase(),
         path,
         params,
-        security: operation.security,
+        security: operation.security ?? documentSecurity,
         exampleResponse: extractExampleResponse(operation),
         tags: operation.tags ?? [],
         operationId: operation.operationId,
@@ -777,7 +778,7 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
     );
   }
 
-  const { tools: builtTools, warnings: toolWarnings } = buildTools(api.paths ?? {}, api.components, raw.paths);
+  const { tools: builtTools, warnings: toolWarnings } = buildTools(api.paths ?? {}, api.components, raw.paths, api.security);
   const tools = builtTools;
   const { models, warnings } = buildModels(raw.components);
   warnings.unshift(...toolWarnings, ...v2Warnings);
@@ -790,10 +791,7 @@ export async function parseOpenAPI(inputPath: string): Promise<MCPServerAST> {
   const baseUrl =
     api.servers?.[0]?.url ?? "https://api.example.com";
 
-  const requiresAuth =
-    tools.some((t) => t.security && t.security.length > 0) ||
-    Boolean(api.components?.securitySchemes &&
-      Object.keys(api.components.securitySchemes).length > 0);
+  const requiresAuth = tools.some((t) => t.security && t.security.length > 0);
 
   return {
     serverName,
